@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "Examify\\Examify.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "ExamifyAPI\\ExamifyApi.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

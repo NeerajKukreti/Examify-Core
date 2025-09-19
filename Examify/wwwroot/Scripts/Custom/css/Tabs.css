@@ -1,0 +1,15 @@
+.tabclose {
+    cursor: pointer;
+    position: relative;
+    top: -14px;
+    right: 13px;
+    font-family: sans-serif;
+    font-size: 13px;
+    color: darkred;
+    display: none
+}
+
+    .tabclose.active{
+        display:inline-block
+    }
+

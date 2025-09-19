@@ -1,0 +1,51 @@
+﻿using Microsoft.Data.SqlClient;
+using Dapper;
+using DataModel;
+using Microsoft.Extensions.Configuration;
+
+using System.Data;
+
+namespace DAL
+{
+    public interface IUserRepository
+    {
+        Task<User?> GetUserByUsername(string username);
+        Task<int> CreateUser(User user);
+    }
+    // Repositories/UserRepository.cs
+
+    public class UserRepository : IUserRepository
+    {
+        private readonly IConfiguration _config;
+        public UserRepository(IConfiguration config) => _config = config;
+
+        private IDbConnection Connection => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+
+        public async Task<User?> GetUserByUsername(string username)
+        {
+            using var conn = Connection;
+            return await conn.QueryFirstOrDefaultAsync<User>(
+                "SELECT * FROM Users WHERE Username = @Username",
+                new { Username = username });
+        }
+
+        public async Task<int> CreateUser(User user)
+        {
+            using var conn = Connection;
+            var parameters = new DynamicParameters();
+            parameters.Add("@UserName", user.Username);
+            parameters.Add("@PasswordHash", user.PasswordHash);
+            parameters.Add("@Role", user.Role);
+
+            // call stored procedure
+            var userId = await conn.ExecuteScalarAsync<int>(
+                "_sp_CreateUser",
+                parameters,
+                commandType: CommandType.StoredProcedure
+            );
+
+            return userId;
+        }
+    }
+
+}

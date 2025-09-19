@@ -1,0 +1,17 @@
+
+.hide_column {
+    display: none;
+}
+
+.DeletedRow {
+    border-left: solid 2px chocolate !important
+}
+
+.ActiveRow {
+    border-left: solid 2px BLANCHEDALMOND !important
+}
+
+.colTxtLeft {
+    text-align: left !important;
+    padding-left: 10px !important;
+}

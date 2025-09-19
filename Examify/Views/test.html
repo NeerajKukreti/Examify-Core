@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test Interface – Responsive Bootstrap Version</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --tb-blue: #00a7f0;
+            --tb-sky: #e6f0fa;
+            --tb-green: #28a745;
+            --tb-red: #e74c3c;
+            --tb-purple: #6f42c1;
+            --tb-blueDeep: #007bff;
+            --tb-grey: #c9c9c9;
+            --line: #d9d9d9;
+            --text: #222;
+        }
+
+        body {
+            background: #f7f7f7;
+            color: var(--text);
+        }
+
+        header {
+            background: #fff;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .tab {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: .4rem .7rem;
+            font-size: 13px;
+        }
+
+            .tab.active {
+                background: var(--tb-blue);
+                border-color: var(--tb-blue);
+                color: #fff;
+                font-weight: 600;
+            }
+
+        .pill {
+            padding: .2rem .7rem;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .gain {
+            background: #e9f7ee;
+            color: var(--tb-green);
+            border: 1px solid #cfe9d6;
+        }
+
+        .penalty {
+            background: #fdecea;
+            color: var(--tb-red);
+            border: 1px solid #f5c6c4;
+        }
+
+        .qbtn {
+            width: 32px;
+            height: 32px;
+            font-size: 12px;
+            font-weight: 400;
+            border-radius: 50%;
+            border: none;
+        }
+
+        #qGrid .col {
+            padding: 2px;
+        }
+
+        .q-unvisited {
+            background: var(--tb-grey);
+            color: #333;
+        }
+
+        .q-not-answered {
+            background: var(--tb-red);
+            color: #fff;
+        }
+
+        .q-answered {
+            background: var(--tb-green);
+            color: #fff;
+        }
+
+        .q-marked {
+            background: var(--tb-purple);
+            color: #fff;
+        }
+
+        .q-marked-answered {
+            background: var(--tb-blueDeep);
+            color: #fff;
+        }
+
+        /* Sidebar hides on mobile */
+        @media (max-width: 767.98px) {
+            #sidebar {
+                display: none;
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: 85%;
+                height: 100%;
+                background: #f8f9fa;
+                z-index: 1050;
+                border-left: 1px solid var(--line);
+                overflow-y: auto;
+            }
+
+                #sidebar.show {
+                    display: block;
+                }
+
+            #mobileToggle {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 1100;
+                border-radius: 50%;
+                width: 56px;
+                height: 56px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+            font-size: 14px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 10px;
+            margin-right: 6px;
+            color: #fff;
+        }
+
+        .answered {
+            background-color: #28a745;
+        }
+
+        .marked {
+            background-color: #6f42c1;
+        }
+
+        .not-visited {
+            background-color: #0d6efd;
+        }
+
+        .not-answered {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="container-fluid py-2 border-bottom">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Testbook_Logo.png/600px-Testbook_Logo.png" alt="logo" height="28">
+                    <div class="fw-semibold small">
+                        IBPS PO Prelims Memory Based Paper (Held On: 23 August 2025 Shift 1)
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="fw-semibold">Time: <strong>00 : 18 : 43</strong></span>
+                    <button class="btn btn-outline-primary btn-sm" id="fullscreenBtn">
+                        <span id="fullscreenIcon">⛶</span> Full Screen
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm">Pause</button>
+                    <button class="btn btn-outline-warning btn-sm" data-bs-toggle="tooltip" data-bs-title="Question Paper">QP</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid py-2 border-top border-bottom d-flex justify-content-between align-items-center bg-white flex-wrap gap-2">
+            <div class="d-flex flex-wrap gap-2">
+                <button class="tab active">Reasoning Ability</button>
+                <button class="tab">English Language</button>
+                <button class="tab">Quantitative Aptitude</button>
+            </div>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <span class="pill gain">Marks +1.142</span>
+                <span class="pill penalty">-0.285</span>
+                <span class="fw-semibold text-secondary">Time 00:25</span>
+                <select class="form-select form-select-sm" style="width:auto;">
+                    <option>View in English</option>
+                    <option>View in Hindi</option>
+                </select>
+                <img src="instructions.png" alt="Instructions" style="cursor:pointer; width:24px; height:24px;" data-bs-toggle="tooltip" data-bs-title="View Instructions">
+                <img src="report.png" alt="Report" style="cursor:pointer; width:24px; height:24px;" data-bs-toggle="tooltip" data-bs-title="Report Issue">
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN LAYOUT -->
+    <main class="container-fluid">
+        <div class="row g-0" style="min-height: calc(100vh - 98px);">
+
+            <!-- Left Main Content -->
+            <section class="col-12 col-md-8 col-lg-9 p-3 bg-white border-end">
+                <h6 id="qTitle" class="fw-bold">Question No. 1</h6>
+                <div class="text-muted small mb-2"><em>Comprehension:</em> (Que No. 1 - 5)</div>
+                <div class="mb-3">
+                    <strong>Directions:</strong> Read the information and answer the given questions.<br>
+                    Six persons, namely, A, B, C, D, E, and F, like different colors...
+                </div>
+                <div class="fw-bold mb-1">Question:</div>
+                <p>How many persons showcase before C?</p>
+
+                <form id="optionsForm" class="mb-3">
+                    <div class="form-check"><input class="form-check-input" type="radio" name="q" value="0" id="opt0"><label class="form-check-label" for="opt0">None</label></div>
+                    <div class="form-check"><input class="form-check-input" type="radio" name="q" value="1" id="opt1"><label class="form-check-label" for="opt1">One</label></div>
+                    <div class="form-check"><input class="form-check-input" type="radio" name="q" value="2" id="opt2"><label class="form-check-label" for="opt2">Two</label></div>
+                    <div class="form-check"><input class="form-check-input" type="radio" name="q" value="3" id="opt3"><label class="form-check-label" for="opt3">Three</label></div>
+                    <div class="form-check"><input class="form-check-input" type="radio" name="q" value="4" id="opt4"><label class="form-check-label" for="opt4">Four</label></div>
+                </form>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-sm btn-info text-white" id="btnReview">Mark for Review & Next</button>
+                    <button class="btn btn-sm btn-warning text-white" id="btnClear">Clear Response</button>
+                    <button class="btn btn-sm btn-success" id="btnNext">Save & Next</button>
+                </div>
+            </section>
+
+            <!-- Right Sidebar -->
+            <aside class="col-12 col-md-4 col-lg-3 bg-light border-start" id="sidebar">
+                <div class="d-flex flex-column h-100 p-2 gap-2">
+                    <div class="d-flex align-items-center bg-white border rounded p-2 gap-2">
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:24px;height:24px;">R</div>
+                        <div><div>Rajkumar</div></div>
+                    </div>
+
+                    <div class="card shadow-sm p-3">
+                        <div class="d-flex flex-wrap">
+                            <div class="status-item"><span class="status-badge answered">0</span> Answered</div>
+                            <div class="status-item"><span class="status-badge marked">0</span> Marked</div>
+                            <div class="status-item"><span class="status-badge not-visited">31</span> Not Visited</div>
+                            <div class="status-item"><span class="status-badge not-answered">4</span> Not Answered</div>
+                            <div class="status-item"><span class="status-badge marked">0</span> Marked & Answered</div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-primary">Section: Reasoning Ability</h6>
+                    <div class="bg-white border rounded p-2 flex-grow-1 overflow-auto">
+                        <div class="row row-cols-6 g-1" id="qGrid"></div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-sm btn-info text-white fw-bold">Submit Section</button>
+                        <button class="btn btn-sm btn-success fw-bold">Submit Test</button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Mobile Toggle -->
+    <button id="mobileToggle" class="btn btn-primary d-md-none">&#9776;</button>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Questions
+        const NUM_QUESTIONS = 40;
+        const S = { UNVISITED: 'unvisited', NOT_ANSWERED: 'not-answered', ANSWERED: 'answered', MARKED: 'marked', MARKED_ANSWERED: 'marked-answered' };
+        const qStatus = Array.from({ length: NUM_QUESTIONS }, (_, i) => i < 4 ? S.NOT_ANSWERED : S.UNVISITED);
+        let current = 0; const hasAnswer = Array(NUM_QUESTIONS).fill(null);
+
+        function statusClass(st) { return 'q-' + st; }
+
+        function renderGrid() {
+            const $g = $('#qGrid').empty();
+            for (let i = 0; i < NUM_QUESTIONS; i++) {
+                const col = $('<div class="col"></div>');
+                const btn = $(`<button type="button" class="qbtn ${statusClass(qStatus[i])}" data-i="${i}">${i + 1}</button>`);
+                if (i === current) btn.addClass('border border-dark');
+                col.append(btn); $g.append(col);
+            }
+        }
+
+        function setCurrent(i) {
+            current = i;
+            if (qStatus[i] === S.UNVISITED) qStatus[i] = S.NOT_ANSWERED;
+            $('#optionsForm input[type=radio]').prop('checked', false);
+            if (hasAnswer[i] !== null) $(`#optionsForm input[value="${hasAnswer[i]}"]`).prop('checked', true);
+            $('#qTitle').text(`Question No. ${i + 1}`);
+            renderGrid();
+        }
+
+        $(function () {
+            renderGrid();
+            $('#qGrid').on('click', '.qbtn', function () { setCurrent(+$(this).data('i')); });
+            $('#optionsForm input').on('change', function () {
+                hasAnswer[current] = Number($(this).val());
+                qStatus[current] = qStatus[current] === S.MARKED ? S.MARKED_ANSWERED : S.ANSWERED;
+            });
+            $('#btnReview').on('click', e => { e.preventDefault(); qStatus[current] = hasAnswer[current] !== null ? S.MARKED_ANSWERED : S.MARKED; setCurrent(Math.min(current + 1, NUM_QUESTIONS - 1)); });
+            $('#btnClear').on('click', e => { e.preventDefault(); hasAnswer[current] = null; $('#optionsForm input').prop('checked', false); qStatus[current] = S.NOT_ANSWERED; });
+            $('#btnNext').on('click', e => { e.preventDefault(); if (hasAnswer[current] === null) qStatus[current] = S.NOT_ANSWERED; else if (qStatus[current] !== S.MARKED_ANSWERED) qStatus[current] = S.ANSWERED; setCurrent(Math.min(current + 1, NUM_QUESTIONS - 1)); });
+            setCurrent(0);
+            // Bootstrap tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            tooltipTriggerList.map(el => new bootstrap.Tooltip(el))
+        });
+
+        // Fullscreen
+        const fullscreenBtn = document.getElementById("fullscreenBtn");
+        function openFullscreen() {
+            if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+        }
+        function closeFullscreen() {
+            if (document.exitFullscreen) document.exitFullscreen();
+        }
+        fullscreenBtn.addEventListener("click", () => {
+            if (!document.fullscreenElement) openFullscreen(); else closeFullscreen();
+        });
+        document.addEventListener("fullscreenchange", () => {
+            if (document.fullscreenElement) {
+                fullscreenBtn.innerHTML = `<span id="fullscreenIcon">🡼</span> Exit Full Screen`;
+            } else {
+                fullscreenBtn.innerHTML = `<span id="fullscreenIcon">⛶</span> Enter Full Screen`;
+            }
+        });
+
+        // Sidebar Toggle
+        document.getElementById("mobileToggle").addEventListener("click", function () {
+            document.getElementById("sidebar").classList.toggle("show");
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,282 @@
+@using DataModel
+@model ExamModel
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>@Model.ExamName - Exam Details</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    
+    <!-- Favicon icon -->
+    <link rel="icon" href="~/theme/assets/images/favicon.ico" type="image/x-icon">
+    
+    <!-- vendor css -->
+    <link rel="stylesheet" href="~/theme/assets/css/style.css">
+</head>
+<body class="">
+    <!-- [ Pre-loader ] start -->
+    <div class="loader-bg">
+        <div class="loader-track">
+            <div class="loader-fill"></div>
+        </div>
+    </div>
+    <!-- [ Pre-loader ] End -->
+
+    <!-- [ navigation menu ] start -->
+    <nav class="pcoded-navbar menu-light ">
+        <div class="navbar-wrapper  ">
+            <div class="navbar-content scroll-div ">
+                <div class="">
+                    <div class="main-menu-header">
+                        <img class="img-radius" src="~/theme/assets/images/user/avatar-2.jpg" alt="User-Profile-Image">
+                        <div class="user-details">
+                            <div id="more-details">Student <i class="fa fa-caret-down"></i></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <ul class="nav pcoded-inner-navbar ">
+                    <li class="nav-item pcoded-menu-caption">
+                        <label>Navigation</label>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/Dashboard" class="nav-link "><span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Dashboard</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/Exam/Selection" class="nav-link "><span class="pcoded-micon"><i class="feather icon-book"></i></span><span class="pcoded-mtext">Exams</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/Exam/Results" class="nav-link "><span class="pcoded-micon"><i class="feather icon-award"></i></span><span class="pcoded-mtext">Results</span></a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!-- [ navigation menu ] end -->
+
+    <!-- [ Header ] start -->
+    <header class="navbar pcoded-header navbar-expand-lg navbar-light header-blue">
+        <div class="m-header">
+            <a class="mobile-menu" id="mobile-collapse" href="#!"><span></span></a>
+            <a href="#!" class="b-brand">
+                <img src="~/theme/assets/images/logo.png" alt="" class="logo">
+            </a>
+            <a href="#!" class="mob-toggler">
+                <i class="feather icon-more-vertical"></i>
+            </a>
+        </div>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ml-auto">
+                <li>
+                    <div class="dropdown drp-user">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            <i class="feather icon-user"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right profile-notification">
+                            <div class="pro-head">
+                                <img src="~/theme/assets/images/user/avatar-1.jpg" class="img-radius" alt="User-Profile-Image">
+                                <span>Student</span>
+                                <a href="/Account/Logout" class="dud-logout" title="Logout">
+                                    <i class="feather icon-log-out"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </header>
+    <!-- [ Header ] end -->
+
+    <!-- [ Main Content ] start -->
+    <div class="pcoded-main-container">
+        <div class="pcoded-content">
+            <!-- exam header start -->
+            <div class="user-profile user-card mb-4">
+                <div class="card-header border-0 p-0 pb-0">
+                    <div class="cover-img-block">
+                        <div class="overlay"></div>
+                    </div>
+                </div>
+                <div class="card-body py-0">
+                    <div class="user-about-block m-0">
+                        <div class="row">
+                            <div class="col-md-4 text-center mt-n5">
+                                <div class="change-profile text-center">
+                                    <div class="profile-dp">
+                                        <div class="position-relative d-inline-block">
+                                            <i class="fas fa-graduation-cap fa-5x text-primary"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h5 class="mb-1">@Model.ExamName</h5>
+                                <p class="mb-2 text-muted">@Model.ExamType</p>
+                            </div>
+                            <div class="col-md-8 mt-md-4">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <p class="mb-3 text-muted">@Model.Description</p>
+                                    </div>
+                                </div>
+                                <ul class="nav nav-tabs profile-tabs nav-fill" id="myTab" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link text-reset active" id="overview-tab" data-toggle="tab" href="#overview" role="tab" aria-controls="overview" aria-selected="true"><i class="feather icon-info mr-2"></i>Overview</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link text-reset" id="instructions-tab" data-toggle="tab" href="#instructions" role="tab" aria-controls="instructions" aria-selected="false"><i class="feather icon-list mr-2"></i>Instructions</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link text-reset" id="start-tab" data-toggle="tab" href="#start" role="tab" aria-controls="start" aria-selected="false"><i class="feather icon-play mr-2"></i>Start Exam</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- exam header end -->
+
+            <!-- exam body start -->
+            <div class="row">
+                <div class="col-md-8 order-md-2">
+                    <div class="tab-content" id="myTabContent">
+                        <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Exam Statistics</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 col-lg-3">
+                                            <div class="card bg-c-blue order-card">
+                                                <div class="card-body">
+                                                    <h6 class="text-white">Duration</h6>
+                                                    <h2 class="text-white">@Model.DurationMinutes</h2>
+                                                    <p class="text-white m-b-0">Minutes</p>
+                                                    <i class="feather icon-clock card-icon"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-lg-3">
+                                            <div class="card bg-c-red order-card">
+                                                <div class="card-body">
+                                                    <h6 class="text-white">Questions</h6>
+                                                    <h2 class="text-white">@Model.TotalQuestions</h2>
+                                                    <p class="text-white m-b-0">Total</p>
+                                                    <i class="feather icon-help-circle card-icon"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                       
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="instructions" role="tabpanel" aria-labelledby="instructions-tab">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Exam Instructions</h5>
+                                </div>
+                                <div class="card-body">
+                                    @if (!string.IsNullOrEmpty(Model.Instructions))
+                                    {
+                                        <div>@Html.Raw(Model.Instructions.Replace("\n", "<br/>"))</div>
+                                    }
+                                    else
+                                    {
+                                        <ul class="list-group list-group-flush">
+                                            <li class="list-group-item"><i class="feather icon-check text-success mr-2"></i>Read all questions carefully before answering</li>
+                                            <li class="list-group-item"><i class="feather icon-check text-success mr-2"></i>Manage your time effectively throughout the exam</li>
+                                            <li class="list-group-item"><i class="feather icon-check text-success mr-2"></i>Review marked questions before final submission</li>
+                                            <li class="list-group-item"><i class="feather icon-check text-success mr-2"></i>Submit your exam before the time expires</li>
+                                            <li class="list-group-item"><i class="feather icon-alert-triangle text-warning mr-2"></i>No negative marking for unanswered questions</li>
+                                            <li class="list-group-item"><i class="feather icon-alert-triangle text-warning mr-2"></i>Once submitted, answers cannot be changed</li>
+                                        </ul>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="start" role="tabpanel" aria-labelledby="start-tab">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <div class="mb-4">
+                                        <i class="feather icon-play-circle fa-5x text-success mb-3"></i>
+                                        <h3>Ready to Start Your Exam?</h3>
+                                        <p class="text-muted">Once you start the exam, the timer will begin. Make sure you have a stable internet connection.</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <button type="button" class="btn btn-success btn-lg startExam">
+                                            <i class="feather icon-play mr-2"></i>Start Exam
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <a href="/Exam/Selection" class="btn btn-secondary">
+                                            <i class="feather icon-arrow-left mr-2"></i>Back to Exams
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 order-md-1">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Quick Info</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <h4 class="text-primary">@Model.DurationMinutes</h4>
+                                    <p class="text-muted mb-0">Minutes</p>
+                                </div>
+                                <div class="col-6">
+                                    <h4 class="text-danger">@Model.TotalQuestions</h4>
+                                    <p class="text-muted mb-0">Questions</p>
+                                </div>
+                            </div>
+                            <hr>
+                           
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Exam Type</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <span class="badge badge-primary badge-pill p-2 mb-2">@Model.ExamType</span>
+                            <p class="text-muted mb-0">Category</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- [ Main Content ] end -->
+
+    <!-- Required Js -->
+    <script src="~/theme/assets/js/vendor-all.min.js"></script>
+    <script src="~/theme/assets/js/plugins/bootstrap.min.js"></script>
+    <script src="~/theme/assets/js/ripple.js"></script>
+    <script src="~/theme/assets/js/pcoded.min.js"></script>
+    <script src="~/theme/assets/js/menu-setting.min.js"></script>
+    <script src="@Url.Content("~/Scripts/Custom/Exam/Exam.js")"></script>
+    <script src="@Url.Content("~/Scripts/Custom/Exam/Details.js")"></script>
+    <script>
+        // Set global variables for exam
+        window.currentUserId = @(ViewBag.UserId ?? 1);
+        window.examId = @ViewBag.ExamId;
+        window.examUrls = {
+            apiBaseUrl: '@Html.Raw(ViewBag.ApiBaseUrl ?? "https://localhost:7271/api/Exam")',
+            startExamUrl: '@Html.Raw(ViewBag.StartExamUrl ?? "/Exam/StartExam")',
+            examResultUrl: '@Html.Raw(ViewBag.ExamResultUrl ?? "/Exam/ExamResult")'
+        };
+    </script>
+</body>
+</html>

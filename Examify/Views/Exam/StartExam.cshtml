@@ -1,0 +1,364 @@
+@using Microsoft.Extensions.Hosting
+@inject IWebHostEnvironment HostEnv
+
+<body data-environment="@HostEnv.EnvironmentName">
+    <!-- Your content -->
+</body>
+
+@{
+    Layout = null;
+}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Online Exam - @ViewBag.ExamId</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --tb-blue: #00a7f0;
+            --tb-sky: #e6f0fa;
+            --tb-green: #28a745;
+            --tb-red: #e74c3c;
+            --tb-purple: #6f42c1;
+            --tb-blueDeep: #007bff;
+            --tb-grey: #c9c9c9;
+            --line: #d9d9d9;
+            --text: #222;
+        }
+
+        body {
+            background: #f7f7f7;
+            color: var(--text);
+        }
+
+        header {
+            background: #fff;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .tab {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: .4rem .7rem;
+            font-size: 13px;
+        }
+
+            .tab.active {
+                background: var(--tb-blue);
+                border-color: var(--tb-blue);
+                color: #fff;
+                font-weight: 600;
+            }
+
+        .pill {
+            padding: .2rem .7rem;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .gain {
+            background: #e9f7ee;
+            color: var(--tb-green);
+            border: 1px solid #cfe9d6;
+        }
+
+        .penalty {
+            background: #fdecea;
+            color: var(--tb-red);
+            border: 1px solid #f5c6c4;
+        }
+
+        .qbtn {
+            width: 32px;
+            height: 32px;
+            font-size: 12px;
+            font-weight: 400;
+            border-radius: 50%;
+            border: none;
+        }
+
+        #qGrid .col {
+            padding: 2px;
+        }
+
+        .q-unvisited {
+            background: var(--tb-grey);
+            color: #333;
+        }
+
+        .q-not-answered {
+            background: var(--tb-red);
+            color: #fff;
+        }
+
+        .q-answered {
+            background: var(--tb-green);
+            color: #fff;
+        }
+
+        .q-marked {
+            background: var(--tb-purple);
+            color: #fff;
+        }
+
+        .q-marked-answered {
+            background: var(--tb-blueDeep);
+            color: #fff;
+        }
+
+        /* Sidebar hides on mobile */
+        @@media (max-width: 767.98px) {
+            #sidebar {
+                display: none;
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: 85%;
+                height: 100%;
+                background: #f8f9fa;
+                z-index: 1050;
+                border-left: 1px solid var(--line);
+                overflow-y: auto;
+            }
+
+                #sidebar.show {
+                    display: block;
+                }
+
+            #mobileToggle {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 1100;
+                border-radius: 50%;
+                width: 56px;
+                height: 56px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+            font-size: 14px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 10px;
+            margin-right: 6px;
+            color: #fff;
+        }
+
+        .answered {
+            background-color: #28a745;
+        }
+
+        .marked {
+            background-color: #6f42c1;
+        }
+
+        .not-visited {
+            background-color: #0d6efd;
+        }
+
+        .not-answered {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <div class="container-fluid py-2 border-bottom">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="fw-semibold small">
+                        Online Exam - ID: @ViewBag.ExamId
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="fw-semibold">Time: <strong id="timer">02:00:00</strong></span>
+                    <button class="btn btn-outline-primary btn-sm" id="fullscreenBtn">
+                        <span id="fullscreenIcon">⛶</span> Full Screen
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm">Pause</button>
+                    <button class="btn btn-danger btn-sm" onclick="submitExam()">Submit Exam</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid py-2 border-top border-bottom d-flex justify-content-between align-items-center bg-white flex-wrap gap-2">
+            <div class="d-flex flex-wrap gap-2" id="sectionTabs">
+                <!-- Section tabs will be loaded dynamically -->
+            </div>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <span class="pill gain" id="currentMarks">Marks +0</span>
+                <span class="pill penalty" id="negativeMarks">-0</span>
+                <span class="fw-semibold text-secondary" id="questionTime">Time 00:00</span>
+                <select class="form-select form-select-sm" style="width:auto;">
+                    <option>View in English</option>
+                    <option>View in Hindi</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN LAYOUT -->
+    <main class="container-fluid">
+        <div class="row g-0" style="min-height: calc(100vh - 98px);">
+
+            <!-- Left Main Content -->
+            <section class="col-12 col-md-8 col-lg-9 p-3 bg-white border-end">
+                <h6 id="qTitle" class="fw-bold">Loading...</h6>
+                <div class="mb-3">
+                    <strong>Question:</strong> <span id="questionText">Loading exam questions...</span>
+                </div>
+
+                <form id="optionsForm" class="mb-3">
+                    <!-- Options will be loaded dynamically -->
+                </form>
+                <div id="orderingContainer" style="display:none;" class="mb-3">
+                    <strong>Order the items:</strong>
+                    <ul id="orderingList" class="list-group"></ul>
+                </div>
+                <div id="pairingContainer" style="display:none;" class="mb-3">
+                    <strong>Match the pairs:</strong>
+                    <div id="pairingList" class="row"></div>
+                </div>
+                <div id="subjectiveContainer" style="display:none;" class="mb-3">
+                    <strong>Your Answer:</strong>
+                    <textarea id="subjectiveAnswer" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-sm btn-secondary" id="btnPrevious">Previous</button>
+                    <button class="btn btn-sm btn-info text-white" id="btnReview">Mark for Review & Next</button>
+                    <button class="btn btn-sm btn-warning text-white" id="btnClear">Clear Response</button>
+                    <button class="btn btn-sm btn-success" id="btnNext">Save & Next</button>
+                </div>
+            </section>
+
+            <!-- Right Sidebar -->
+            <aside class="col-12 col-md-4 col-lg-3 bg-light border-start" id="sidebar">
+                <div class="d-flex flex-column h-100 p-2 gap-2">
+                    <div class="card shadow-sm p-3">
+                        <div class="d-flex flex-wrap">
+                            <div class="status-item"><span id="answeredCount" class="status-badge answered">0</span> Answered</div>
+                            <div class="status-item"><span id="markedCount"  class="status-badge marked">0</span> Marked</div>
+                            <div class="status-item" ><span id="notVisitedCount" class="status-badge not-visited">0</span> Not Visited</div>
+                            <div class="status-item"><span id="notAnsweredCount" class="status-badge not-answered">0</span> Not Answered</div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-primary" id="sectionTitle">Section: Loading...</h6>
+                    <div class="bg-white border rounded p-2 flex-grow-1 overflow-auto">
+                        <div class="row row-cols-6 g-1" id="qGrid"></div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-sm btn-info text-white fw-bold">Submit Section</button>
+                        <button class="btn btn-sm btn-success fw-bold" onclick="submitExam()">Submit Test</button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Mobile Toggle -->
+    <button id="mobileToggle" class="btn btn-primary d-md-none">&#9776;</button>
+
+    <!-- Debug Panel -->
+    <div id="debugPanel" style="position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.9); color: white; padding: 15px; border-radius: 8px; font-size: 11px; z-index: 9999; min-width: 250px; display: none;">
+        <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+            <strong>Debug Panel</strong>
+            <button onclick="$('#debugPanel').hide()" style="background: red; color: white; border: none; border-radius: 3px; padding: 2px 6px; margin-left: 10px;">×</button>
+        </div>
+        <div><strong>API Response Status:</strong> <span id="apiStatus">Not loaded</span></div>
+        <div><strong>Exam Data:</strong> <span id="examDataStatus">Not loaded</span></div>
+        <div><strong>Questions Loaded:</strong> <span id="questionsLoaded">0</span></div>
+        <div><strong>Current Question:</strong> <span id="currentQuestionDebug">0</span></div>
+        <div><strong>Responses Saved:</strong> <span id="responsesSaved">0</span></div>
+        <div style="margin-top: 8px;">
+            <button onclick="console.log('examData:', examData); console.log('allQuestions:', allQuestions); console.log('examResponses:', examResponses);"
+                    style="background: #007bff; color: white; border: none; border-radius: 3px; padding: 4px 8px; font-size: 10px; margin: 2px;">
+                Log All Data
+            </button>
+            <button onclick="alert(JSON.stringify(examResponses, null, 2))"
+                    style="background: #28a745; color: white; border: none; border-radius: 3px; padding: 4px 8px; font-size: 10px; margin: 2px;">
+                Show Responses
+            </button>
+        </div>
+    </div>
+
+    <!-- Debug Toggle Button -->
+    <button onclick="$('#debugPanel').toggle()"
+            style="position: fixed; bottom: 10px; right: 10px; background: #6c757d; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 12px; z-index: 9998;">
+        DEBUG
+    </button>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="@Url.Content("~/Scripts/Custom/Exam/AntiCheating.js")"></script>
+    <script src="@Url.Content("~/Scripts/Custom/Exam/Exam.js")"></script>
+    <script>
+
+
+        // Set global variables
+        window.currentUserId = @(ViewBag.UserId ?? 1);
+        window.examUrls = {
+            apiBaseUrl: '@Html.Raw(ViewBag.ApiBaseUrl ?? "https://localhost:7271/api/Exam")',
+            startExamUrl: '@Html.Raw(ViewBag.StartExamUrl ?? "/Exam/StartExam")',
+            examResultUrl: '@Html.Raw(ViewBag.ExamResultUrl ?? "/Exam/ExamResult")'
+        };
+
+        // Initialize exam when page loads
+        $(document).ready(function() {
+            console.log('StartExam page loaded, initializing exam with ID:', @ViewBag.ExamId);
+
+            if (typeof initializeExam === 'function') {
+                initializeExam(@ViewBag.ExamId);
+            } else {
+                console.error('initializeExam function not found!');
+                alert('Failed to load exam system. Please refresh the page.');
+            }
+        });
+
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const environment = document.body.getAttribute('data-environment');
+            const isProd = environment === 'Production';
+            
+            if (isProd) {
+                    // Initialize new anti-cheating system
+                if (typeof initializeAntiCheating === 'function') {
+                    initializeAntiCheating();
+                }
+            }
+            else
+            {
+                // if (typeof initializeAntiCheating === 'function') {
+                //     initializeAntiCheating();
+                // }
+            }
+        });
+    </script>
+</body>
+</html>
+
