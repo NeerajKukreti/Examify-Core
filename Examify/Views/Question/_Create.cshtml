@@ -2,7 +2,7 @@
 @{
     ViewBag.Title = "Create/Edit Question";
     Layout = null;
-}
+} 
 
 <style>
     .no-gutter {
@@ -43,7 +43,7 @@
     /* Collapsible panel */
     .panel-header {
         background: linear-gradient(to bottom, #f8f9fa 0%, #e9ecef 100%);
-        padding: 12px 15px;
+        padding: 5px 15px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -220,14 +220,14 @@
             margin: 0;
             padding: 8px 12px;
             /* background: #f8f9fa;
-                border: 1px solid #e9ecef;
-                border-radius: 4px; */
+                                                border: 1px solid #e9ecef;
+                                                border-radius: 4px; */
             transition: all 0.2s;
         }
 
             .multi-select-container .checkbox:hover {
                 /* background: #e9ecef;
-                    border-color: #007bff; */
+                                                    border-color: #007bff; */
             }
 
     /* Option controls alignment */
@@ -244,8 +244,8 @@
         margin: 0;
         padding: 5px 8px;
         /*  background: #fff;
-            border: 1px solid #dee2e6;
-            border-radius: 4px; */
+                                            border: 1px solid #dee2e6;
+                                            border-radius: 4px; */
         min-width: 120px;
     }
 
@@ -254,313 +254,265 @@
     }
 </style>
 
-<div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
-    <h4 class="modal-title">
-        <h4 class="page-title bold" style="">
-            Add/update Question
-            <small></small>
-        </h4>
-    </h4>
-</div>
 <form asp-action="Edit" method="post" id="questionForm">
-    <div class="modal-body modal-content ">
-        <div class="toolbar1" style="display:;">
-            <span class="ql-formats">
-                <select class="ql-font"></select>
-                <select class="ql-size"></select>
-            </span>
-            <span class="ql-formats">
-                <button class="ql-bold"></button>
-                <button class="ql-italic"></button>
-                <button class="ql-underline"></button>
-                <button class="ql-strike"></button>
-            </span>
-            <span class="ql-formats">
-                <select class="ql-color"></select>
-                <select class="ql-background"></select>
-            </span>
-            <span class="ql-formats">
-                <button class="ql-script" value="sub"></button>
-                <button class="ql-script" value="super"></button>
-            </span>
-            <span class="ql-formats">
-                <button class="ql-header" value="1"></button>
-                <button class="ql-header" value="2"></button>
-                <button class="ql-blockquote"></button>
-                <button class="ql-code-block"></button>
-            </span>
-            <span class="ql-formats">
-                <button class="ql-list" value="ordered"></button>
-                <button class="ql-list" value="bullet"></button>
-                <button class="ql-indent" value="-1"></button>
-                <button class="ql-indent" value="+1"></button>
-            </span>
-            <span class="ql-formats">
-                <button class="ql-direction" value="rtl"></button>
-                <select class="ql-align"></select>
-            </span>
-            <span class="ql-formats">
-                <button class="ql-link"></button>
-                <button class="ql-image"></button>
-                <button class="ql-formula"></button>
-            </span>
+
+    <div class="toolbar1">
+        <span class="ql-formats">
+            <select class="ql-font"></select>
+            <select class="ql-size"></select>
+        </span>
+        <span class="ql-formats">
+            <button class="ql-bold"></button>
+            <button class="ql-italic"></button>
+            <button class="ql-underline"></button>
+            <button class="ql-strike"></button>
+        </span>
+        <span class="ql-formats">
+            <select class="ql-color"></select>
+            <select class="ql-background"></select>
+        </span>
+        <span class="ql-formats">
+            <button class="ql-script" value="sub"></button>
+            <button class="ql-script" value="super"></button>
+        </span>
+        <span class="ql-formats">
+            <button class="ql-header" value="1"></button>
+            <button class="ql-header" value="2"></button>
+            <button class="ql-blockquote"></button>
+            <button class="ql-code-block"></button>
+        </span>
+        <span class="ql-formats">
+            <button class="ql-list" value="ordered"></button>
+            <button class="ql-list" value="bullet"></button>
+            <button class="ql-indent" value="-1"></button>
+            <button class="ql-indent" value="+1"></button>
+        </span>
+        <span class="ql-formats">
+            <button class="ql-direction" value="rtl"></button>
+            <select class="ql-align"></select>
+        </span>
+        <span class="ql-formats">
+            <button class="ql-link"></button>
+            <button class="ql-image"></button>
+            <button class="ql-formula"></button>
+        </span>
+    </div>
+    <div class="toolbar2">
+        <span class="ql-formats">
+            <select class="ql-font"></select>
+            <select class="ql-size"></select>
+        </span>
+        <span class="ql-formats">
+            <button class="ql-bold"></button>
+            <button class="ql-italic"></button>
+            <button class="ql-underline"></button>
+            <button class="ql-strike"></button>
+        </span>
+        <span class="ql-formats">
+            <button class="ql-script" value="sub"></button>
+            <button class="ql-script" value="super"></button>
+        </span>
+        <span class="ql-formats">
+            <button class="ql-link"></button>
+            <button class="ql-image"></button>
+            <button class="ql-formula"></button>
+        </span>
+    </div>
+
+    <div class="container-fluid">
+
+        <input type="hidden" asp-for="QuestionId" />
+        <input type="hidden" asp-for="QuestionEnglish" id="hfQuestionEnglish" />
+        <input type="hidden" asp-for="QuestionHindi" id="hfQuestionHindi" />
+        <input type="hidden" asp-for="AdditionalTextEnglish" id="hfAdditionalEnglish" />
+        <input type="hidden" asp-for="AdditionalTextHindi" id="hfAdditionalHindi" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="form-section">
+            <div class="section-title">
+                Question configuration
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group required">
+                        <label asp-for="SubjectId">Subject <span class="text-danger">*</span></label>
+                        <select asp-for="SubjectId" class="form-control select" id="ddlSubject" name="SubjectId">
+                            <option value="">Select Subject</option>
+                        </select>
+                        <span asp-validation-for="SubjectId" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group required">
+                        <label asp-for="QuestionTypeId">Question Type <span class="text-danger">*</span></label>
+                        <select asp-for="QuestionTypeId" class="form-control select" id="ddlQuestionType" name="QuestionTypeId">
+                            <option value="">Select Type</option>
+                        </select>
+                        <span asp-validation-for="QuestionTypeId" class="text-danger"></span>
+                    </div>
+
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group required">
+                        <label asp-for="TopicId">Topic <span class="text-danger">*</span></label>
+                        <select asp-for="TopicId" class="form-control select" id="ddlTopic" name="TopicId">
+                            <option value="">Select Topic</option>
+                        </select>
+                        <span asp-validation-for="TopicId" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group multi-select-container">
+                        <div class="checkbox">
+                            <label style="font-weight: 500;display:flex;">
+                                <input asp-for="IsMultiSelect" style="margin-right:8px;" /> Multi Select Question
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="editor-panel required">
+            <div class="panel-header">
+                <div class="panel-title">
+                    Question English <span class="text-danger">*</span>
+                </div>
+                <button type="button" class="toggle-btn">+</button>
+            </div>
+            <div class="panel-body">
+                <div class="editor-container" id="editor-question-english" data-name="Question english"></div>
+                <span class="text-danger" id="valQuestionEnglish"></span>
+            </div>
         </div>
 
-        <div class="container-fluid">
-
-            <input type="hidden" asp-for="QuestionId" />
-            <input type="hidden" asp-for="QuestionEnglish" id="hfQuestionEnglish" />
-            <input type="hidden" asp-for="QuestionHindi" id="hfQuestionHindi" />
-            <input type="hidden" asp-for="AdditionalTextEnglish" id="hfAdditionalEnglish" />
-            <input type="hidden" asp-for="AdditionalTextHindi" id="hfAdditionalHindi" />
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-section">
-                <div class="section-title">
-                    Question configuration
+        <div class="editor-panel" data-editor-target="QuestionHindi" data-editor-id="editor-question-hindi">
+            <div class="panel-header">
+                <div class="panel-title">
+                    Question Hindi
                 </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group required">
-                            <label asp-for="SubjectId">Subject <span class="text-danger">*</span></label>
-                            <select asp-for="SubjectId" class="form-control select" id="ddlSubject" name="SubjectId">
-                                <option value="">Select Subject</option>
-                            </select>
-                            <span asp-validation-for="SubjectId" class="text-danger"></span>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group required">
-                            <label asp-for="QuestionTypeId">Question Type <span class="text-danger">*</span></label>
-                            <select asp-for="QuestionTypeId" class="form-control select" id="ddlQuestionType" name="QuestionTypeId">
-                                <option value="">Select Type</option>
-                            </select>
-                            <span asp-validation-for="QuestionTypeId" class="text-danger"></span>
-                        </div>
+                <button type="button" class="toggle-btn">+</button>
+            </div>
+            <div class="panel-body">
+                <div class="editor-container" id="editor-question-hindi" data-name="Question hindi"></div>
+            </div>
+        </div>
 
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group required">
-                            <label asp-for="TopicId">Topic <span class="text-danger">*</span></label>
-                            <select asp-for="TopicId" class="form-control select" id="ddlTopic" name="TopicId">
-                                <option value="">Select Topic</option>
-                            </select>
-                            <span asp-validation-for="TopicId" class="text-danger"></span>
+        <div class="editor-panel" data-editor-target="AdditionalTextEnglish" data-editor-id="editor-additional-english">
+            <div class="panel-header">
+                <div class="panel-title">
+                    Additional Text English
+                </div>
+                <button type="button" class="toggle-btn">+</button>
+            </div>
+            <div class="panel-body">
+                <div class="editor-container" id="editor-additional-english" data-name="Additional Text English"></div>
+            </div>
+        </div>
+
+        <div class="editor-panel" data-editor-target="AdditionalTextHindi" data-editor-id="editor-additional-hindi">
+            <div class="panel-header">
+                <div class="panel-title">
+                    Additional Text Hindi
+                </div>
+                <button type="button" class="toggle-btn">+</button>
+            </div>
+            <div class="panel-body">
+                <div class="editor-container" id="editor-additional-hindi" data-name="Additional Text Hindi"></div>
+            </div>
+        </div>
+
+        <!-- Explanation Section -->
+        <div class="form-section">
+            <div class="section-title">
+                Explanation
+            </div>
+            <div class="form-group textarea-container">
+                <textarea asp-for="Explanation" class="form-control" placeholder="Provide detailed explanation for the answer..."></textarea>
+            </div>
+        </div>
+
+        <!-- Options Section -->
+        <div class="options-section" id="options-section">
+            <div class="form-group">
+                <button type="button" id="btnAddOption" class="btn blue btn-outline">
+                    <i class="glyphicon glyphicon-plus"></i> Add More Option
+                </button>
+                <span class="text-danger" id="optionsValidation"></span>
+            </div>
+
+            <div id="options-wrapper">
+                <div class="form-group option-group" data-option-index="1">
+                    <div class="option-label">Option 1</div>
+                    <div class="row">
+                        <div class="col-md-10">
+                            <div class="editor-container" style="height: 50px !important" id="editor-option1" data-name="Option 1"></div>
+                        </div>
+                        <div class="col-md-2 option-controls">
+                            <div class="option-checkbox checkbox">
+                                <label>
+                                    <input type="checkbox" /> Is Correct
+                                </label>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group multi-select-container">
-                            <div class="checkbox">
-                                <label style="font-weight: 500;display:flex;">
-                                    <input asp-for="IsMultiSelect" style="margin-right:8px;" /> Multi Select Question
+                </div>
+
+                <div class="form-group option-group" data-option-index="2">
+                    <div class="option-label">Option 2</div>
+                    <div class="row">
+                        <div class="col-md-10">
+                            <div class="editor-container" style="height: 50px !important" id="editor-option2" data-name="Option 2"></div>
+                        </div>
+                        <div class="col-md-2 option-controls">
+                            <div class="option-checkbox checkbox">
+                                <label>
+                                    <input type="checkbox" /> Is Correct
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group option-group" data-option-index="3">
+                    <div class="option-label">Option 3</div>
+                    <div class="row">
+                        <div class="col-md-10">
+                            <div class="editor-container" style="height: 50px !important" id="editor-option3" data-name="Option 3"></div>
+                        </div>
+                        <div class="col-md-2 option-controls">
+                            <div class="option-checkbox checkbox">
+                                <label>
+                                    <input type="checkbox" /> Is Correct
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group option-group" data-option-index="4">
+                    <div class="option-label">Option 4</div>
+                    <div class="row">
+                        <div class="col-md-10">
+                            <div class="editor-container" style="height: 50px !important" id="editor-option4" data-name="Option 4"></div>
+                        </div>
+                        <div class="col-md-2 option-controls">
+                            <div class="option-checkbox checkbox">
+                                <label>
+                                    <input type="checkbox" /> Is Correct
                                 </label>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="editor-panel required">
-                <div class="panel-header">
-                    <div class="panel-title">
-                        Question English <span class="text-danger">*</span>
-                    </div>
-                    <button type="button" class="toggle-btn">+</button>
-                </div>
-                <div class="panel-body">
-                    <div class="editor-container" id="editor-question-english" data-name="Question english"></div>
-                    <span class="text-danger" id="valQuestionEnglish"></span>
-                </div>
-            </div>
-
-            <div class="editor-panel" data-editor-target="QuestionHindi" data-editor-id="editor-question-hindi">
-                <div class="panel-header">
-                    <div class="panel-title">
-                        Question Hindi
-                    </div>
-                    <button type="button" class="toggle-btn">+</button>
-                </div>
-                <div class="panel-body">
-                    <div class="editor-container" id="editor-question-hindi" data-name="Question hindi"></div>
-                </div>
-            </div>
-
-            <div class="editor-panel" data-editor-target="AdditionalTextEnglish" data-editor-id="editor-additional-english">
-                <div class="panel-header">
-                    <div class="panel-title">
-                        Additional Text English
-                    </div>
-                    <button type="button" class="toggle-btn">+</button>
-                </div>
-                <div class="panel-body">
-                    <div class="editor-container" id="editor-additional-english" data-name="Additional Text English"></div>
-                </div>
-            </div>
-
-            <div class="editor-panel" data-editor-target="AdditionalTextHindi" data-editor-id="editor-additional-hindi">
-                <div class="panel-header">
-                    <div class="panel-title">
-                        Additional Text Hindi
-                    </div>
-                    <button type="button" class="toggle-btn">+</button>
-                </div>
-                <div class="panel-body">
-                    <div class="editor-container" id="editor-additional-hindi" data-name="Additional Text Hindi"></div>
-                </div>
-            </div>
-
-            <!-- Explanation Section -->
-            <div class="form-section">
-                <div class="section-title">
-                    Explanation
-                </div>
-                <div class="form-group textarea-container">
-                    <textarea asp-for="Explanation" class="form-control" placeholder="Provide detailed explanation for the answer..."></textarea>
-                </div>
-            </div>
-
-            <!-- Options Section -->
-            <div class="options-section" id="options-section">
-                <div class="form-group">
-                    <button type="button" id="btnAddOption" class="btn blue btn-outline">
-                        <i class="glyphicon glyphicon-plus"></i> Add More Option
-                    </button>
-                    <span class="text-danger" id="optionsValidation"></span>
-                </div>
-
-                <div id="options-wrapper">
-                    <div class="form-group option-group" data-option-index="1">
-                        <div class="option-label">Option 1</div>
-                        <div class="row">
-                            <div class="col-md-10">
-                                <div class="editor-container" style="height: 50px !important" id="editor-option1" data-name="Option 1"></div>
-                            </div>
-                            <div class="col-md-2 option-controls">
-                                <div class="option-checkbox checkbox">
-                                    <label>
-                                        <input type="checkbox" /> Is Correct
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group option-group" data-option-index="2">
-                        <div class="option-label">Option 2</div>
-                        <div class="row">
-                            <div class="col-md-10">
-                                <div class="editor-container" style="height: 50px !important" id="editor-option2" data-name="Option 2"></div>
-                            </div>
-                            <div class="col-md-2 option-controls">
-                                <div class="option-checkbox checkbox">
-                                    <label>
-                                        <input type="checkbox" /> Is Correct
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group option-group" data-option-index="3">
-                        <div class="option-label">Option 3</div>
-                        <div class="row">
-                            <div class="col-md-10">
-                                <div class="editor-container" style="height: 50px !important" id="editor-option3" data-name="Option 3"></div>
-                            </div>
-                            <div class="col-md-2 option-controls">
-                                <div class="option-checkbox checkbox">
-                                    <label>
-                                        <input type="checkbox" /> Is Correct
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group option-group" data-option-index="4">
-                        <div class="option-label">Option 4</div>
-                        <div class="row">
-                            <div class="col-md-10">
-                                <div class="editor-container" style="height: 50px !important" id="editor-option4" data-name="Option 4"></div>
-                            </div>
-                            <div class="col-md-2 option-controls">
-                                <div class="option-checkbox checkbox">
-                                    <label>
-                                        <input type="checkbox" /> Is Correct
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
         </div>
 
+
     </div>
-    <div class="modal-footer">
-        <button type="button" data-dismiss="modal" class="btn btn-outline dark">Close</button>
-        <button type="button" class="btn green">Save changes</button>
-    </div>
+
+
 </form>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+
 <script src="@Url.Content("~/scripts/custom/questionbank/question.js")"></script>
-
-<script src="~/assets/pages/scripts/form-validation.min.js"></script>
-<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
-<script>
-    (function($){
-        function plainText(html){ var d=document.createElement('div'); d.innerHTML=html||''; return (d.textContent||'').replace(/\u200B/g,'').trim(); }
-        $(function(){
-            var $form = $('#questionForm');
-            $form.validate({
-                ignore: [],
-                rules: {
-                    SubjectId: { required: true },
-                    QuestionTypeId: { required: true },
-                    TopicId: { required: true }
-                },
-                messages: {
-                    SubjectId: 'Subject is required',
-                    QuestionTypeId: 'Question type is required',
-                    TopicId: 'Topic is required'
-                },
-                errorPlacement: function(error, element){
-                    if(element.attr('id')==='hfQuestionEnglish'){
-                        error.appendTo($('#valQuestionEnglish'));
-                    } else if(element.attr('name')==='IsCorrectOption'){
-                        error.appendTo($('#optionsValidation'));
-                    } else {
-                        error.insertAfter(element);
-                    }
-                }
-            });
-
-            // Custom validation for Quill Question English
-            $.validator.addMethod('quillrequired', function(value, element){
-                var q = window.__quillEditors && window.__quillEditors['editor-question-english'];
-                if(!q) return false;
-                return plainText(q.root.innerHTML).length > 0;
-            }, 'Question English is required');
-            $('#hfQuestionEnglish').rules('add', { quillrequired: true });
-
-            // Custom validation for at least one Is Correct checkbox
-            $.validator.addMethod('atleastonecorrect', function(value, element){
-                return $('#options-wrapper input[type="checkbox"]').filter(':checked').length > 0;
-            }, 'At least one option must be marked as correct');
-            // Add a dummy hidden field for this rule
-            if($('#isCorrectDummy').length===0){
-                $('<input type="hidden" id="isCorrectDummy" name="IsCorrectOption" />').appendTo($form);
-            }
-            $('#isCorrectDummy').rules('add', { atleastonecorrect: true });
-
-            // On submit, sync Quill content to hidden field before validation
-            $form.on('submit', function(e){
-                var q = window.__quillEditors && window.__quillEditors['editor-question-english'];
-                if(q) $('#hfQuestionEnglish').val(q.root.innerHTML);
-            });
-        });
-    })(jQuery);
-</script>
-
+<script src="@Url.Content("~/theme/plugins/jquery-validation 1.19.5/jquery.validate.js")"></script>
 

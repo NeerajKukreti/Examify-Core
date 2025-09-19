@@ -27,18 +27,10 @@
     <Content Remove="wwwroot\Scripts\Custom\global.js" />
     <Content Remove="wwwroot\Scripts\Custom\QuestionBank\Question.js" />
     <Content Remove="wwwroot\Scripts\Custom\Tabs.js" />
-    <Content Remove="wwwroot\Scripts\jquery-1.10.2.intellisense.js" />
-    <Content Remove="wwwroot\Scripts\jquery.validate.unobtrusive.js" />
-    <Content Remove="wwwroot\Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Remove="wwwroot\Scripts\_references.js" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="wwwroot\Scripts\Custom\css\datatable.css" />
-    <None Include="wwwroot\Scripts\Custom\css\global.css" />
-    <None Include="wwwroot\Scripts\Custom\css\Tabs.css" />
-    <None Include="wwwroot\Scripts\Custom\Datatable\datatables.min.css" />
-    <None Include="wwwroot\Scripts\Custom\Datatable\datatables.min.js" />
     <None Include="wwwroot\Scripts\Custom\Exam\Exam.js" />
     <None Include="wwwroot\Scripts\Custom\Exam\ExamDatatable.js" />
     <None Include="wwwroot\Scripts\Custom\Exam\ExamValidation.js" />
@@ -56,9 +48,6 @@
     <None Include="wwwroot\Scripts\Custom\Subject\SubjectDatatable.js" />
     <None Include="wwwroot\Scripts\Custom\Subject\SubjectValidation.js" />
     <None Include="wwwroot\Scripts\Custom\Tabs.js" />
-    <None Include="wwwroot\Scripts\jquery-1.10.2.intellisense.js" />
-    <None Include="wwwroot\Scripts\jquery.validate.unobtrusive.js" />
-    <None Include="wwwroot\Scripts\jquery.validate.unobtrusive.min.js" />
     <None Include="wwwroot\Scripts\_references.js" />
   </ItemGroup>
 
@@ -76,6 +65,7 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\QuesionUploads\" />
+    <Folder Include="wwwroot\theme\plugins\jquery-validation 1.19.5\" />
   </ItemGroup>
 
 </Project>

@@ -61,9 +61,7 @@ function initializeMultiSelectBehavior() {
                     .prop('checked', false); 
             }
         });
-}
-
-
+} 
 
 function loadQuestionTypes() {
     var apiUrl = API_BASE_URL_QUESTION + '/types';
@@ -150,7 +148,8 @@ function loadTopics(subjectId) {
 
     function getToolbarTemplateClone() {
         // Pick the first existing generated toolbar (created for initial editors)
-        var $anyToolbar = $('[id^="toolbar-for-editor-option"], [id^="toolbar-for-editor-question"], [id^="toolbar-for-editor-additional"]').first();
+        ///var $anyToolbar = $('[id^="toolbar-for-editor-option"], [id^="toolbar-for-editor-question"], [id^="toolbar-for-editor-additional"]').first();
+        var $anyToolbar = $('[class="toolbar2"]').first();
         if (!$anyToolbar.length) return null;
         var $clone = $anyToolbar.clone(false); // shallow clone; handlers not needed (Quill will bind new ones)
         $clone.removeAttr('aria-label role');
@@ -159,6 +158,9 @@ function loadTopics(subjectId) {
     }
 
     function initQuillFor(editorId, displayName) {
+
+        debugger
+
         if (typeof Quill === 'undefined') return;
         var $editor = $('#' + editorId);
         if (!$editor.length) return;
@@ -270,3 +272,105 @@ function loadTopics(subjectId) {
     captureInitialCount();
 
 })(window, jQuery);
+
+// Quill editor initialization for all .editor-container elements in the question create page
+$(function () {
+    if (typeof Quill === 'undefined') {
+        console.error('Quill is not loaded. Include quill.js before this script.');
+        return;
+    }
+    // Map for editor instances
+    var quillEditors = window.__quillEditors = {};
+    // Robustly detect resize module and register it (if present)
+    var resizeCandidate = (window.ImageResize && window.ImageResize.default) || window.ImageResize || window.QuillImageResizeModule || window.QuillImageResize || null;
+    try {
+        if (resizeCandidate) {
+            Quill.register('modules/imageResize', resizeCandidate);
+            console.log('imageResize registered');
+        } else {
+            console.log('imageResize not found; CSS fallback will apply.');
+        }
+    } catch (e) {
+        console.warn('imageResize registration failed:', e);
+        resizeCandidate = null;
+    }
+    // Find the toolbar template (first .toolbar1)
+    var $template = $('.toolbar1').first();
+    var $template2 = $('.toolbar2').first();
+    if (!$template.length) {
+        console.error('No .toolbar1 toolbar template found — please add one.');
+        return;
+    }
+    // Remove template from DOM (we'll clone it and insert before each editor)
+    $template.detach();
+    $template2.detach();
+    // Initialize each editor with its own toolbar clone placed immediately above it
+    $('.editor-container').each(function () {
+        var $editor = $(this);
+        var editorId = $editor.attr('id');
+        if (!editorId) {
+            console.warn('editor container missing id — skipping', $editor);
+            return;
+        }
+        debugger;
+        // clone template and give unique id
+        var toolbarId = 'toolbar-for-' + editorId;
+
+        if (toolbarId.indexOf("option") != -1) {
+            var $clone = $template2.clone(true).removeClass('toolbar1').attr('id', toolbarId);
+        }
+        else {
+            var $clone = $template.clone(true).removeClass('toolbar1').attr('id', toolbarId);
+        }
+        
+
+        $clone.insertBefore($editor);
+        // build modules config
+        var modulesConfig = { toolbar: '#' + toolbarId };
+        if (resizeCandidate) {
+            modulesConfig.imageResize = { modules: ['Resize', 'DisplaySize', 'Toolbar'], preserveRatio: false };
+        }
+        // init Quill for this editor
+        var q = new Quill('#' + editorId, {
+            theme: 'snow',
+            placeholder: 'Compose a ' + $editor.data('name'),
+            modules: modulesConfig
+        });
+        // Attach image upload handler for THIS editor
+        q.getModule('toolbar').addHandler('image', function () {
+            const input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accept', 'image/*');
+            input.click();
+            input.onchange = async () => {
+                const file = input.files[0];
+                if (file) {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    try {
+                        const response = await fetch('/Question/uploads', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await response.json();
+                        // Use THIS editor instance (q)
+                        const range = q.getSelection(true);
+                        q.insertEmbed(range.index, 'image', data.url);
+                        q.setSelection(range.index + 1);
+                    } catch (err) {
+                        console.error('Upload failed:', err);
+                    }
+                }
+            };
+        });
+        quillEditors[editorId] = q;
+    });
+    // OPTIONAL: use CSS fallback so images are resizable if JS module missing
+    if (!resizeCandidate) {
+        $('<style>')
+            .prop('type', 'text/css')
+            .html('.ql-editor img { resize: both; overflow: auto; max-width:100%; height:auto; }')
+            .appendTo('head');
+    }
+    console.log('Initialized editors:', Object.keys(quillEditors));
+});
