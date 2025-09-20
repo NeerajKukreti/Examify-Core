@@ -1,7 +1,7 @@
 ﻿using DataModel;
 using Microsoft.AspNetCore.Mvc;
-using OnlineExam.Helpers;
-using OnlineExam.Services;
+using Examify.Helpers;
+using Examify.Services;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -11,7 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web; 
 
-namespace OnlineExam.Controllers
+namespace Examify.Controllers
 {
     public class InstituteLoginController : Controller
     {

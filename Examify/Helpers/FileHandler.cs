@@ -2,12 +2,12 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using OnlineExam.Common;
+using Examify.Common;
 using System.IO;
 using System.Runtime;
 using System.Threading.Tasks;
 
-namespace OnlineExam.Helpers
+namespace Examify.Helpers
 {
     public interface IFileService
     {

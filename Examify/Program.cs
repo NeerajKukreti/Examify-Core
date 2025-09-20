@@ -1,14 +1,14 @@
 using Examify.Services;
-using OnlineExam.Common;
-using OnlineExam.Helpers;
-using OnlineExam.Services;
+using Examify.Common;
+using Examify.Helpers;
+using Examify.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.Configure<AppSettings>(
     builder.Configuration.GetSection("AppSettings"));
-builder.Services.Configure<OnlineExam.Common.ApiSettings>(
+builder.Services.Configure<Examify.Common.ApiSettings>(
     builder.Configuration.GetSection("ApiSettings"));
 
 builder.Services.AddHttpContextAccessor();

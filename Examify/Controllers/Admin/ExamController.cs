@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using DataModel;
-using OnlineExam.Common;
-using OnlineExam.Helpers;
-using OnlineExam.Services;
+using Examify.Common;
+using Examify.Helpers;
+using Examify.Services;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -12,7 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
 
-namespace OnlineExam.Controllers
+namespace Examify.Controllers
 {
     public class ExamController : Controller
     {

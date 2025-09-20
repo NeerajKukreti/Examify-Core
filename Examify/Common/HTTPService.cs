@@ -7,7 +7,7 @@
 //using System.Net.Security;
 //using System.IO;
 
-//namespace OnlineExam.Common
+//namespace Examify.Common
 //{
 //    public class HTTPService1
 //    {

@@ -2,12 +2,12 @@
 using Examify.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using OnlineExam.Common;
-using OnlineExam.Helpers;
-using OnlineExam.Services;
+using Examify.Common;
+using Examify.Helpers;
+using Examify.Services;
 using System.Diagnostics;
 
-namespace OnlineExam.Controllers
+namespace Examify.Controllers
 {
     public class AdminLoginController : Controller
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using DataModel;
-using OnlineExam.Common;
-using OnlineExam.Helpers;
+using Examify.Common;
+using Examify.Helpers;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
@@ -9,7 +9,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OnlineExam.Services
+namespace Examify.Services
 {
     public interface IExamService
     {

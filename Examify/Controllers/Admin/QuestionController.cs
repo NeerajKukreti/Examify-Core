@@ -1,16 +1,15 @@
 using DataModel;
 using Examify.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+using Examify.Common.constants; 
 
-namespace OnlineExam.Controllers.Admin
+namespace Examify.Controllers.Admin
 {
     public class QuestionController : Controller
     {
         private readonly IQuestionService _QuestionService;
         private readonly IWebHostEnvironment _env;
- 
+
         public QuestionController(IQuestionService QuestionService, IWebHostEnvironment env)
         {
             _QuestionService = QuestionService;
@@ -47,13 +46,14 @@ namespace OnlineExam.Controllers.Admin
         [HttpPost]
         public async Task<IActionResult> Create(QuestionModel model)
         {
-            if (ModelState.IsValid)
+            // if (ModelState.IsValid)
+            if (true)
             {
                 var success = await _QuestionService.CreateAsync(model);
                 if (success)
                     return RedirectToAction("Index");
             }
-            return View("Create", model);
+            return Ok();
         }
 
         // GET: Admin/Question/Edit/{id}
@@ -74,6 +74,14 @@ namespace OnlineExam.Controllers.Admin
                 if (success)
                     return RedirectToAction("Index");
             }
+            else
+            {
+                var errors = ModelState
+                    .Where(x => x.Value.Errors.Count > 0)
+                    .Select(x => new { x.Key, x.Value.Errors })
+                    .ToList();
+                // Log or inspect 'errors' to see which fields are failing and why
+            }
             return View("Edit", model);
         }
 
@@ -90,7 +98,7 @@ namespace OnlineExam.Controllers.Admin
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded.");
 
-            var uploadsPath = Path.Combine(_env.WebRootPath, "uploads");
+            var uploadsPath = Path.Combine(_env.WebRootPath, "QuesionUploads");
             if (!Directory.Exists(uploadsPath))
                 Directory.CreateDirectory(uploadsPath);
 
@@ -103,7 +111,7 @@ namespace OnlineExam.Controllers.Admin
             }
 
             // Return the public URL
-            var fileUrl = $"/uploads/{fileName}";
+            var fileUrl = $"/{Question.QuestionUploads}/{fileName}";
             return Ok(new { url = fileUrl });
         }
 

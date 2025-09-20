@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
-using OnlineExam.Common;
+using Examify.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Net;
 using System.Text;
 using System.Web; 
 
-namespace OnlineExam.Services
+namespace Examify.Services
 {
 
     public class DashboardService

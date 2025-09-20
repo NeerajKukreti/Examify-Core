@@ -1,9 +1,9 @@
 ﻿ using DataModel;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using OnlineExam.Common;
+using Examify.Common;
 
-namespace OnlineExam.Services
+namespace Examify.Services
 {
     public interface IAdminLoginService
     {

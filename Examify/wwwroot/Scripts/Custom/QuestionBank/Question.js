@@ -1,5 +1,5 @@
-﻿let API_BASE_URL_QUESTION = 'https://localhost:7271/api/Question'; // fallback
-let API_BASE_URL_SUBJECT = 'https://localhost:7271/api/Subject'; // fallback
+﻿var API_BASE_URL_QUESTION = 'https://localhost:7271/api/Question'; // fallback
+var API_BASE_URL_SUBJECT = 'https://localhost:7271/api/Subject'; // fallback
 
 $(document).ready(function () {
 
@@ -159,8 +159,6 @@ function loadTopics(subjectId) {
 
     function initQuillFor(editorId, displayName) {
 
-        debugger
-
         if (typeof Quill === 'undefined') return;
         var $editor = $('#' + editorId);
         if (!$editor.length) return;
@@ -312,7 +310,7 @@ $(function () {
             console.warn('editor container missing id — skipping', $editor);
             return;
         }
-        debugger;
+        
         // clone template and give unique id
         var toolbarId = 'toolbar-for-' + editorId;
 

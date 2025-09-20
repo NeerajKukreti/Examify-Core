@@ -46,13 +46,36 @@ namespace DAL.Repository
         public async Task<int> CreateQuestionAsync(QuestionModel model)
         {
             using var connection = Connection;
-            return await connection.ExecuteScalarAsync<int>("_sp_CreateQuestion", new {
-                model.QuestionEnglish,
-                model.QuestionHindi,
-                model.TopicId,
-                //model.TopicName,
-                model.IsMultiSelect
-            }, commandType: CommandType.StoredProcedure);
+
+            // Prepare table-valued parameter for choices (Options)
+            var dtChoices = new DataTable();
+            dtChoices.Columns.Add("Text1", typeof(string)); // English text
+            dtChoices.Columns.Add("Text2", typeof(string)); // Hindi text (not available currently -> null)
+            dtChoices.Columns.Add("Flag", typeof(bool));    // IsCorrect
+
+            if (model.Options != null)
+            {
+                foreach (var opt in model.Options)
+                {
+                    // Assuming only one language (Text) is provided; Hindi left null
+                    dtChoices.Rows.Add(opt?.Text ?? string.Empty, DBNull.Value, opt?.IsCorrect ?? false);
+                }
+            }
+
+            var p = new DynamicParameters();
+            p.Add("@TopicId", model.TopicId, DbType.Int32);
+            p.Add("@QuestionEnglish", model.QuestionEnglish, DbType.String);
+            p.Add("@QuestionHindi", string.IsNullOrWhiteSpace(model.QuestionHindi) ? null : model.QuestionHindi, DbType.String);
+            p.Add("@AdditionalTextEnglish", string.IsNullOrWhiteSpace(model.AdditionalTextEnglish) ? null : model.AdditionalTextEnglish, DbType.String);
+            p.Add("@AdditionalTextHindi", string.IsNullOrWhiteSpace(model.AdditionalTextHindi) ? null : model.AdditionalTextHindi, DbType.String);
+            p.Add("@Explanation", string.IsNullOrWhiteSpace(model.Explanation) ? null : model.Explanation, DbType.String);
+            p.Add("@QuestionTypeId", model.QuestionTypeId, DbType.Int32);
+            // Stored procedure expects NVARCHAR(100) CreatedBy, model has int? so convert
+            p.Add("@CreatedBy", model.CreatedBy, DbType.Int32);
+            p.Add("@IsMultiSelect", model.IsMultiSelect, DbType.Boolean);
+            p.Add("@Choices", dtChoices.AsTableValuedParameter("dbo.CommonTextFlagType"));
+
+            return await connection.ExecuteScalarAsync<int>("_sp_CreateQuestion", p, commandType: CommandType.StoredProcedure);
         }
 
         public async Task<int> UpdateQuestionAsync(QuestionModel model)

@@ -1,4 +1,4 @@
-namespace OnlineExam.Common
+namespace Examify.Common
 {
     public class ApiSettings
     {

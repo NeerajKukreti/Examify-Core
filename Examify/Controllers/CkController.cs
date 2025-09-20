@@ -1,14 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using OnlineExam.Common;
-using OnlineExam.Helpers;
+using Examify.Common;
+using Examify.Helpers;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Web; 
 
-namespace OnlineExam.Controllers
+namespace Examify.Controllers
 {
     public class CkController : Controller
     {

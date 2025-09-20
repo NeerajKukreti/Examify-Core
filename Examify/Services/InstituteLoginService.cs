@@ -1,6 +1,6 @@
 ﻿using DataModel;
 using Microsoft.Extensions.Options;
-using OnlineExam.Common;
+using Examify.Common;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OnlineExam.Services
+namespace Examify.Services
 {
     public interface IInstituteLoginService
     {

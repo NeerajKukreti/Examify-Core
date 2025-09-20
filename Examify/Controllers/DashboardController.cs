@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using OnlineExam.Services;
+using Examify.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web; 
 
-namespace OnlineExam.Controllers
+namespace Examify.Controllers
 {
     public class DashboardController : Controller
     {

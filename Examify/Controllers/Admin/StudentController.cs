@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Options;
-using OnlineExam.Common;
-using OnlineExam.Helpers;
-using OnlineExam.Services;
+using Examify.Common;
+using Examify.Helpers;
+using Examify.Services;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -14,7 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web; 
 
-namespace OnlineExam.Controllers
+namespace Examify.Controllers
 {
     public class StudentController : Controller
     {

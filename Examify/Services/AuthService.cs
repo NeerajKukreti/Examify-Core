@@ -1,6 +1,6 @@
 using DataModel;
 using Microsoft.Extensions.Options;
-using OnlineExam.Common;
+using Examify.Common;
 using System.Text;
 using System.Text.Json;
 

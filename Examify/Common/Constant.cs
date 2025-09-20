@@ -1,6 +1,6 @@
-namespace OnlineExam.Common
+namespace Examify.Common.constants
 {
-    public static class Constants
+    public static class ENDPOINTS
     {
         // Base API URL and client name
         public const string BaseUrl = "https://localhost:7271/api/";
@@ -18,10 +18,15 @@ namespace OnlineExam.Common
         // Question endpoints
         public const string QuestionList = "question/list";
         public const string QuestionById = "question/GetQuestionById";
-        public const string QuestionCreate = "question/create";
+        public const string QuestionCreate = "question";
         public const string QuestionUpdate = "question/update";
         public const string QuestionDelete = "question/delete/{0}";
 
         // Add other endpoints as needed
+    }
+
+    public static class Question
+    {
+        public const string QuestionUploads = "QuesionUploads"; 
     }
 }

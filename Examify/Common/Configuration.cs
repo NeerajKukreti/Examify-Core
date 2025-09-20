@@ -1,6 +1,6 @@
 ﻿using System.Security;
 
-namespace OnlineExam.Common
+namespace Examify.Common
 {
     public class AppSettings
     {
