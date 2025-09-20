@@ -5,9 +5,14 @@ using ExamifyAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+LoggerConfigurator.ConfigureLogger("http://localhost", 12201, "Logs/API-app-.log");
+
+builder.Host.UseSerilog();
 
 // JWT Auth
 builder.Services.AddAuthentication(options =>

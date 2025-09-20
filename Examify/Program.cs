@@ -1,9 +1,14 @@
 using Examify.Services;
 using Examify.Common;
 using Examify.Helpers;
-using Examify.Services;
+using Serilog;
+ 
 
 var builder = WebApplication.CreateBuilder(args);
+
+LoggerConfigurator.ConfigureLogger("http://localhost", 12201, "Logs/MVC-app-.log");
+
+builder.Host.UseSerilog();
 
 // Add services to the container.
 builder.Services.Configure<AppSettings>(

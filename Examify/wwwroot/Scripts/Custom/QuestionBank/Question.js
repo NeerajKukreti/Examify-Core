@@ -63,6 +63,18 @@ function initializeMultiSelectBehavior() {
         });
 } 
 
+function loadSubjects() {
+    var apiUrl = API_BASE_URL_SUBJECT + '/list?instituteId=3';
+    $.get(apiUrl, function (data) {
+        var $ddl = $('#ddlSubject');
+        $ddl.empty().append('<option value="">Select Subject</option>');
+        $.each(data, function (i, subject) {
+            $ddl.append('<option value="' + subject.SubjectId + '">' + subject.SubjectName + '</option>');
+        });
+        $(document).trigger('subjectsLoaded'); // <-- Add this
+    });
+}
+
 function loadQuestionTypes() {
     var apiUrl = API_BASE_URL_QUESTION + '/types';
     $.get(apiUrl, function (data) {
@@ -71,32 +83,25 @@ function loadQuestionTypes() {
         $.each(data, function (i, type) {
             $ddl.append('<option value="' + type.QuestionTypeId + '">' + type.TypeName + '</option>');
         });
+        $(document).trigger('questionTypesLoaded'); // <-- Add this
     });
 }
 
-function loadSubjects() {
-    var apiUrl = API_BASE_URL_SUBJECT + '/list?instituteId=3'; // Change instituteId as needed
-    $.get(apiUrl, function (data) {
-        var $ddl = $('#ddlSubject');
-        $ddl.empty().append('<option value="">Select Subject</option>');
-        $.each(data, function (i, subject) {
-            $ddl.append('<option value="' + subject.SubjectId + '">' + subject.SubjectName + '</option>');
-        });
-    });
-}
-
-function loadTopics(subjectId) {
+// Update loadTopics to accept a callback
+function loadTopics(subjectId, callback) {
     if (!subjectId) {
         $('#ddlTopic').empty().append('<option value="">Select Topic</option>');
+        if (callback) callback();
         return;
     }
-    var apiUrl = API_BASE_URL_SUBJECT + '/topics?instituteId=3&subjectId=' + subjectId; // Change instituteId as needed
+    var apiUrl = API_BASE_URL_SUBJECT + '/topics?instituteId=3&subjectId=' + subjectId;
     $.get(apiUrl, function (data) {
         var $ddl = $('#ddlTopic');
         $ddl.empty().append('<option value="">Select Topic</option>');
         $.each(data, function (i, topic) {
             $ddl.append('<option value="' + topic.TopicId + '">' + topic.Description + '</option>');
         });
+        if (callback) callback();
     });
 }
 
@@ -158,7 +163,7 @@ function loadTopics(subjectId) {
     }
 
     function initQuillFor(editorId, displayName) {
-
+     
         if (typeof Quill === 'undefined') return;
         var $editor = $('#' + editorId);
         if (!$editor.length) return;
@@ -167,7 +172,8 @@ function loadTopics(subjectId) {
         var $toolbarClone = getToolbarTemplateClone();
         if ($toolbarClone) {
             $toolbarClone.attr('id', toolbarId);
-            $toolbarClone.insertBefore($editor);
+            $toolbarClone.css('display', ''); // Remove display: none
+            $toolbarClone.insertBefore($editor); 
         } else {
             console.error('No toolbar template found for dynamic option editor');
         }
@@ -221,6 +227,8 @@ function loadTopics(subjectId) {
             '  <div class="row">',
             '    <div class="col-md-10">',
             '      <div class="editor-container" style="height: 50px !important" id="' + editorId + '" data-name="Option ' + idx + '"></div>',
+            '       <input type = "hidden" class= "option-hidden-field" data-option-index="'+idx+'" />',
+            '       <span class="text-danger option-error" id="valOption' + idx + '"></span>',
             '    </div>',
             '    <div class="col-md-2 option-controls">',
             '      <div class="option-checkbox checkbox">',
@@ -228,7 +236,7 @@ function loadTopics(subjectId) {
             '          <input type="checkbox" /> Is Correct',
             '        </label>',
             '      </div>',
-            '      <div class="option-remove-btn" style="margin-top: 8px;    margin-left: -12px;">',
+            '      <div class="option-remove-btn" style="">',
             '        <button type="button" class="btn btn-danger btn-xs btn-remove-option" title="Remove Option">',
             '          <i class="glyphicon glyphicon-trash"></i> Remove',
             '        </button>',
@@ -300,8 +308,8 @@ $(function () {
         return;
     }
     // Remove template from DOM (we'll clone it and insert before each editor)
-    $template.detach();
-    $template2.detach();
+    //$template.detach();
+    //$template2.detach();
     // Initialize each editor with its own toolbar clone placed immediately above it
     $('.editor-container').each(function () {
         var $editor = $(this);
@@ -321,7 +329,7 @@ $(function () {
             var $clone = $template.clone(true).removeClass('toolbar1').attr('id', toolbarId);
         }
         
-
+        $clone.css('display', ''); // Remove display: none
         $clone.insertBefore($editor);
         // build modules config
         var modulesConfig = { toolbar: '#' + toolbarId };
@@ -371,4 +379,124 @@ $(function () {
             .appendTo('head');
     }
     console.log('Initialized editors:', Object.keys(quillEditors));
+});
+
+$(function () {
+
+    // Remove previous errors
+    function clearErrors() {
+        $('.error-message').remove();
+        $('.error').removeClass('error');
+    }
+
+    // AJAX submit for question create form
+    $(document).off('submit.ajaxCreate', '#questionForm').on('submit.ajaxCreate', '#questionForm', function (e) {
+        e.preventDefault(); // Prevent normal form submit
+        clearErrors();
+        let valid = true;
+
+        // Subject
+        if (!$('#ddlSubject').val()) {
+            showError('#ddlSubject', 'Subject is required');
+            valid = false;
+        }
+        // Question Type
+        if (!$('#ddlQuestionType').val()) {
+            showError('#ddlQuestionType', 'Question type is required');
+            valid = false;
+        }
+        // Topic
+        if (!$('#ddlTopic').val()) {
+            showError('#ddlTopic', 'Topic is required');
+            valid = false;
+        }
+        // Question English (Quill)
+        let qEng = window.__quillEditors && window.__quillEditors['editor-question-english'];
+        let qEngText = qEng ? $(qEng.root).text().trim() : '';
+        if (!qEngText) {
+            showError('#valQuestionEnglish', 'Question English is required');
+            valid = false;
+        }
+        // Sync Quill HTML to hidden field
+        if (qEng) $('#hfQuestionEnglish').val(qEng.root.innerHTML);
+        // Question Hindi
+        let qHindi = window.__quillEditors && window.__quillEditors['editor-question-hindi'];
+        if (qHindi) $('#hfQuestionHindi').val(qHindi.root.innerHTML);
+        // Additional Text English
+        let qAddEng = window.__quillEditors && window.__quillEditors['editor-additional-english'];
+        if (qAddEng) $('#hfAdditionalEnglish').val(qAddEng.root.innerHTML);
+        // Additional Text Hindi
+        let qAddHindi = window.__quillEditors && window.__quillEditors['editor-additional-hindi'];
+        if (qAddHindi) $('#hfAdditionalHindi').val(qAddHindi.root.innerHTML);
+
+        // Options (static and dynamic)
+        let correctChecked = false;
+        $('#options-wrapper .option-group').each(function (i) {
+            var $group = $(this);
+            var $editor = $group.find('.editor-container');
+            var editorId = $editor.attr('id');
+            var qOpt = window.__quillEditors && window.__quillEditors[editorId];
+            var $hidden = $group.find('.option-hidden-field');
+            if (qOpt && $hidden.length) {
+                $hidden.val(qOpt.root.innerHTML);
+                $hidden.attr('name', 'Options[' + i + '].Text');
+            }
+            // Sync IsCorrect
+            var isCorrect = $group.find('input[type="checkbox"]').is(':checked');
+            if (isCorrect) correctChecked = true;
+            var $correctHidden = $group.find('.option-correct-hidden');
+            if ($correctHidden.length === 0) {
+                $correctHidden = $('<input type="hidden" class="option-correct-hidden" />').appendTo($group);
+            }
+            $correctHidden.val(isCorrect ? 'true' : 'false');
+            $correctHidden.attr('name', 'Options[' + i + '].IsCorrect');
+        });
+        // Ensure all option hidden fields have correct names
+        $('#options-wrapper .option-group').each(function (i) {
+           
+            var $group = $(this);
+            var $hidden = $group.find('.option-hidden-field');
+            if ($hidden.length) {
+                $hidden.attr('name', 'Options[' + i + '].Text');
+            }
+            var $correctHidden = $group.find('.option-correct-hidden');
+            if ($correctHidden.length) {
+                $correctHidden.attr('name', 'Options[' + i + '].IsCorrect');
+            }
+        });
+        // At least one correct option
+        if (!correctChecked) {
+            $('#optionsValidation').html('<span class="error-message" style="color:brown;">At least one option must be marked as correct</span>');
+            valid = false;
+        } else {
+            $('#optionsValidation').empty();
+        }
+        if (!valid) return;
+
+        // AJAX submit
+        var $form = $(this);
+        var formData = $form.serialize();
+        $.ajax({
+            url: $form.attr('action'),
+            type: 'POST',
+            data: formData,
+            success: function (response) {
+                debugger;
+                toastr.success('Question saved', 'Alert')
+
+                if (response && response.success) {
+                    // Close modal and refresh question list (customize as needed)
+                    $('#questionModel').modal('hide');
+                    if (typeof reloadQuestionTable === 'function') reloadQuestionTable();
+                } else {
+                    // Show error (customize as needed)
+                    alert('Failed to create question.');
+                }
+            },
+            error: function () {
+                toastr.error('An error occured while saving the question', 'Alert')
+            }
+        });
+    });
+
 });

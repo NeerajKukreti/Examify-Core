@@ -44,6 +44,7 @@
     <!--end::Third Party Plugin(Bootstrap Icons)-->
     <!--begin::Required Plugin(AdminLTE)-->
     <link href="@Url.Content("~/theme/css/adminlte.min.css")" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <!--end::Required Plugin(AdminLTE)-->
     <!-- apexcharts -->
     <link rel="stylesheet"
@@ -81,7 +82,7 @@
             <!--begin::Copyright-->
             <strong>
                 Copyright &copy; 2014-2025&nbsp;
-                <a href="https://adminlte.io" class="text-decoration-none">AdminLTE.io</a>.
+                <a href="#" class="text-decoration-none">ExamVaults</a>.
             </strong>
             All rights reserved.
             <!--end::Copyright-->
@@ -96,6 +97,8 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
     @RenderSection("Scripts", required: false)
+
+    <script src="@Url.Content("~/theme/plugins/font-awesome 7.0.1/js/fontawesome.js")"></script> 
 
     <!--begin::Third Party Plugin(OverlayScrollbars)-->
     <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.11.0/browser/overlayscrollbars.browser.es6.min.js"

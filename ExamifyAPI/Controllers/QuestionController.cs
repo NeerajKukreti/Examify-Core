@@ -24,10 +24,10 @@ namespace ExamifyAPI.Controllers
             return Ok(questions);
         }
 
-        [HttpGet("GetQuestionById/{id}")]
+        [HttpGet("GetQuestion/{id}")]
         public async Task<ActionResult<QuestionModel>> Get(int id)
         {
-            var question = await _questionService.GetQuestionByIdAsync(id);
+            var question = await _questionService.GetQuestionAsync(id);
             if (question == null) return NotFound();
             return Ok(question);
         }

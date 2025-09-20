@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExamifyApi", "ExamifyAPI\Ex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DAL", "DAL\DAL.csproj", "{31386B27-08B6-481C-9F68-FF8DA5D091D8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examify.Logs", "Examify.Logs\Examify.Logs.csproj", "{F99C5975-8C23-4031-9596-16A008844013}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{31386B27-08B6-481C-9F68-FF8DA5D091D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{31386B27-08B6-481C-9F68-FF8DA5D091D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{31386B27-08B6-481C-9F68-FF8DA5D091D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F99C5975-8C23-4031-9596-16A008844013}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F99C5975-8C23-4031-9596-16A008844013}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F99C5975-8C23-4031-9596-16A008844013}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F99C5975-8C23-4031-9596-16A008844013}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

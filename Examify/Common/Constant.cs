@@ -17,7 +17,7 @@ namespace Examify.Common.constants
 
         // Question endpoints
         public const string QuestionList = "question/list";
-        public const string QuestionById = "question/GetQuestionById";
+        public const string QuestionById = "question/GetQuestion";
         public const string QuestionCreate = "question";
         public const string QuestionUpdate = "question/update";
         public const string QuestionDelete = "question/delete/{0}";

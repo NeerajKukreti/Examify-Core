@@ -1,7 +1,7 @@
 using DataModel;
 using Examify.Services;
 using Microsoft.AspNetCore.Mvc;
-using Examify.Common.constants; 
+using Examify.Common.constants;
 
 namespace Examify.Controllers.Admin
 {
@@ -39,29 +39,34 @@ namespace Examify.Controllers.Admin
         // GET: Admin/Question/Create
         public IActionResult Create()
         {
-            return PartialView("_Create");
+            return PartialView("_Create", new QuestionModel());
         }
 
         // POST: Admin/Question/Create
         [HttpPost]
         public async Task<IActionResult> Create(QuestionModel model)
         {
-            // if (ModelState.IsValid)
-            if (true)
+            if (ModelState.IsValid)
             {
                 var success = await _QuestionService.CreateAsync(model);
                 if (success)
-                    return RedirectToAction("Index");
+                    return Json(new { success = true }); // AJAX expects JSON
             }
-            return Ok();
+            // Optionally, return validation errors
+            var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
+                .Select(x => new { x.Key, x.Value.Errors })
+                .ToList();
+            return Json(new { success = false, errors });
         }
 
         // GET: Admin/Question/Edit/{id}
         public async Task<IActionResult> Edit(int id)
         {
-            var question = new QuestionModel();//await _QuestionService.GetByIdAsync(id);
+            var question = await _QuestionService.GetByIdAsync(id);
+
             if (question == null) return NotFound();
-            return View("Edit", question);
+
+            return PartialView("_Create", question);
         }
 
         // POST: Admin/Question/Edit/{id}

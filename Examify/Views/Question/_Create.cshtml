@@ -1,4 +1,5 @@
 ﻿@model DataModel.QuestionModel
+@using System.Text.Json
 @{
     ViewBag.Title = "Create/Edit Question";
     Layout = null;
@@ -9,7 +10,7 @@
         color: brown !important;
     }
 
-     
+
     .no-gutter {
         margin-right: 0;
         margin-left: 0;
@@ -225,14 +226,14 @@
             margin: 0;
             padding: 8px 0px;
             /* background: #f8f9fa;
-                                                    border: 1px solid #e9ecef;
-                                                    border-radius: 4px; */
+                                                                border: 1px solid #e9ecef;
+                                                                border-radius: 4px; */
             transition: all 0.2s;
         }
 
             .multi-select-container .checkbox:hover {
                 /* background: #e9ecef;
-                                                        border-color: #007bff; */
+                                                                    border-color: #007bff; */
             }
 
     /* Option controls alignment */
@@ -247,10 +248,10 @@
 
     .option-checkbox {
         margin: 0;
-        padding: 5px 8px;
+        /* padding: 5px 8px; */
         /*  background: #fff;
-                                                border: 1px solid #dee2e6;
-                                                border-radius: 4px; */
+                                                            border: 1px solid #dee2e6;
+                                                            border-radius: 4px; */
         min-width: 120px;
     }
 
@@ -259,9 +260,10 @@
     }
 </style>
 
+
 <form asp-action="Create" method="post" id="questionForm">
 
-    <div class="toolbar1">
+    <div class="toolbar1" style="display: none">
         <span class="ql-formats">
             <select class="ql-font"></select>
             <select class="ql-size"></select>
@@ -302,7 +304,7 @@
             <button class="ql-formula"></button>
         </span>
     </div>
-    <div class="toolbar2">
+    <div class="toolbar2" style="display: none">
         <span class="ql-formats">
             <select class="ql-font"></select>
             <select class="ql-size"></select>
@@ -330,11 +332,7 @@
         <input type="hidden" name="QuestionEnglish" id="hfQuestionEnglish" />
         <input type="hidden" name="QuestionHindi" id="hfQuestionHindi" />
         <input type="hidden" name="AdditionalTextEnglish" id="hfAdditionalEnglish" />
-        <input type="hidden" name="AdditionalTextHindi" id="hfAdditionalHindi" />@* 
-        <input type="hidden" name="Options[0].Text" id="hfOption1" class="option-hidden-field" data-option-index="1" />
-        <input type="hidden" name="Options[1].Text" id="hfOption2" class="option-hidden-field" data-option-index="2" />
-        <input type="hidden" name="Options[2].Text" id="hfOption3" class="option-hidden-field" data-option-index="3" />
-        <input type="hidden" name="Options[3].Text" id="hfOption4" class="option-hidden-field" data-option-index="4" /> *@
+        <input type="hidden" name="AdditionalTextHindi" id="hfAdditionalHindi" />
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="form-section">
             <div class="section-title">
@@ -435,14 +433,14 @@
                 Explanation
             </div>
             <div class="form-group textarea-container">
-                <textarea asp-for="Explanation" class="form-control" placeholder="Provide detailed explanation for the answer..."></textarea>
+                <textarea asp-for="Explanation" class="form-control" placeholder="Question explanation..."></textarea>
             </div>
         </div>
 
         <!-- Options Section -->
         <div class="options-section" id="options-section">
             <div class="form-group">
-                <button type="button" id="btnAddOption" class="btn blue btn-outline">
+                <button type="button" id="btnAddOption" class="btn btn-outline-primary mb-3">
                     <i class="glyphicon glyphicon-plus"></i> Add More Option
                 </button>
                 <span class="text-danger" id="optionsValidation"></span>
@@ -455,6 +453,7 @@
                         <div class="col-md-10">
                             <div class="editor-container" style="height: 50px !important" id="editor-option1" data-name="Option 1"></div>
                             <input type="hidden" class="option-hidden-field" data-option-index="1" />
+                            <input type="hidden" class="option-choiceid-field" data-option-index="1" />
                             <span class="text-danger option-error" id="valOption1"></span>
                         </div>
                         <div class="col-md-2 option-controls">
@@ -473,6 +472,7 @@
                         <div class="col-md-10">
                             <div class="editor-container" style="height: 50px !important" id="editor-option2" data-name="Option 2"></div>
                             <input type="hidden" class="option-hidden-field" data-option-index="2" />
+                            <input type="hidden" class="option-choiceid-field" data-option-index="2" />
                             <span class="text-danger option-error" id="valOption2"></span>
                         </div>
                         <div class="col-md-2 option-controls">
@@ -491,6 +491,7 @@
                         <div class="col-md-10">
                             <div class="editor-container" style="height: 50px !important" id="editor-option3" data-name="Option 3"></div>
                             <input type="hidden" class="option-hidden-field" data-option-index="3" />
+                            <input type="hidden" class="option-choiceid-field" data-option-index="3" />
                             <span class="text-danger option-error" id="valOption3"></span>
                         </div>
                         <div class="col-md-2 option-controls">
@@ -509,6 +510,7 @@
                         <div class="col-md-10">
                             <div class="editor-container" style="height: 50px !important" id="editor-option4" data-name="Option 4"></div>
                             <input type="hidden" class="option-hidden-field" data-option-index="4" />
+                            <input type="hidden" class="option-choiceid-field" data-option-index="4" />
                             <span class="text-danger option-error" id="valOption4"></span>
                         </div>
                         <div class="col-md-2 option-controls">
@@ -527,7 +529,7 @@
                 Cancel
             </button>
             <button class="btn btn-outline-primary mb-2" style="margin-top: 20px; width: 80px;" type="submit">
-                Add
+                @(Model.QuestionId > 0 ? "Update" : "Add")
             </button>
         </div>
 
@@ -536,141 +538,85 @@
 
 </form>
 
-
 <script src="@Url.Content("~/scripts/custom/questionbank/question.js")"></script>
 <script src="@Url.Content("~/theme/plugins/jquery-validation 1.19.5/jquery.validate.js")"></script>
+
 <script>
-$(function () {
-    // Remove previous errors
-    function clearErrors() {
-        $('.error-message').remove();
-        $('.error').removeClass('error');
-    }
+    // Inject model data for edit mode
+    window.modelData = @Html.Raw(JsonSerializer.Serialize(Model));
 
-    // Utility to show error
-    function showError(selector, message) {
-        $(selector).addClass('error');
-        $('<span class="error-message" style="color:brown;">' + message + '</span>').insertAfter($(selector));
-    }
-
-    // Manual validation and data sync on submit
-    $('#questionForm').on('submit', function (e) {
-        clearErrors();
-        let valid = true;
-
-        // Subject
-        if (!$('#ddlSubject').val()) {
-            showError('#ddlSubject', 'Subject is ');
-            valid = false;
-        }
-
-        // Question Type
-        if (!$('#ddlQuestionType').val()) {
-            showError('#ddlQuestionType', 'Question type is ');
-            valid = false;
-        }
-
-        // Topic
-        if (!$('#ddlTopic').val()) {
-            showError('#ddlTopic', 'Topic is ');
-            valid = false;
-        }
-
-        // Question English (Quill)
-        let qEng = window.__quillEditors && window.__quillEditors['editor-question-english'];
-        let qEngText = qEng ? $(qEng.root).text().trim() : '';
-        if (!qEngText) {
-            showError('#valQuestionEnglish', 'Question English is ');
-            valid = false;
-        }
-        // Sync Quill HTML to hidden field
-        if (qEng) $('#hfQuestionEnglish').val(qEng.root.innerHTML);
-
-        // Question Hindi
-        let qHindi = window.__quillEditors && window.__quillEditors['editor-question-hindi'];
-        if (qHindi) $('#hfQuestionHindi').val(qHindi.root.innerHTML);
-
-        // Additional Text English
-        let qAddEng = window.__quillEditors && window.__quillEditors['editor-additional-english'];
-        if (qAddEng) $('#hfAdditionalEnglish').val(qAddEng.root.innerHTML);
-
-        // Additional Text Hindi
-        let qAddHindi = window.__quillEditors && window.__quillEditors['editor-additional-hindi'];
-        if (qAddHindi) $('#hfAdditionalHindi').val(qAddHindi.root.innerHTML);
-
-        // Options (static and dynamic)
-        let correctChecked = false;
-        $('#options-wrapper .option-group').each(function (i) {
-            var $group = $(this);
-            var $editor = $group.find('.editor-container');
-            var editorId = $editor.attr('id');
-            var qOpt = window.__quillEditors && window.__quillEditors[editorId];
-            var $hidden = $group.find('.option-hidden-field');
-            if (qOpt && $hidden.length) {
-                $hidden.val(qOpt.root.innerHTML);
-                $hidden.attr('name', 'Options[' + i + '].Text');
+    $(function () {
+        // Refill Quill editors if model data exists
+        if (window.modelData) {
+            if (window.__quillEditors && window.__quillEditors['editor-question-english']) {
+                window.__quillEditors['editor-question-english'].root.innerHTML = window.modelData.QuestionEnglish || '';
             }
-            // Sync IsCorrect
-            var isCorrect = $group.find('input[type="checkbox"]').is(':checked');
-            if (isCorrect) correctChecked = true;
-            var $correctHidden = $group.find('.option-correct-hidden');
-            if ($correctHidden.length === 0) {
-                $correctHidden = $('<input type="hidden" class="option-correct-hidden" />').appendTo($group);
+            if (window.__quillEditors && window.__quillEditors['editor-question-hindi']) {
+                window.__quillEditors['editor-question-hindi'].root.innerHTML = window.modelData.QuestionHindi || '';
             }
-            $correctHidden.val(isCorrect ? 'true' : 'false');
-            $correctHidden.attr('name', 'Options[' + i + '].IsCorrect');
-        });
+            if (window.__quillEditors && window.__quillEditors['editor-additional-english']) {
+                window.__quillEditors['editor-additional-english'].root.innerHTML = window.modelData.AdditionalTextEnglish || '';
+            }
+            if (window.__quillEditors && window.__quillEditors['editor-additional-hindi']) {
+                window.__quillEditors['editor-additional-hindi'].root.innerHTML = window.modelData.AdditionalTextHindi || '';
+            }
 
-        // Ensure all option hidden fields have correct names
-        $('#options-wrapper .option-group').each(function (i) {
-            var $group = $(this);
-            var $hidden = $group.find('.option-hidden-field');
-            if ($hidden.length) {
-                $hidden.attr('name', 'Options[' + i + '].Text');
+            // Add extra option groups if needed
+            if (window.modelData.Options && window.modelData.Options.length > 4) {
+                for (var i = 4; i < window.modelData.Options.length; i++) {
+                    if (window.QuestionOptions && typeof window.QuestionOptions.add === 'function') {
+                        window.QuestionOptions.add();
+                    }
+                }
             }
-            var $correctHidden = $group.find('.option-correct-hidden');
-            if ($correctHidden.length) {
-                $correctHidden.attr('name', 'Options[' + i + '].IsCorrect');
+
+            // Refill options
+            if (window.modelData.Options && window.modelData.Options.length > 0) {
+                $('#options-wrapper .option-group').each(function (i) {
+                    var opt = window.modelData.Options[i];
+                    if (opt) {
+                        var editorId = $(this).find('.editor-container').attr('id');
+                        if (window.__quillEditors && window.__quillEditors[editorId]) {
+                            window.__quillEditors[editorId].root.innerHTML = opt.Text || '';
+                        }
+                        $(this).find('.option-hidden-field').val(opt.Text || '');
+                        $(this).find('input[type="checkbox"]').prop('checked', !!opt.IsCorrect);
+
+                        // Set ChoiceId hidden field
+                        var $choiceId = $(this).find('.option-choiceid-field');
+                        if ($choiceId.length === 0) {
+                            $choiceId = $('<input type="hidden" class="option-choiceid-field" />').appendTo($(this));
+                        }
+                        $choiceId.val(opt.ChoiceId || '');
+                        $choiceId.attr('name', 'Options[' + i + '].ChoiceId');
+                    }
+                });
+            }
+
+            // Set dropdowns and other controls
+            $('#ddlSubject').val(window.modelData.SubjectId);
+            $('#ddlQuestionType').val(window.modelData.QuestionTypeId);
+            $('#ddlTopic').val(window.modelData.TopicId);
+            $('#IsMultiSelect').prop('checked', !!window.modelData.IsMultiSelect);
+            $('textarea[asp-for="Explanation"]').val(window.modelData.Explanation || '');
+        }
+
+        $(document).on('subjectsLoaded', function () {
+
+            $('#ddlSubject').val(window.modelData.SubjectId);
+            // Trigger topic load if editing
+            if (window.modelData.SubjectId) {
+                loadTopics(window.modelData.SubjectId, function () {
+                    $('#ddlTopic').val(window.modelData.TopicId);
+                });
             }
         });
+        $(document).on('questionTypesLoaded', function () {
 
-        // At least one correct option
-        if (!correctChecked) {
-            $('#optionsValidation').html('<span class="error-message" style="color:brown;">At least one option must be marked as correct</span>');
-            valid = false;
-        } else {
-            $('#optionsValidation').empty();
-        }
-
-        if (!valid) e.preventDefault();
+            $('#ddlQuestionType').val(window.modelData.QuestionTypeId);
+        });
     });
-});
 </script>
 
-<script id="optionsTemplate" type="text/template">
-    var html = [
-        '<div class="form-group option-group" data-option-index="' + idx + '">',
-        '  <div class="option-label">Option ' + idx + '</div>',
-        '  <div class="row">',
-        '    <div class="col-md-10">',
-        '      <div class="editor-container" style="height: 50px !important" id="' + editorId + '" data-name="Option ' + idx + '"></div>',
-        '      <input type="hidden" class="option-hidden-field" />',
-        '      <input type="hidden" class="option-correct-hidden" />',
-        '    </div>',
-        '    <div class="col-md-2 option-controls">',
-        '      <div class="option-checkbox checkbox">',
-        '        <label>',
-        '          <input type="checkbox" /> Is Correct',
-        '        </label>',
-        '      </div>',
-        '      <div class="option-remove-btn" style="margin-top: 8px;    margin-left: -12px;">',
-        '        <button type="button" class="btn btn-danger btn-xs btn-remove-option" title="Remove Option">',
-        '          <i class="glyphicon glyphicon-trash"></i> Remove',
-        '        </button>',
-        '      </div>',
-        '    </div>',
-        '  </div>',
-        '</div>'
-    ].join('');
-</script>
+
 
