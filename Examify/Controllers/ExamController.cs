@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Examify.Common;
 using System.Text.Json;
 using DataModel;
+using Examify.Common.constants;
 
 public class ExamController : Controller
 {
@@ -24,8 +25,8 @@ public class ExamController : Controller
 
     public async Task<IActionResult> Details(int id)
     {
-        var client = _httpClientFactory.CreateClient(_apiSettings.ClientName);
-        var response = await client.GetAsync($"{_apiSettings.Endpoints.ExamById}/{id}");
+        var client = _httpClientFactory.CreateClient(ENDPOINTS.ClientName);
+        var response = await client.GetAsync($"{ENDPOINTS.ExamById}/{id}");
         
         if (response.IsSuccessStatusCode)
         {
@@ -33,16 +34,16 @@ public class ExamController : Controller
             var exam = JsonSerializer.Deserialize<ExamModel>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             ViewBag.ExamId = id;
             ViewBag.UserId = JwtHelper.GetUserIdFromSession(_httpContextAccessor);
-            ViewBag.ApiBaseUrl = _apiSettings.BaseUrl + "Exam";
-            ViewBag.StartExamUrl = _apiSettings.StartExamUrl;
-            ViewBag.ExamResultUrl = _apiSettings.ExamResultUrl;
+            ViewBag.ApiBaseUrl = ENDPOINTS.BaseUrl + "Exam";
+            ViewBag.StartExamUrl = ENDPOINTS.StartExamUrl;
+            ViewBag.ExamResultUrl = ENDPOINTS.ExamResultUrl;
             return View(exam);
         }
         ViewBag.ExamId = id;
         ViewBag.UserId = JwtHelper.GetUserIdFromSession(_httpContextAccessor);
-        ViewBag.ApiBaseUrl = _apiSettings.BaseUrl + "Exam";
-        ViewBag.StartExamUrl = _apiSettings.StartExamUrl;
-        ViewBag.ExamResultUrl = _apiSettings.ExamResultUrl;
+        ViewBag.ApiBaseUrl = ENDPOINTS.BaseUrl + "Exam";
+        ViewBag.StartExamUrl = ENDPOINTS.StartExamUrl;
+        ViewBag.ExamResultUrl = ENDPOINTS.ExamResultUrl;
 
         return NotFound();
     }
@@ -51,9 +52,9 @@ public class ExamController : Controller
     {
         ViewBag.ExamId = examId;
         ViewBag.UserId = JwtHelper.GetUserIdFromSession(_httpContextAccessor);
-        ViewBag.ApiBaseUrl = _apiSettings.BaseUrl + "Exam";
-        ViewBag.StartExamUrl = _apiSettings.StartExamUrl;
-        ViewBag.ExamResultUrl = _apiSettings.ExamResultUrl;
+        ViewBag.ApiBaseUrl = ENDPOINTS.BaseUrl + "Exam";
+        ViewBag.StartExamUrl = ENDPOINTS.StartExamUrl;
+        ViewBag.ExamResultUrl = ENDPOINTS.ExamResultUrl;
         return View();
     }
     

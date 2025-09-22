@@ -211,12 +211,14 @@ function showQuestion(globalIndex = 0) {
             // Render checkboxes
             question.SessionChoices.forEach((choice, index) => {
                 const choiceId = choice.SessionChoiceId || choice.ChoiceId;
-                const checked = Array.isArray(response.SessionChoiceId) && response.SessionChoiceId.includes(choiceId) ? 'checked' : '';
+                const checked = Array.isArray(response.SessionChoiceIds) && response.SessionChoiceIds.includes(choiceId) ? 'checked' : '';
                 const selectedClass = checked ? 'selected' : '';
                 $form.append(`
                     <div class="option-item ${selectedClass}" data-choice-id="${choiceId}">
-                        <input type="checkbox" name="q_multi" value="${choiceId}" id="opt${index}" ${checked}>
-                        <label for="opt${index}">${choice.ChoiceTextEnglish || choice.ChoiceText || `Choice ${index + 1}`}</label>
+                        <label for="opt${index}">
+                            <input type="checkbox" name="q_multi" value="${choiceId}" id="opt${index}" ${checked}>
+                            ${choice.ChoiceTextEnglish || choice.ChoiceText || `Choice ${index + 1}`}
+                        </label>
                     </div>
                 `);
             });
@@ -231,7 +233,7 @@ function showQuestion(globalIndex = 0) {
             // Render radio buttons (single select)
             question.SessionChoices.forEach((choice, index) => {
                 const choiceId = choice.SessionChoiceId || choice.ChoiceId;
-                const checked = response.SessionChoiceId === choiceId ? 'checked' : '';
+                const checked = response.SessionChoiceId == choiceId ? 'checked' : '';
                 const selectedClass = checked ? 'selected' : '';
                 $form.append(`
                     <div class="option-item ${selectedClass}" data-choice-id="${choiceId}">
@@ -269,25 +271,7 @@ function showQuestion(globalIndex = 0) {
             $list.append(`<li class="list-group-item ordering-item" draggable="true" data-order-id="${order.SessionOrderId}" data-correct-order="${order.CorrectOrder}">${order.ItemText}</li>`);
         });
         // Enable drag-and-drop using HTML5
-        $list.children().each(function(i, el) {
-            el.addEventListener('dragstart', function(e) {
-                e.dataTransfer.setData('text/plain', i);
-            });
-            el.addEventListener('dragover', function(e) {
-                e.preventDefault();
-            });
-            el.addEventListener('drop', function(e) {
-                e.preventDefault();
-                const fromIdx = e.dataTransfer.getData('text/plain');
-                const toIdx = i;
-                const items = $list.children().toArray();
-                const moved = items.splice(fromIdx, 1)[0];
-                items.splice(toIdx, 0, moved);
-                $list.empty().append(items);
-                // Save the new order immediately using CorrectOrder
-                response.OrderedItems = items.map(item => $(item).data('correct-order'));
-            });
-        });
+        setupOrderingDragAndDrop($list, response);
     }
     else if (uiType === 'pairing' && question.SessionPairs && question.SessionPairs.length > 0) {
         $('#pairingContainer').show();
@@ -335,6 +319,7 @@ function showQuestion(globalIndex = 0) {
 }
 
 function saveCurrentResponse() {
+    debugger;
     const question = allQuestions[currentQuestionIndex];
     const response = examResponses[question.SessionQuestionId];
     const uiType = getQuestionUiType(question);
@@ -347,12 +332,16 @@ function saveCurrentResponse() {
                 response.SessionChoiceIds.push(parseInt($(this).val()));
             });
             answered = response.SessionChoiceIds.length > 0;
+            // For multi-select, clear single value
+            response.SessionChoiceId = null;
         } else {
-            // Single select: store as array with one value
             const selectedChoice = $('#optionsForm input[name="q"]:checked').val();
             if (selectedChoice) {
                 response.SessionChoiceIds = [parseInt(selectedChoice)];
+                response.SessionChoiceId = parseInt(selectedChoice); // <-- Add this line
                 answered = true;
+            } else {
+                response.SessionChoiceId = null;
             }
         }
     }
@@ -744,4 +733,30 @@ function updateDebugPanel() {
     const minutes = Math.floor(questionTimeSpent / 60);
     const seconds = questionTimeSpent % 60;
     $('#questionTime').text(`Time ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+}
+
+// Helper to rebind drag events after DOM update
+function setupOrderingDragAndDrop($list, response) {
+    // Remove any previous delegated handlers
+    $list.off('.orderingDrag');
+
+    $list.on('dragstart.orderingDrag', '.ordering-item', function(e) {
+        e.originalEvent.dataTransfer.setData('text/plain', $(this).index());
+    });
+
+    $list.on('dragover.orderingDrag', '.ordering-item', function(e) {
+        e.preventDefault();
+    });
+
+    $list.on('drop.orderingDrag', '.ordering-item', function(e) {
+        e.preventDefault();
+        const fromIdx = parseInt(e.originalEvent.dataTransfer.getData('text/plain'), 10);
+        const toIdx = $(this).index();
+        const items = $list.children().toArray();
+        const moved = items.splice(fromIdx, 1)[0];
+        items.splice(toIdx, 0, moved);
+        $list.empty().append(items);
+        response.OrderedItems = items.map(item => $(item).data('correct-order'));
+        // No need to rebind, delegation handles new DOM
+    });
 }
