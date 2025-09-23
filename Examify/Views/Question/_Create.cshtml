@@ -630,10 +630,23 @@
         if (!window.modelData || !window.modelData.QuestionId || window.modelData.QuestionId === 0) {
             // Wait for the question types to be loaded before setting default
             $(document).on('questionTypesLoaded', function() {
-                if (MCQ_TYPE_ID) {
-                    setTimeout(function() {
-                        $('#ddlQuestionType').val(MCQ_TYPE_ID).trigger('change');
-                    }, 100);
+                if (AllQuestionTypes && AllQuestionTypes.length > 0) {
+                    // Find MCQ type from AllQuestionTypes
+                    const mcqType = AllQuestionTypes.find(type => 
+                        type.TypeName.toLowerCase().includes('mcq') || 
+                        type.TypeName.toLowerCase().includes('multiple choice')
+                    );
+                    
+                    if (mcqType) {
+                        setTimeout(function() {
+                            $('#ddlQuestionType').val(mcqType.QuestionTypeId).trigger('change');
+                        }, 100);
+                    } else if (AllQuestionTypes.length > 0) {
+                        // Default to first type if MCQ not found
+                        setTimeout(function() {
+                            $('#ddlQuestionType').val(AllQuestionTypes[0].QuestionTypeId).trigger('change');
+                        }, 100);
+                    }
                 }
             });
         }
@@ -647,8 +660,21 @@
                 $('#hiddenQuestionTypeId').val(typeId);
             }
             
+            // Find question type from AllQuestionTypes
+            let questionType = null;
+            if (AllQuestionTypes && AllQuestionTypes.length > 0) {
+                questionType = AllQuestionTypes.find(type => type.QuestionTypeId === typeId);
+            }
+            
+            // Check if it's a True/False type
+            const isTrueFalseType = questionType && (
+                questionType.TypeName.toLowerCase().includes('true/false') || 
+                questionType.TypeName.toLowerCase().includes('true false') ||
+                questionType.TypeName.toLowerCase().includes('t/f')
+            );
+            
             // Toggle visibility based on question type
-            if (typeId === TRUE_FALSE_TYPE_ID) {
+            if (isTrueFalseType) {
                 $('#options-section').hide();
                 $('#true-false-section').show();
                 $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
@@ -689,9 +715,24 @@
             }
 
             // Handle True/False question type if editing
-            // We need to wait for question types to be loaded to know TRUE_FALSE_TYPE_ID
+            // We need to wait for question types to be loaded to know the question types
             $(document).on('questionTypesLoaded', function() {
-                if (window.modelData.QuestionTypeId === TRUE_FALSE_TYPE_ID) {
+                // Find question type from AllQuestionTypes
+                let questionType = null;
+                if (window.modelData && window.modelData.QuestionTypeId && AllQuestionTypes) {
+                    questionType = AllQuestionTypes.find(type => type.QuestionTypeId === window.modelData.QuestionTypeId);
+                }
+                
+                // Check if it's a True/False type
+                const isTrueFalseType = questionType && (
+                    questionType.TypeName.toLowerCase().includes('true/false') || 
+                    questionType.TypeName.toLowerCase().includes('true false') ||
+                    questionType.TypeName.toLowerCase().includes('t/f')
+                );
+                
+                console.log("Question type:", questionType ? questionType.TypeName : "Unknown");
+                
+                if (isTrueFalseType) {
                     console.log("Loading True/False question for editing");
                     console.log("Options:", window.modelData.Options);
                     
@@ -808,13 +849,25 @@
         $(document).on('questionTypesLoaded', function () {
             if (window.modelData && window.modelData.QuestionId > 0) {
                 $('#ddlQuestionType').val(window.modelData.QuestionTypeId).trigger('change');
-            } else if (MCQ_TYPE_ID) {
-                // Default to MCQ for new questions
-                $('#ddlQuestionType').val(MCQ_TYPE_ID).trigger('change');
+            } else if (AllQuestionTypes && AllQuestionTypes.length > 0) {
+                // Find MCQ type from AllQuestionTypes for new questions
+                const mcqType = AllQuestionTypes.find(type => 
+                    type.TypeName.toLowerCase().includes('mcq') || 
+                    type.TypeName.toLowerCase().includes('multiple choice')
+                );
+                
+                if (mcqType) {
+                    // Default to MCQ for new questions
+                    $('#ddlQuestionType').val(mcqType.QuestionTypeId).trigger('change');
+                } else if (AllQuestionTypes.length > 0) {
+                    // Default to first type if MCQ not found
+                    $('#ddlQuestionType').val(AllQuestionTypes[0].QuestionTypeId).trigger('change');
+                }
             }
         });
     });
 </script>
+
 
 
 

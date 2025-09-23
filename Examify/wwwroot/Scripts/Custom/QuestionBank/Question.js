@@ -4,6 +4,7 @@ var API_BASE_URL_SUBJECT = 'https://localhost:7271/api/Subject'; // fallback
 // Question type IDs will be set dynamically when types are loaded
 var MCQ_TYPE_ID; 
 var TRUE_FALSE_TYPE_ID;
+var AllQuestionTypes;
 
 $(document).ready(function () {
 
@@ -127,15 +128,16 @@ function loadSubjects() {
 function loadQuestionTypes() {
     var apiUrl = API_BASE_URL_QUESTION + '/types';
     $.get(apiUrl, function (data) {
+        AllQuestionTypes = data; // Store all types globally
+        
         var $ddl = $('#ddlQuestionType');
         $ddl.empty().append('<option value="">Select Type</option>');
         
-        // Find the MCQ and True/False type IDs by their names
+        // Still set MCQ_TYPE_ID and TRUE_FALSE_TYPE_ID for backward compatibility
         $.each(data, function (i, type) {
             $ddl.append('<option value="' + type.QuestionTypeId + '">' + type.TypeName + '</option>');
             
             // Identify MCQ and True/False types by their names
-            // Adjust these conditions based on the actual names in your database
             if (type.TypeName.toLowerCase().includes('mcq') || 
                 type.TypeName.toLowerCase().includes('multiple choice')) {
                 MCQ_TYPE_ID = type.QuestionTypeId;
@@ -152,6 +154,7 @@ function loadQuestionTypes() {
         if (!TRUE_FALSE_TYPE_ID && data.length > 1) TRUE_FALSE_TYPE_ID = data[1].QuestionTypeId; // Default to second type
         
         console.log("Question Types loaded - MCQ:", MCQ_TYPE_ID, "True/False:", TRUE_FALSE_TYPE_ID);
+        console.log("All Question Types:", AllQuestionTypes.map(t => t.TypeName).join(', '));
         
         $(document).trigger('questionTypesLoaded');
     });
@@ -553,11 +556,26 @@ $(function () {
             questionTypeId = parseInt($('#hiddenQuestionTypeId').val() || '0');
         }
         
+        // Find the question type object from AllQuestionTypes
+        let questionType = null;
+        if (AllQuestionTypes && AllQuestionTypes.length > 0) {
+            questionType = AllQuestionTypes.find(type => type.QuestionTypeId === questionTypeId);
+        }
+        
+        // Check if it's a True/False question type based on type name
+        const isTrueFalseType = questionType && (
+            questionType.TypeName.toLowerCase().includes('true/false') || 
+            questionType.TypeName.toLowerCase().includes('true false') ||
+            questionType.TypeName.toLowerCase().includes('t/f')
+        );
+        
         // Create form data from form values
         var formData = new FormData(this);
         
         // Check if it's a True/False question
-        if (questionTypeId === TRUE_FALSE_TYPE_ID) {
+        if (isTrueFalseType) {
+            console.log("Processing True/False question type:", questionType);
+            
             // Remove all option fields from the form data first
             // to avoid including MCQ options and True/False options together
             const keysToRemove = [];
@@ -580,8 +598,6 @@ $(function () {
                 valid = false;
             } else {
                 $('#tfOptionsValidation').empty();
-                
-                // Only include the True/False options (exactly 2)
                 
                 // Get ChoiceId for True option
                 let trueChoiceId = $('.true-false-option').eq(0).find('.option-choiceid-field').val() || '';
@@ -606,7 +622,7 @@ $(function () {
                 console.log("False option - ChoiceId:", falseChoiceId, "IsCorrect:", falseIsSelected);
             }
         } else {
-            // Options (static and dynamic) for MCQ
+            // Options (static and dynamic) for MCQ or other question types
             let correctChecked = false;
             
             // Remove existing option fields (to rebuild them in proper order)
@@ -659,6 +675,7 @@ $(function () {
         
         // Log form data for debugging
         console.log("Question Type ID being submitted:", questionTypeId);
+        console.log("Question Type:", questionType ? questionType.TypeName : "Unknown");
         
         // Debug all form data
         const formDataEntries = [];
