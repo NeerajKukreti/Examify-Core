@@ -1,6 +1,10 @@
 ﻿var API_BASE_URL_QUESTION = 'https://localhost:7271/api/Question'; // fallback
 var API_BASE_URL_SUBJECT = 'https://localhost:7271/api/Subject'; // fallback
 
+// Question type IDs will be set dynamically when types are loaded
+var MCQ_TYPE_ID; 
+var TRUE_FALSE_TYPE_ID;
+
 $(document).ready(function () {
 
     // Ensure dynamic options are cleared (back to initial markup) & MAX_OPTIONS resets
@@ -52,16 +56,61 @@ function initializeMultiSelectBehavior() {
             var isMultiSelect = $('#IsMultiSelect').is(':checked');
             var $this = $(this);
 
+            // Update hidden field immediately
+            var $group = $this.closest('.option-group');
+            var isChecked = $this.is(':checked');
+            
+            // Find or create hidden field for IsCorrect
+            var $correctHidden = $group.find('.option-correct-hidden');
+            if ($correctHidden.length === 0) {
+                $correctHidden = $('<input type="hidden" class="option-correct-hidden" />').appendTo($group);
+            }
+            
+            // Set the value based on checkbox state
+            $correctHidden.val(isChecked ? 'true' : 'false');
+
             // Only enforce single selection when multi-select is NOT checked (disabled)
             if (!isMultiSelect && $this.is(':checked')) {
                 // If multi-select is disabled and this checkbox is being checked
                 // Uncheck all other "Is Correct" checkboxes
                 $('#options-wrapper input[type="checkbox"]:not([asp-for="IsMultiSelect"])')
                     .not($this)
-                    .prop('checked', false); 
+                    .prop('checked', false)
+                    .each(function() {
+                        // Update their hidden fields too
+                        $(this).closest('.option-group').find('.option-correct-hidden').val('false');
+                    });
             }
+            
+            // Update names for all options
+            updateOptionFieldNames();
         });
 } 
+
+// Function to update option field names for consistent indexing
+function updateOptionFieldNames() {
+    $('#options-wrapper .option-group').each(function(i) {
+        var $group = $(this);
+        
+        // Text field
+        var $hidden = $group.find('.option-hidden-field');
+        if ($hidden.length) {
+            $hidden.attr('name', 'Options[' + i + '].Text');
+        }
+        
+        // IsCorrect field
+        var $correctHidden = $group.find('.option-correct-hidden');
+        if ($correctHidden.length) {
+            $correctHidden.attr('name', 'Options[' + i + '].IsCorrect');
+        }
+        
+        // ChoiceId field
+        var $choiceId = $group.find('.option-choiceid-field');
+        if ($choiceId.length) {
+            $choiceId.attr('name', 'Options[' + i + '].ChoiceId');
+        }
+    });
+}
 
 function loadSubjects() {
     var apiUrl = API_BASE_URL_SUBJECT + '/list?instituteId=3';
@@ -80,10 +129,31 @@ function loadQuestionTypes() {
     $.get(apiUrl, function (data) {
         var $ddl = $('#ddlQuestionType');
         $ddl.empty().append('<option value="">Select Type</option>');
+        
+        // Find the MCQ and True/False type IDs by their names
         $.each(data, function (i, type) {
             $ddl.append('<option value="' + type.QuestionTypeId + '">' + type.TypeName + '</option>');
+            
+            // Identify MCQ and True/False types by their names
+            // Adjust these conditions based on the actual names in your database
+            if (type.TypeName.toLowerCase().includes('mcq') || 
+                type.TypeName.toLowerCase().includes('multiple choice')) {
+                MCQ_TYPE_ID = type.QuestionTypeId;
+            }
+            else if (type.TypeName.toLowerCase().includes('true/false') || 
+                     type.TypeName.toLowerCase().includes('true false') ||
+                     type.TypeName.toLowerCase().includes('t/f')) {
+                TRUE_FALSE_TYPE_ID = type.QuestionTypeId;
+            }
         });
-        $(document).trigger('questionTypesLoaded'); // <-- Add this
+        
+        // Set defaults if not found
+        if (!MCQ_TYPE_ID && data.length > 0) MCQ_TYPE_ID = data[0].QuestionTypeId; // Default to first type
+        if (!TRUE_FALSE_TYPE_ID && data.length > 1) TRUE_FALSE_TYPE_ID = data[1].QuestionTypeId; // Default to second type
+        
+        console.log("Question Types loaded - MCQ:", MCQ_TYPE_ID, "True/False:", TRUE_FALSE_TYPE_ID);
+        
+        $(document).trigger('questionTypesLoaded');
     });
 }
 
@@ -227,7 +297,9 @@ function loadTopics(subjectId, callback) {
             '  <div class="row">',
             '    <div class="col-md-10">',
             '      <div class="editor-container" style="height: 50px !important" id="' + editorId + '" data-name="Option ' + idx + '"></div>',
-            '       <input type = "hidden" class= "option-hidden-field" data-option-index="'+idx+'" />',
+            '       <input type="hidden" class="option-hidden-field" data-option-index="'+idx+'" />',
+            '       <input type="hidden" class="option-choiceid-field" data-option-index="'+idx+'" />',
+            '       <input type="hidden" class="option-correct-hidden" value="false" />',
             '       <span class="text-danger option-error" id="valOption' + idx + '"></span>',
             '    </div>',
             '    <div class="col-md-2 option-controls">',
@@ -253,6 +325,9 @@ function loadTopics(subjectId, callback) {
         if (typeof initializeMultiSelectBehavior === 'function') {
             initializeMultiSelectBehavior();
         }
+        
+        // Update hidden field names
+        updateOptionFieldNames();
     }
 
     function removeOption(btn) {
@@ -264,6 +339,8 @@ function loadTopics(subjectId, callback) {
         $('#toolbar-for-' + editorId).remove();
         $group.fadeOut(200, function () {
             $(this).remove();
+            // Update hidden field names after removal
+            updateOptionFieldNames();
         });
     }
 
@@ -389,6 +466,41 @@ $(function () {
         $('.error').removeClass('error');
     }
 
+    // Helper to show errors
+    function showError(selector, message) {
+        $(selector).addClass('error').after('<span class="error-message" style="color:brown;">' + message + '</span>');
+    }
+
+    // Handle True/False checkbox behavior
+    $(document).off('change.tfOption', '.tf-option').on('change.tfOption', '.tf-option', function() {
+        if ($(this).is(':checked')) {
+            // Get the selected option value (true or false)
+            const selectedValue = $(this).data('option-value');
+            console.log("Selected True/False option:", selectedValue);
+            
+            // Uncheck other options
+            $('.tf-option').not(this).prop('checked', false);
+            
+            // Update all option values correctly
+            $('.true-false-option').each(function(i) {
+                const thisValue = $(this).find('.tf-option').data('option-value');
+                const isSelected = thisValue === selectedValue;
+                
+                // Set correct text value - always maintain proper format
+                const optionText = thisValue === 'true' ? '<p>True</p>' : '<p>False</p>';
+                $(this).find('.option-hidden-field').val(optionText);
+                
+                // Set IsCorrect based on whether this is the selected option
+                $(this).find('.option-correct-hidden').val(isSelected ? 'true' : 'false');
+                
+                // Ensure field names are set properly
+                $(this).find('.option-hidden-field').attr('name', 'Options[' + i + '].Text');
+                $(this).find('.option-correct-hidden').attr('name', 'Options[' + i + '].IsCorrect');
+                $(this).find('.option-choiceid-field').attr('name', 'Options[' + i + '].ChoiceId');
+            });
+        }
+    });
+
     // AJAX submit for question create form
     $(document).off('submit.ajaxCreate', '#questionForm').on('submit.ajaxCreate', '#questionForm', function (e) {
         e.preventDefault(); // Prevent normal form submit
@@ -400,16 +512,19 @@ $(function () {
             showError('#ddlSubject', 'Subject is required');
             valid = false;
         }
+        
         // Question Type
-        if (!$('#ddlQuestionType').val()) {
+        if (!$('#ddlQuestionType').val() && !$('#hiddenQuestionTypeId').val()) {
             showError('#ddlQuestionType', 'Question type is required');
             valid = false;
         }
+        
         // Topic
         if (!$('#ddlTopic').val()) {
             showError('#ddlTopic', 'Topic is required');
             valid = false;
         }
+        
         // Question English (Quill)
         let qEng = window.__quillEditors && window.__quillEditors['editor-question-english'];
         let qEngText = qEng ? $(qEng.root).text().trim() : '';
@@ -417,6 +532,7 @@ $(function () {
             showError('#valQuestionEnglish', 'Question English is required');
             valid = false;
         }
+        
         // Sync Quill HTML to hidden field
         if (qEng) $('#hfQuestionEnglish').val(qEng.root.innerHTML);
         // Question Hindi
@@ -429,60 +545,138 @@ $(function () {
         let qAddHindi = window.__quillEditors && window.__quillEditors['editor-additional-hindi'];
         if (qAddHindi) $('#hfAdditionalHindi').val(qAddHindi.root.innerHTML);
 
-        // Options (static and dynamic)
-        let correctChecked = false;
-        $('#options-wrapper .option-group').each(function (i) {
-            var $group = $(this);
-            var $editor = $group.find('.editor-container');
-            var editorId = $editor.attr('id');
-            var qOpt = window.__quillEditors && window.__quillEditors[editorId];
-            var $hidden = $group.find('.option-hidden-field');
-            if (qOpt && $hidden.length) {
-                $hidden.val(qOpt.root.innerHTML);
-                $hidden.attr('name', 'Options[' + i + '].Text');
-            }
-            // Sync IsCorrect
-            var isCorrect = $group.find('input[type="checkbox"]').is(':checked');
-            if (isCorrect) correctChecked = true;
-            var $correctHidden = $group.find('.option-correct-hidden');
-            if ($correctHidden.length === 0) {
-                $correctHidden = $('<input type="hidden" class="option-correct-hidden" />').appendTo($group);
-            }
-            $correctHidden.val(isCorrect ? 'true' : 'false');
-            $correctHidden.attr('name', 'Options[' + i + '].IsCorrect');
-        });
-        // Ensure all option hidden fields have correct names
-        $('#options-wrapper .option-group').each(function (i) {
-           
-            var $group = $(this);
-            var $hidden = $group.find('.option-hidden-field');
-            if ($hidden.length) {
-                $hidden.attr('name', 'Options[' + i + '].Text');
-            }
-            var $correctHidden = $group.find('.option-correct-hidden');
-            if ($correctHidden.length) {
-                $correctHidden.attr('name', 'Options[' + i + '].IsCorrect');
-            }
-        });
-        // At least one correct option
-        if (!correctChecked) {
-            $('#optionsValidation').html('<span class="error-message" style="color:brown;">At least one option must be marked as correct</span>');
-            valid = false;
-        } else {
-            $('#optionsValidation').empty();
+        // Get the question type - use let instead of const so we can modify it if needed
+        let questionTypeId = parseInt($('#ddlQuestionType').val() || '0');
+        
+        // If the QuestionType dropdown is disabled (for editing), get value from hidden field
+        if (($('#ddlQuestionType').prop('disabled') || questionTypeId === 0) && $('#hiddenQuestionTypeId').length) {
+            questionTypeId = parseInt($('#hiddenQuestionTypeId').val() || '0');
         }
+        
+        // Create form data from form values
+        var formData = new FormData(this);
+        
+        // Check if it's a True/False question
+        if (questionTypeId === TRUE_FALSE_TYPE_ID) {
+            // Remove all option fields from the form data first
+            // to avoid including MCQ options and True/False options together
+            const keysToRemove = [];
+            for (let key of formData.keys()) {
+                if (key.startsWith('Options[')) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => formData.delete(key));
+            
+            // Validate True/False options
+            let tfCorrectChecked = false;
+            $('.tf-option:checked').each(function() {
+                tfCorrectChecked = true;
+            });
+            
+            // Ensure at least one True/False option is selected
+            if (!tfCorrectChecked) {
+                $('#tfOptionsValidation').html('<span class="error-message" style="color:brown;">Please select either True or False as the correct answer</span>');
+                valid = false;
+            } else {
+                $('#tfOptionsValidation').empty();
+                
+                // Only include the True/False options (exactly 2)
+                
+                // Get ChoiceId for True option
+                let trueChoiceId = $('.true-false-option').eq(0).find('.option-choiceid-field').val() || '';
+                let trueIsSelected = $('.tf-option[data-option-value="true"]').is(':checked');
+                
+                // Add True option
+                formData.append('Options[0].Text', '<p>True</p>');
+                formData.append('Options[0].IsCorrect', trueIsSelected ? 'true' : 'false');
+                formData.append('Options[0].ChoiceId', trueChoiceId);
+                
+                // Get ChoiceId for False option
+                let falseChoiceId = $('.true-false-option').eq(1).find('.option-choiceid-field').val() || '';
+                let falseIsSelected = $('.tf-option[data-option-value="false"]').is(':checked');
+                
+                // Add False option
+                formData.append('Options[1].Text', '<p>False</p>');
+                formData.append('Options[1].IsCorrect', falseIsSelected ? 'true' : 'false');
+                formData.append('Options[1].ChoiceId', falseChoiceId);
+                
+                // Debug output
+                console.log("True option - ChoiceId:", trueChoiceId, "IsCorrect:", trueIsSelected);
+                console.log("False option - ChoiceId:", falseChoiceId, "IsCorrect:", falseIsSelected);
+            }
+        } else {
+            // Options (static and dynamic) for MCQ
+            let correctChecked = false;
+            
+            // Remove existing option fields (to rebuild them in proper order)
+            const keysToRemove = [];
+            for (let key of formData.keys()) {
+                if (key.startsWith('Options[')) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => formData.delete(key));
+            
+            // Gather MCQ options and add them back to formData
+            $('#options-wrapper .option-group').each(function (i) {
+                var $group = $(this);
+                var $editor = $group.find('.editor-container');
+                var editorId = $editor.attr('id');
+                var qOpt = window.__quillEditors && window.__quillEditors[editorId];
+                
+                // Get text from editor
+                var optionText = qOpt ? qOpt.root.innerHTML : '';
+                
+                // Get IsCorrect value
+                var isChecked = $group.find('input[type="checkbox"]').is(':checked');
+                if (isChecked) correctChecked = true;
+                
+                // Get ChoiceId if it exists
+                var choiceId = $group.find('.option-choiceid-field').val() || '';
+                
+                // Add to form data
+                formData.append(`Options[${i}].Text`, optionText);
+                formData.append(`Options[${i}].IsCorrect`, isChecked ? 'true' : 'false');
+                formData.append(`Options[${i}].ChoiceId`, choiceId);
+            });
+
+            // At least one correct option
+            if (!correctChecked) {
+                $('#optionsValidation').html('<span class="error-message" style="color:brown;">At least one option must be marked as correct</span>');
+                valid = false;
+            } else {
+                $('#optionsValidation').empty();
+            }
+        }
+        
         if (!valid) return;
 
-        // AJAX submit
-        var $form = $(this);
-        var formData = $form.serialize();
+        // Make sure QuestionTypeId is included in form data
+        if (!formData.has('QuestionTypeId')) {
+            formData.append('QuestionTypeId', questionTypeId.toString());
+        }
+        
+        // Log form data for debugging
+        console.log("Question Type ID being submitted:", questionTypeId);
+        
+        // Debug all form data
+        const formDataEntries = [];
+        for (let [key, value] of formData.entries()) {
+            formDataEntries.push(`${key}: ${value}`);
+        }
+        console.log("Form data entries:", formDataEntries);
+        
+        // Convert FormData to URL-encoded string
+        var serializedData = new URLSearchParams(formData).toString();
+        
         $.ajax({
-            url: $form.attr('action'),
+            url: $('#questionForm').attr('action'),
             type: 'POST',
-            data: formData,
+            data: serializedData,
+            contentType: 'application/x-www-form-urlencoded',
             success: function (response) {
-                debugger;
-                toastr.success('Question saved', 'Alert')
+                toastr.success('Question saved', 'Alert');
 
                 if (response && response.success) {
                     // Close modal and refresh question list (customize as needed)
@@ -490,11 +684,13 @@ $(function () {
                     if (typeof reloadQuestionTable === 'function') reloadQuestionTable();
                 } else {
                     // Show error (customize as needed)
-                    alert('Failed to create question.');
+                    console.error("Save failed:", response);
+                    alert(response.error || 'Failed to create question.');
                 }
             },
-            error: function () {
-                toastr.error('An error occured while saving the question', 'Alert')
+            error: function (xhr, status, error) {
+                console.error("AJAX Error:", xhr.responseText);
+                toastr.error('An error occurred while saving the question', 'Alert');
             }
         });
     });

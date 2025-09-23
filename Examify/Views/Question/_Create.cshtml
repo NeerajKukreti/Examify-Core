@@ -258,6 +258,44 @@
     .option-remove-btn {
         align-self: flex-start;
     }
+    
+    /* True/False options section */
+    .true-false-section {
+        display: none; /* Initially hidden */
+        background: #fff;
+        border: 1px solid #e1e5e9;
+        border-radius: 6px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+
+    .true-false-option {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 15px;
+        position: relative;
+        transition: all 0.2s;
+    }
+
+    .true-false-option:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+    }
+
+    .true-false-label {
+        font-weight: 600;
+        color: #495057;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .true-false-label input {
+        margin-right: 10px;
+    }
 </style>
 
 
@@ -351,9 +389,21 @@
                 <div class="col-md-6">
                     <div class="form-group ">
                         <label asp-for="QuestionTypeId">Question Type <span class="text-danger">*</span></label>
-                        <select asp-for="QuestionTypeId" class="form-control select" id="ddlQuestionType" name="QuestionTypeId">
-                            <option value="">Select Type</option>
-                        </select>
+                        @if (Model.QuestionId > 0)
+                        {
+                            <!-- For editing, use readonly with hidden field -->
+                            <select class="form-control select" id="ddlQuestionType" disabled>
+                                <option value="">Select Type</option>
+                            </select>
+                            <input type="hidden" name="QuestionTypeId" id="hiddenQuestionTypeId" value="@Model.QuestionTypeId" />
+                        }
+                        else
+                        {
+                            <!-- For new questions, use normal dropdown -->
+                            <select asp-for="QuestionTypeId" class="form-control select" id="ddlQuestionType" name="QuestionTypeId">
+                                <option value="">Select Type</option>
+                            </select>
+                        }
                         <span asp-validation-for="QuestionTypeId" class="text-danger"></span>
                     </div>
 
@@ -437,7 +487,33 @@
             </div>
         </div>
 
-        <!-- Options Section -->
+        <!-- True/False Options Section -->
+        <div class="true-false-section" id="true-false-section">
+            <div class="section-title">
+                True/False Options
+            </div>
+            <span class="text-danger" id="tfOptionsValidation"></span>
+            <div id="tf-options-wrapper">
+                <div class="true-false-option" data-option-index="1">
+                    <div class="true-false-label">
+                        <input type="checkbox" class="tf-option" data-option-value="true" /> True
+                    </div>
+                    <input type="hidden" class="option-hidden-field" data-option-index="1" name="Options[0].Text" value="<p>True</p>" />
+                    <input type="hidden" class="option-choiceid-field" data-option-index="1" name="Options[0].ChoiceId" />
+                    <input type="hidden" class="option-correct-hidden" name="Options[0].IsCorrect" value="false" />
+                </div>
+                <div class="true-false-option" data-option-index="2">
+                    <div class="true-false-label">
+                        <input type="checkbox" class="tf-option" data-option-value="false" /> False
+                    </div>
+                    <input type="hidden" class="option-hidden-field" data-option-index="2" name="Options[1].Text" value="<p>False</p>" />
+                    <input type="hidden" class="option-choiceid-field" data-option-index="2" name="Options[1].ChoiceId" />
+                    <input type="hidden" class="option-correct-hidden" name="Options[1].IsCorrect" value="false" />
+                </div>
+            </div>
+        </div>
+
+        <!-- MCQ Options Section -->
         <div class="options-section" id="options-section">
             <div class="form-group">
                 <button type="button" id="btnAddOption" class="btn btn-outline-primary mb-3">
@@ -452,8 +528,9 @@
                     <div class="row">
                         <div class="col-md-10">
                             <div class="editor-container" style="height: 50px !important" id="editor-option1" data-name="Option 1"></div>
-                            <input type="hidden" class="option-hidden-field" data-option-index="1" />
-                            <input type="hidden" class="option-choiceid-field" data-option-index="1" />
+                            <input type="hidden" class="option-hidden-field" data-option-index="1" name="Options[0].Text" />
+                            <input type="hidden" class="option-choiceid-field" data-option-index="1" name="Options[0].ChoiceId" />
+                            <input type="hidden" class="option-correct-hidden" name="Options[0].IsCorrect" value="false" />
                             <span class="text-danger option-error" id="valOption1"></span>
                         </div>
                         <div class="col-md-2 option-controls">
@@ -471,8 +548,9 @@
                     <div class="row">
                         <div class="col-md-10">
                             <div class="editor-container" style="height: 50px !important" id="editor-option2" data-name="Option 2"></div>
-                            <input type="hidden" class="option-hidden-field" data-option-index="2" />
-                            <input type="hidden" class="option-choiceid-field" data-option-index="2" />
+                            <input type="hidden" class="option-hidden-field" data-option-index="2" name="Options[1].Text" />
+                            <input type="hidden" class="option-choiceid-field" data-option-index="2" name="Options[1].ChoiceId" />
+                            <input type="hidden" class="option-correct-hidden" name="Options[1].IsCorrect" value="false" />
                             <span class="text-danger option-error" id="valOption2"></span>
                         </div>
                         <div class="col-md-2 option-controls">
@@ -490,8 +568,9 @@
                     <div class="row">
                         <div class="col-md-10">
                             <div class="editor-container" style="height: 50px !important" id="editor-option3" data-name="Option 3"></div>
-                            <input type="hidden" class="option-hidden-field" data-option-index="3" />
-                            <input type="hidden" class="option-choiceid-field" data-option-index="3" />
+                            <input type="hidden" class="option-hidden-field" data-option-index="3" name="Options[2].Text" />
+                            <input type="hidden" class="option-choiceid-field" data-option-index="3" name="Options[2].ChoiceId" />
+                            <input type="hidden" class="option-correct-hidden" name="Options[2].IsCorrect" value="false" />
                             <span class="text-danger option-error" id="valOption3"></span>
                         </div>
                         <div class="col-md-2 option-controls">
@@ -509,8 +588,9 @@
                     <div class="row">
                         <div class="col-md-10">
                             <div class="editor-container" style="height: 50px !important" id="editor-option4" data-name="Option 4"></div>
-                            <input type="hidden" class="option-hidden-field" data-option-index="4" />
-                            <input type="hidden" class="option-choiceid-field" data-option-index="4" />
+                            <input type="hidden" class="option-hidden-field" data-option-index="4" name="Options[3].Text" />
+                            <input type="hidden" class="option-choiceid-field" data-option-index="4" name="Options[3].ChoiceId" />
+                            <input type="hidden" class="option-correct-hidden" name="Options[3].IsCorrect" value="false" />
                             <span class="text-danger option-error" id="valOption4"></span>
                         </div>
                         <div class="col-md-2 option-controls">
@@ -546,6 +626,53 @@
     window.modelData = @Html.Raw(JsonSerializer.Serialize(Model));
 
     $(function () {
+        // Default to MCQ question type for new questions
+        if (!window.modelData || !window.modelData.QuestionId || window.modelData.QuestionId === 0) {
+            // Wait for the question types to be loaded before setting default
+            $(document).on('questionTypesLoaded', function() {
+                if (MCQ_TYPE_ID) {
+                    setTimeout(function() {
+                        $('#ddlQuestionType').val(MCQ_TYPE_ID).trigger('change');
+                    }, 100);
+                }
+            });
+        }
+
+        // Handle question type change
+        $(document).off('change.questionType', '#ddlQuestionType').on('change.questionType', '#ddlQuestionType', function() {
+            const typeId = parseInt($(this).val());
+            
+            // Update hidden field if in edit mode
+            if ($('#hiddenQuestionTypeId').length) {
+                $('#hiddenQuestionTypeId').val(typeId);
+            }
+            
+            // Toggle visibility based on question type
+            if (typeId === TRUE_FALSE_TYPE_ID) {
+                $('#options-section').hide();
+                $('#true-false-section').show();
+                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
+            } else {
+                $('#options-section').show();
+                $('#true-false-section').hide();
+                $('#IsMultiSelect').prop('disabled', false);
+            }
+        });
+
+        // Handle True/False checkbox behavior (only one can be selected)
+        $(document).off('change.tfOption', '.tf-option').on('change.tfOption', '.tf-option', function() {
+            if ($(this).is(':checked')) {
+                // Uncheck other options
+                $('.tf-option').not(this).prop('checked', false);
+                
+                // Update hidden field values
+                $('.true-false-option').each(function(i) {
+                    const isChecked = $(this).find('.tf-option').is(':checked');
+                    $(this).find('.option-correct-hidden').val(isChecked ? 'true' : 'false');
+                });
+            }
+        });
+
         // Refill Quill editors if model data exists
         if (window.modelData) {
             if (window.__quillEditors && window.__quillEditors['editor-question-english']) {
@@ -561,37 +688,104 @@
                 window.__quillEditors['editor-additional-hindi'].root.innerHTML = window.modelData.AdditionalTextHindi || '';
             }
 
-            // Add extra option groups if needed
-            if (window.modelData.Options && window.modelData.Options.length > 4) {
-                for (var i = 4; i < window.modelData.Options.length; i++) {
-                    if (window.QuestionOptions && typeof window.QuestionOptions.add === 'function') {
-                        window.QuestionOptions.add();
+            // Handle True/False question type if editing
+            // We need to wait for question types to be loaded to know TRUE_FALSE_TYPE_ID
+            $(document).on('questionTypesLoaded', function() {
+                if (window.modelData.QuestionTypeId === TRUE_FALSE_TYPE_ID) {
+                    console.log("Loading True/False question for editing");
+                    console.log("Options:", window.modelData.Options);
+                    
+                    // Set correct True/False option
+                    if (window.modelData.Options && window.modelData.Options.length > 0) {
+                        // Make sure we have both True and False options
+                        let trueOption = null;
+                        let falseOption = null;
+                        
+                        // Find True and False options
+                        for (let i = 0; i < window.modelData.Options.length; i++) {
+                            const opt = window.modelData.Options[i];
+                            const optText = opt.Text ? opt.Text.toLowerCase() : '';
+                            
+                            if (optText.includes('true')) {
+                                trueOption = opt;
+                            } else if (optText.includes('false')) {
+                                falseOption = opt;
+                            }
+                        }
+                        
+                        console.log("True option:", trueOption);
+                        console.log("False option:", falseOption);
+                        
+                        // Set True option
+                        if (trueOption) {
+                            // Set checkbox if it's correct
+                            if (trueOption.IsCorrect) {
+                                $('.tf-option[data-option-value="true"]').prop('checked', true);
+                            }
+                            
+                            // Always set ChoiceId
+                            const trueChoiceId = trueOption.ChoiceId || '';
+                            $('.true-false-option').eq(0).find('.option-choiceid-field').val(trueChoiceId);
+                            console.log("Set True ChoiceId to:", trueChoiceId);
+                        }
+                        
+                        // Set False option
+                        if (falseOption) {
+                            // Set checkbox if it's correct
+                            if (falseOption.IsCorrect) {
+                                $('.tf-option[data-option-value="false"]').prop('checked', true);
+                            }
+                            
+                            // Always set ChoiceId
+                            const falseChoiceId = falseOption.ChoiceId || '';
+                            $('.true-false-option').eq(1).find('.option-choiceid-field').val(falseChoiceId);
+                            console.log("Set False ChoiceId to:", falseChoiceId);
+                        }
+                        
+                        // Make sure the correct hidden values are set too
+                        $('.true-false-option').each(function(i) {
+                            const isChecked = $(this).find('.tf-option').is(':checked');
+                            $(this).find('.option-correct-hidden').val(isChecked ? 'true' : 'false');
+                        });
+                    }
+                } else {
+                    // Add extra option groups if needed for MCQ
+                    if (window.modelData.Options && window.modelData.Options.length > 4) {
+                        for (var i = 4; i < window.modelData.Options.length; i++) {
+                            if (window.QuestionOptions && typeof window.QuestionOptions.add === 'function') {
+                                window.QuestionOptions.add();
+                            }
+                        }
+                    }
+
+                    // Refill options for MCQ
+                    if (window.modelData.Options && window.modelData.Options.length > 0) {
+                        $('#options-wrapper .option-group').each(function (i) {
+                            var opt = window.modelData.Options[i];
+                            if (opt) {
+                                var editorId = $(this).find('.editor-container').attr('id');
+                                if (window.__quillEditors && window.__quillEditors[editorId]) {
+                                    window.__quillEditors[editorId].root.innerHTML = opt.Text || '';
+                                }
+                                $(this).find('.option-hidden-field').val(opt.Text || '');
+                                $(this).find('input[type="checkbox"]').prop('checked', !!opt.IsCorrect);
+                                $(this).find('.option-correct-hidden').val(opt.IsCorrect ? 'true' : 'false');
+
+                                // Set ChoiceId hidden field
+                                var $choiceId = $(this).find('.option-choiceid-field');
+                                if ($choiceId.length === 0) {
+                                    $choiceId = $('<input type="hidden" class="option-choiceid-field" />').appendTo($(this));
+                                }
+                                $choiceId.val(opt.ChoiceId || '');
+                                $choiceId.attr('name', 'Options[' + i + '].ChoiceId');
+                            }
+                        });
                     }
                 }
-            }
-
-            // Refill options
-            if (window.modelData.Options && window.modelData.Options.length > 0) {
-                $('#options-wrapper .option-group').each(function (i) {
-                    var opt = window.modelData.Options[i];
-                    if (opt) {
-                        var editorId = $(this).find('.editor-container').attr('id');
-                        if (window.__quillEditors && window.__quillEditors[editorId]) {
-                            window.__quillEditors[editorId].root.innerHTML = opt.Text || '';
-                        }
-                        $(this).find('.option-hidden-field').val(opt.Text || '');
-                        $(this).find('input[type="checkbox"]').prop('checked', !!opt.IsCorrect);
-
-                        // Set ChoiceId hidden field
-                        var $choiceId = $(this).find('.option-choiceid-field');
-                        if ($choiceId.length === 0) {
-                            $choiceId = $('<input type="hidden" class="option-choiceid-field" />').appendTo($(this));
-                        }
-                        $choiceId.val(opt.ChoiceId || '');
-                        $choiceId.attr('name', 'Options[' + i + '].ChoiceId');
-                    }
-                });
-            }
+                
+                // Trigger the question type change to show/hide appropriate sections
+                $('#ddlQuestionType').trigger('change');
+            });
 
             // Set dropdowns and other controls
             $('#ddlSubject').val(window.modelData.SubjectId);
@@ -602,18 +796,22 @@
         }
 
         $(document).on('subjectsLoaded', function () {
-
-            $('#ddlSubject').val(window.modelData.SubjectId);
-            // Trigger topic load if editing
-            if (window.modelData.SubjectId) {
+            if (window.modelData && window.modelData.SubjectId) {
+                $('#ddlSubject').val(window.modelData.SubjectId);
+                // Trigger topic load if editing
                 loadTopics(window.modelData.SubjectId, function () {
                     $('#ddlTopic').val(window.modelData.TopicId);
                 });
             }
         });
+        
         $(document).on('questionTypesLoaded', function () {
-
-            $('#ddlQuestionType').val(window.modelData.QuestionTypeId);
+            if (window.modelData && window.modelData.QuestionId > 0) {
+                $('#ddlQuestionType').val(window.modelData.QuestionTypeId).trigger('change');
+            } else if (MCQ_TYPE_ID) {
+                // Default to MCQ for new questions
+                $('#ddlQuestionType').val(MCQ_TYPE_ID).trigger('change');
+            }
         });
     });
 </script>
