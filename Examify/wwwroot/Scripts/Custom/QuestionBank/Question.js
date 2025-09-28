@@ -1,4 +1,7 @@
-﻿var API_BASE_URL_QUESTION = 'https://localhost:7271/api/Question'; // fallback
+﻿var descriptiveOptionCount = 1; // Start with 1 (the default one)
+var MAX_DESCRIPTIVE_OPTIONS = 4; // Maximum number of descriptive options allowed
+
+var API_BASE_URL_QUESTION = 'https://localhost:7271/api/Question'; // fallback
 var API_BASE_URL_SUBJECT = 'https://localhost:7271/api/Subject'; // fallback
 
 // Question type IDs will be set dynamically when types are loaded
@@ -712,4 +715,271 @@ $(function () {
         });
     });
 
+});
+
+$(function () {
+    // Add descriptive option button
+    $(document).off('click', '#btnAddDescriptiveOption').on('click', '#btnAddDescriptiveOption', function() {
+        if (descriptiveOptionCount >= MAX_DESCRIPTIVE_OPTIONS) {
+            alert('Maximum of ' + MAX_DESCRIPTIVE_OPTIONS + ' text inputs allowed');
+            return;
+        }
+        
+        descriptiveOptionCount++;
+        const idx = descriptiveOptionCount;
+        
+        const html = `
+            <div class="form-group descriptive-option-group" data-option-index="${idx}">
+                <div class="option-label">Text Input ${idx}</div>
+                <div class="row">
+                    <div class="col-md-10">
+                        <textarea class="form-control descriptive-input" rows="3" placeholder="Enter text..."></textarea>
+                        <input type="hidden" class="option-hidden-field" data-option-index="${idx}" name="Options[${idx-1}].Text" />
+                        <input type="hidden" class="option-choiceid-field" data-option-index="${idx}" name="Options[${idx-1}].ChoiceId" />
+                        <input type="hidden" class="option-correct-hidden" name="Options[${idx-1}].IsCorrect" value="true" />
+                        <span class="text-danger option-error" id="valDescriptiveOption${idx}"></span>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-danger btn-xs btn-remove-descriptive-option mt-2" title="Remove Option">
+                            <i class="glyphicon glyphicon-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        $('#descriptive-options-wrapper').append(html);
+        updateDescriptiveOptionFieldNames();
+        
+        // Make sure the textarea input handler is applied to the new textarea
+        bindDescriptiveInputHandler();
+    });
+    
+    // Remove descriptive option button
+    $(document).off('click', '.btn-remove-descriptive-option').on('click', '.btn-remove-descriptive-option', function() {
+        $(this).closest('.descriptive-option-group').fadeOut(200, function() {
+            $(this).remove();
+            descriptiveOptionCount--;
+            updateDescriptiveOptionFieldNames();
+        });
+    });
+    
+    // Initial bind of descriptive input handlers
+    bindDescriptiveInputHandler();
+});
+
+// Function to bind textarea input handler
+function bindDescriptiveInputHandler() {
+    // Sync text area content to hidden field on input
+    $(document).off('input', '.descriptive-input').on('input', '.descriptive-input', function() {
+        const textValue = $(this).val();
+        // Wrap in <p> tags for consistency with other option types
+        const htmlValue = '<p>' + textValue.replace(/\n/g, '</p><p>') + '</p>';
+        $(this).closest('.descriptive-option-group').find('.option-hidden-field').val(htmlValue);
+    });
+}
+
+// Function to update field names for all descriptive options
+function updateDescriptiveOptionFieldNames() {
+    $('#descriptive-options-wrapper .descriptive-option-group').each(function(i) {
+        var $group = $(this);
+        
+        // Text field
+        var $hidden = $group.find('.option-hidden-field');
+        if ($hidden.length) {
+            $hidden.attr('name', 'Options[' + i + '].Text');
+        }
+        
+        // IsCorrect field
+        var $correctHidden = $group.find('.option-correct-hidden');
+        if ($correctHidden.length) {
+            $correctHidden.attr('name', 'Options[' + i + '].IsCorrect');
+        }
+        
+        // ChoiceId field
+        var $choiceId = $group.find('.option-choiceid-field');
+        if ($choiceId.length) {
+            $choiceId.attr('name', 'Options[' + i + '].ChoiceId');
+        }
+    });
+}
+
+// Handle True/False question type if editing
+// We need to wait for question types to be loaded to know the question types
+$(document).on('questionTypesLoaded', function() {
+    // Find question type from AllQuestionTypes
+    let questionType = null;
+    if (window.modelData && window.modelData.QuestionTypeId && AllQuestionTypes) {
+        questionType = AllQuestionTypes.find(type => type.QuestionTypeId === window.modelData.QuestionTypeId);
+    }
+
+    // Check if it's a True/False type
+    const isTrueFalseType = questionType && (
+        questionType.TypeName.toLowerCase().includes('true/false') || 
+        questionType.TypeName.toLowerCase().includes('true false') ||
+        questionType.TypeName.toLowerCase().includes('t/f')
+    );
+    
+    // Check if it's a Descriptive type
+    const isDescriptiveType = questionType && (
+        questionType.TypeName.toLowerCase().includes('descriptive') || 
+        questionType.TypeName.toLowerCase().includes('subjective')
+    );
+
+    console.log("Question type:", questionType ? questionType.TypeName : "Unknown");
+
+    if (isTrueFalseType) {
+        console.log("Loading True/False question for editing");
+        console.log("Options:", window.modelData.Options);
+
+        // Set correct True/False option
+        if (window.modelData.Options && window.modelData.Options.length > 0) {
+            // Make sure we have both True and False options
+            let trueOption = null;
+            let falseOption = null;
+
+            // Find True and False options
+            for (let i = 0; i < window.modelData.Options.length; i++) {
+                const opt = window.modelData.Options[i];
+                const optText = opt.Text ? opt.Text.toLowerCase() : '';
+
+                if (optText.includes('true')) {
+                    trueOption = opt;
+                } else if (optText.includes('false')) {
+                    falseOption = opt;
+                }
+            }
+
+            console.log("True option:", trueOption);
+            console.log("False option:", falseOption);
+
+            // Set True option
+            if (trueOption) {
+                // Set checkbox if it's correct
+                if (trueOption.IsCorrect) {
+                    $('.tf-option[data-option-value="true"]').prop('checked', true);
+                }
+
+                // Always set ChoiceId
+                const trueChoiceId = trueOption.ChoiceId || '';
+                $('.true-false-option').eq(0).find('.option-choiceid-field').val(trueChoiceId);
+                console.log("Set True ChoiceId to:", trueChoiceId);
+            }
+
+            // Set False option
+            if (falseOption) {
+                // Set checkbox if it's correct
+                if (falseOption.IsCorrect) {
+                    $('.tf-option[data-option-value="false"]').prop('checked', true);
+                }
+
+                // Always set ChoiceId
+                const falseChoiceId = falseOption.ChoiceId || '';
+                $('.true-false-option').eq(1).find('.option-choiceid-field').val(falseChoiceId);
+                console.log("Set False ChoiceId to:", falseChoiceId);
+            }
+
+            // Make sure the correct hidden values are set too
+            $('.true-false-option').each(function(i) {
+                const isChecked = $(this).find('.tf-option').is(':checked');
+                $(this).find('.option-correct-hidden').val(isChecked ? 'true' : 'false');
+            });
+        }
+    }
+    else if (isDescriptiveType) {
+        console.log("Loading Descriptive question for editing");
+        
+        // First, clear existing options
+        $('#descriptive-options-wrapper').find('.descriptive-option-group').remove();
+        descriptiveOptionCount = 0;
+        
+        // If we have options, load them
+        if (window.modelData.Options && window.modelData.Options.length > 0) {
+            // Load each option from the model data
+            for (let i = 0; i < window.modelData.Options.length && i < MAX_DESCRIPTIVE_OPTIONS; i++) {
+                const opt = window.modelData.Options[i];
+                
+                // Add a new option
+                descriptiveOptionCount++;
+                const idx = descriptiveOptionCount;
+                
+                const html = `
+                    <div class="form-group descriptive-option-group" data-option-index="${idx}">
+                        <div class="option-label">Text Input ${idx}</div>
+                        <div class="row">
+                            <div class="col-md-10">
+                                <textarea class="form-control descriptive-input" rows="3" placeholder="Enter text..."></textarea>
+                                <input type="hidden" class="option-hidden-field" data-option-index="${idx}" name="Options[${idx-1}].Text" />
+                                <input type="hidden" class="option-choiceid-field" data-option-index="${idx}" name="Options[${idx-1}].ChoiceId" />
+                                <input type="hidden" class="option-correct-hidden" name="Options[${idx-1}].IsCorrect" value="true" />
+                                <span class="text-danger option-error" id="valDescriptiveOption${idx}"></span>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-danger btn-xs btn-remove-descriptive-option mt-2" title="Remove Option">
+                                    <i class="glyphicon glyphicon-trash"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                $('#descriptive-options-wrapper').append(html);
+                
+                // Remove <p> tags to get plain text for textarea
+                let plainText = opt.Text || '';
+                plainText = plainText.replace(/<p>/g, '').replace(/<\/p>/g, '\n').trim();
+                
+                const $newOption = $('#descriptive-options-wrapper .descriptive-option-group').last();
+                $newOption.find('.descriptive-input').val(plainText);
+                $newOption.find('.option-hidden-field').val(opt.Text || '');
+                $newOption.find('.option-choiceid-field').val(opt.ChoiceId || '');
+            }
+            
+            // Make sure the textarea input handlers are bound
+            bindDescriptiveInputHandler();
+            
+            // Update all field names
+            updateDescriptiveOptionFieldNames();
+        } else {
+            // Add a default empty option if none exist
+            $('#btnAddDescriptiveOption').trigger('click');
+        }
+    } 
+    else {
+        // Add extra option groups if needed for MCQ
+        if (window.modelData.Options && window.modelData.Options.length > 4) {
+            for (var i = 4; i < window.modelData.Options.length; i++) {
+                if (window.QuestionOptions && typeof window.QuestionOptions.add === 'function') {
+                    window.QuestionOptions.add();
+                }
+            }
+        }
+
+        // Refill options for MCQ
+        if (window.modelData.Options && window.modelData.Options.length > 0) {
+            $('#options-wrapper .option-group').each(function (i) {
+                var opt = window.modelData.Options[i];
+                if (opt) {
+                    var editorId = $(this).find('.editor-container').attr('id');
+                    if (window.__quillEditors && window.__quillEditors[editorId]) {
+                        window.__quillEditors[editorId].root.innerHTML = opt.Text || '';
+                    }
+                    $(this).find('.option-hidden-field').val(opt.Text || '');
+                    $(this).find('input[type="checkbox"]').prop('checked', !!opt.IsCorrect);
+                    $(this).find('.option-correct-hidden').val(opt.IsCorrect ? 'true' : 'false');
+
+                    // Set ChoiceId hidden field
+                    var $choiceId = $(this).find('.option-choiceid-field');
+                    if ($choiceId.length === 0) {
+                        $choiceId = $('<input type="hidden" class="option-choiceid-field" />').appendTo($(this));
+                    }
+                    $choiceId.val(opt.ChoiceId || '');
+                    $choiceId.attr('name', 'Options[' + i + '].ChoiceId');
+                }
+            });
+        }
+    }
+
+    // Trigger the question type change to show/hide appropriate sections
+    $('#ddlQuestionType').trigger('change');
 });

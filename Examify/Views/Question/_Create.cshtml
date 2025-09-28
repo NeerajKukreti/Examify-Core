@@ -296,8 +296,38 @@
     .true-false-label input {
         margin-right: 10px;
     }
-</style>
 
+    /* Descriptive questions section */
+    .descriptive-section {
+        display: none; /* Initially hidden */
+        background: #fff;
+        border: 1px solid #e1e5e9;
+        border-radius: 6px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+
+    .descriptive-option-group {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 15px;
+        position: relative;
+        transition: all 0.2s;
+    }
+
+    .descriptive-option-group:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+    }
+
+    .descriptive-input {
+        width: 100%;
+        min-height: 80px;
+    }
+</style>
 
 <form asp-action="Create" method="post" id="questionForm">
 
@@ -604,6 +634,39 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Descriptive Options Section -->
+        <div class="descriptive-section" id="descriptive-section" style="display: none;">
+            <div class="section-title">
+                Descriptive Options
+            </div>
+            <p class="text-muted mb-3">Add one or more text inputs for this descriptive question (maximum 4).</p>
+            <div class="form-group">
+                <button type="button" id="btnAddDescriptiveOption" class="btn btn-outline-primary mb-3">
+                    <i class="glyphicon glyphicon-plus"></i> Add Text Input
+                </button>
+                <span class="text-danger" id="descriptiveOptionsValidation"></span>
+            </div>
+            <div id="descriptive-options-wrapper">
+                <div class="form-group descriptive-option-group" data-option-index="1">
+                    <div class="option-label">Text Input 1</div>
+                    <div class="row">
+                        <div class="col-md-10">
+                            <textarea class="form-control descriptive-input" rows="3" placeholder="Enter text..."></textarea>
+                            <input type="hidden" class="option-hidden-field" data-option-index="1" name="Options[0].Text" />
+                            <input type="hidden" class="option-choiceid-field" data-option-index="1" name="Options[0].ChoiceId" />
+                            <input type="hidden" class="option-correct-hidden" name="Options[0].IsCorrect" value="true" />
+                            <span class="text-danger option-error" id="valDescriptiveOption1"></span>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger btn-xs btn-remove-descriptive-option mt-2" title="Remove Option">
+                                <i class="glyphicon glyphicon-trash"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="d-flex justify-content-end">
             <button class="btn btn-outline-primary mb-2" style="margin-top: 20px; margin-right: 10px;width: 80px;">
                 Cancel
@@ -666,21 +729,33 @@
                 questionType = AllQuestionTypes.find(type => type.QuestionTypeId === typeId);
             }
             
-            // Check if it's a True/False type
+            // Check question type based on the type name
             const isTrueFalseType = questionType && (
                 questionType.TypeName.toLowerCase().includes('true/false') || 
                 questionType.TypeName.toLowerCase().includes('true false') ||
                 questionType.TypeName.toLowerCase().includes('t/f')
             );
             
+            const isDescriptiveType = questionType && (
+                questionType.TypeName.toLowerCase().includes('descriptive') || 
+                questionType.TypeName.toLowerCase().includes('subjective')
+            );
+            
             // Toggle visibility based on question type
             if (isTrueFalseType) {
                 $('#options-section').hide();
+                $('#descriptive-section').hide();
                 $('#true-false-section').show();
+                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
+            } else if (isDescriptiveType) {
+                $('#options-section').hide();
+                $('#true-false-section').hide();
+                $('#descriptive-section').show();
                 $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
             } else {
                 $('#options-section').show();
                 $('#true-false-section').hide();
+                $('#descriptive-section').hide();
                 $('#IsMultiSelect').prop('disabled', false);
             }
         });
@@ -764,6 +839,7 @@
                                 $('.tf-option[data-option-value="true"]').prop('checked', true);
                             }
                             
+
                             // Always set ChoiceId
                             const trueChoiceId = trueOption.ChoiceId || '';
                             $('.true-false-option').eq(0).find('.option-choiceid-field').val(trueChoiceId);
@@ -777,6 +853,7 @@
                                 $('.tf-option[data-option-value="false"]').prop('checked', true);
                             }
                             
+
                             // Always set ChoiceId
                             const falseChoiceId = falseOption.ChoiceId || '';
                             $('.true-false-option').eq(1).find('.option-choiceid-field').val(falseChoiceId);
@@ -867,6 +944,8 @@
         });
     });
 </script>
+
+
 
 
 
