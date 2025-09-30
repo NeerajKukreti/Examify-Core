@@ -327,6 +327,48 @@
         width: 100%;
         min-height: 80px;
     }
+    
+    /* Pairing questions section */
+    .pairing-section {
+        display: none; /* Initially hidden */
+        background: #fff;
+        border: 1px solid #e1e5e9;
+        border-radius: 6px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+    
+    .pair-group {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 15px;
+        position: relative;
+        transition: all 0.2s;
+    }
+    
+    .pair-group:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+    }
+    
+    .pair-label {
+        position: absolute;
+        top: -8px;
+        left: 15px;
+        background: #fff;
+        padding: 0 8px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #6c757d;
+    }
+    
+    .pair-input {
+        width: 100%;
+        min-height: 60px;
+    }
 </style>
 
 <form asp-action="Create" method="post" id="questionForm">
@@ -667,6 +709,49 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Pairing Options Section -->
+        <div class="pairing-section" id="pairing-section" style="display: none;">
+            <div class="section-title">
+                Matching Pairs
+            </div>
+            <p class="text-muted mb-3">Create matching pairs by adding left and right items. Students will match these items during the exam.</p>
+            <div class="form-group">
+                <button type="button" id="btnAddPair" class="btn btn-outline-primary mb-3">
+                    <i class="glyphicon glyphicon-plus"></i> Add Pair
+                </button>
+                <span class="text-danger" id="pairOptionsValidation"></span>
+            </div>
+            <div id="pairs-wrapper">
+                <div class="form-group pair-group" data-pair-index="1">
+                    <div class="pair-label">Pair 1</div>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <div class="form-group">
+                                <label>Left Item</label>
+                                <textarea class="form-control pair-left-input" rows="2" placeholder="Enter left item..."></textarea>
+                                <input type="hidden" class="pair-left-hidden" data-pair-index="1" name="Pairs[0].LeftText" />
+                                <input type="hidden" class="pair-id-hidden" data-pair-index="1" name="Pairs[0].PairId" />
+                                <span class="text-danger pair-error" id="valPairLeft1"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="form-group">
+                                <label>Right Item</label>
+                                <textarea class="form-control pair-right-input" rows="2" placeholder="Enter right item..."></textarea>
+                                <input type="hidden" class="pair-right-hidden" data-pair-index="1" name="Pairs[0].RightText" />
+                                <span class="text-danger pair-error" id="valPairRight1"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger btn-xs btn-remove-pair mt-4" title="Remove Pair">
+                                <i class="glyphicon glyphicon-trash"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="d-flex justify-content-end">
             <button class="btn btn-outline-primary mb-2" style="margin-top: 20px; margin-right: 10px;width: 80px;">
                 Cancel
@@ -686,7 +771,15 @@
 
 <script>
     // Inject model data for edit mode
+    debugger;
     window.modelData = @Html.Raw(JsonSerializer.Serialize(Model));
+    
+    // Make sure arrays exist
+    if (window.modelData) {
+        window.modelData.Options = window.modelData.Options || [];
+        window.modelData.Pairs = window.modelData.Pairs || [];
+        window.modelData.Orders = window.modelData.Orders || [];
+    }
 
     $(function () {
         // Default to MCQ question type for new questions
@@ -741,21 +834,36 @@
                 questionType.TypeName.toLowerCase().includes('subjective')
             );
             
+            const isPairingType = questionType && (
+                questionType.TypeName.toLowerCase().includes('matching') || 
+                questionType.TypeName.toLowerCase().includes('pair') ||
+                questionType.TypeName.toLowerCase().includes('match')
+            );
+            
             // Toggle visibility based on question type
             if (isTrueFalseType) {
                 $('#options-section').hide();
                 $('#descriptive-section').hide();
+                $('#pairing-section').hide();
                 $('#true-false-section').show();
                 $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
             } else if (isDescriptiveType) {
                 $('#options-section').hide();
                 $('#true-false-section').hide();
+                $('#pairing-section').hide();
                 $('#descriptive-section').show();
+                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
+            } else if (isPairingType) {
+                $('#options-section').hide();
+                $('#true-false-section').hide();
+                $('#descriptive-section').hide();
+                $('#pairing-section').show();
                 $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
             } else {
                 $('#options-section').show();
                 $('#true-false-section').hide();
                 $('#descriptive-section').hide();
+                $('#pairing-section').hide();
                 $('#IsMultiSelect').prop('disabled', false);
             }
         });
@@ -805,7 +913,14 @@
                     questionType.TypeName.toLowerCase().includes('t/f')
                 );
                 
-                console.log("Question type:", questionType ? questionType.TypeName : "Unknown");
+                // Check if it's a pairing type
+                const isPairingType = questionType && (
+                    questionType.TypeName.toLowerCase().includes('matching') || 
+                    questionType.TypeName.toLowerCase().includes('pair') ||
+                    questionType.TypeName.toLowerCase().includes('match')
+                );
+                
+                console.log("Question type:", questionType ? questionType.TypeName : "Unknown", "Is Pairing:", isPairingType);
                 
                 if (isTrueFalseType) {
                     console.log("Loading True/False question for editing");
@@ -925,6 +1040,23 @@
         
         $(document).on('questionTypesLoaded', function () {
             if (window.modelData && window.modelData.QuestionId > 0) {
+                // Log data about the question type and available pairs
+                if (window.modelData.QuestionTypeId && AllQuestionTypes) {
+                    const questionType = AllQuestionTypes.find(type => type.QuestionTypeId === window.modelData.QuestionTypeId);
+                    if (questionType) {
+                        console.log("Loading question of type:", questionType.TypeName);
+                        
+                        // Check if it's a pairing question
+                        const isPairingType = questionType.TypeName.toLowerCase().includes('matching') || 
+                                             questionType.TypeName.toLowerCase().includes('pair') ||
+                                             questionType.TypeName.toLowerCase().includes('match');
+                        
+                        if (isPairingType && window.modelData.Pairs) {
+                            console.log("Pairing question detected with pairs:", window.modelData.Pairs);
+                        }
+                    }
+                }
+                
                 $('#ddlQuestionType').val(window.modelData.QuestionTypeId).trigger('change');
             } else if (AllQuestionTypes && AllQuestionTypes.length > 0) {
                 // Find MCQ type from AllQuestionTypes for new questions
@@ -944,6 +1076,65 @@
         });
     });
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

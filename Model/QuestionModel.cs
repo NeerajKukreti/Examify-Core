@@ -1,11 +1,16 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+
 namespace DataModel
 {
+
+    [ValidateNever]
     public class QuestionModel
     {
         public int? QuestionId { get; set; } = 0;
         public int TopicId { get; set; }
         public int SubjectId { get; set; }
         public string TopicName { get; set; } = string.Empty;
+        public string TypeName { get; set; } = string.Empty;
         public string QuestionEnglish { get; set; } = string.Empty;
         public string QuestionHindi { get; set; } = string.Empty;
         public string AdditionalTextEnglish { get; set; } = string.Empty;
@@ -27,7 +32,7 @@ namespace DataModel
     {
         public int? ChoiceId { get; set; }
         public string Text { get; set; } = string.Empty;
-        public bool IsCorrect { get; set; }
+        public bool? IsCorrect { get; set; }
     }
 
     public class PairModel

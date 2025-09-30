@@ -45,16 +45,32 @@ namespace DAL.Repository
                 "_sp_GetAllQuestions", p, commandType: CommandType.StoredProcedure);
 
             var question = await multi.ReadFirstOrDefaultAsync<QuestionModel>();
-            if (question != null)
+
+            if (question == null)
+                return null;
+
+            // Second result: Options OR Pairs depending on type
+            if (question.TypeName is "MCQ" or "True/False" or "Descriptive")
             {
                 var optionRows = await multi.ReadAsync();
-                var options = optionRows.Select(opt => new OptionModel {
+                question.Options = optionRows.Select(opt => new OptionModel
+                {
                     ChoiceId = opt.ChoiceId,
                     Text = (string)opt.ChoiceTextEnglish,
                     IsCorrect = (bool)opt.IsCorrect
                 }).ToList();
-                question.Options = options;
             }
+            else if (question.TypeName == "Matching")
+            {
+                var pairRows = await multi.ReadAsync();
+                question.Pairs = pairRows.Select(p => new PairModel
+                {
+                    PairId = p.PairId,
+                    LeftText = (string)p.LeftText,
+                    RightText = (string)p.RightText
+                }).ToList();
+            }
+
             return question;
         }
 
@@ -69,14 +85,46 @@ namespace DAL.Repository
                 dtChoices.Columns.Add("Id", typeof(string)); // ChioiceId
                 dtChoices.Columns.Add("Text1", typeof(string)); // English text
                 dtChoices.Columns.Add("Text2", typeof(string)); // Hindi text (not available currently -> null)
+                dtChoices.Columns.Add("Order", typeof(string)); // ChioiceId
                 dtChoices.Columns.Add("Flag", typeof(bool));    // IsCorrect
 
-                if (model.Options != null)
+                var questtionTypes = await GetQuestionTypesAsync();
+                var questionType = questtionTypes.FirstOrDefault(qt => qt.QuestionTypeId == model.QuestionTypeId);
+
+                var choiceTypes = new[] { "MCQ", "True/False", "Descriptive" };
+
+
+                if (choiceTypes.Contains(questionType?.TypeName))
                 {
-                    foreach (var opt in model.Options)
+                    if (model.Options != null)
                     {
-                        // Assuming only one language (Text) is provided; Hindi left null
-                        dtChoices.Rows.Add(opt?.ChoiceId,opt?.Text ?? string.Empty, DBNull.Value, opt?.IsCorrect ?? false);
+                        foreach (var opt in model.Options)
+                        {
+                            // Assuming only one language (Text) is provided; Hindi left null
+                            dtChoices.Rows.Add(opt?.ChoiceId, opt?.Text ?? string.Empty, DBNull.Value, DBNull.Value, opt?.IsCorrect ?? false);
+                        }
+                    }
+                } 
+                else if (questionType?.TypeName == "Matching")
+                {
+                    if (model.Pairs != null)
+                    {
+                        foreach (var opt in model.Pairs)
+                        {
+                            dtChoices.Rows.Add(opt?.PairId, opt?.LeftText ?? string.Empty, opt?.RightText ?? string.Empty, DBNull.Value, DBNull.Value);
+                        }
+                    }
+                }
+                else if (questionType?.TypeName == "Ordering")
+                {
+                    if (model.Orders != null)
+                    {
+                        var i = 0;
+
+                        foreach (var opt in model.Orders)
+                        {
+                            dtChoices.Rows.Add(opt?.OrderId, opt?.ItemText ?? string.Empty, DBNull.Value,++i, DBNull.Value);
+                        }
                     }
                 }
 
@@ -94,7 +142,7 @@ namespace DAL.Repository
                 p.Add("@IsMultiSelect", model.IsMultiSelect, DbType.Boolean);
                 p.Add("@Choices", dtChoices.AsTableValuedParameter("dbo.CommonTextFlagType"));
 
-                return await connection.ExecuteScalarAsync<int>("_sp_CreateQuestion", p, commandType: CommandType.StoredProcedure);
+                return await connection.ExecuteScalarAsync<int>("_sp_UpsertQuestion", p, commandType: CommandType.StoredProcedure);
             }
             catch (Exception ex)
             {

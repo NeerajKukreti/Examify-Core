@@ -1,5 +1,10 @@
-﻿var descriptiveOptionCount = 1; // Start with 1 (the default one)
+﻿// Global variables for descriptive questions
+var descriptiveOptionCount = 1; // Start with 1 (the default one)
 var MAX_DESCRIPTIVE_OPTIONS = 4; // Maximum number of descriptive options allowed
+
+// Global variables for pairing questions
+var pairCount = 1; // Start with 1 (the default one) 
+var MAX_PAIRS = 10; // Maximum number of pairs allowed
 
 var API_BASE_URL_QUESTION = 'https://localhost:7271/api/Question'; // fallback
 var API_BASE_URL_SUBJECT = 'https://localhost:7271/api/Subject'; // fallback
@@ -17,7 +22,7 @@ $(document).ready(function () {
             window.QuestionOptions.resetOptions();
         }
         if (typeof window.QuestionOptions.resetMax === 'function') {
-            window.QuestionOptions.resetMax(10); // default
+            window.QuestionOptions.resetMax(5); // default
         }
     }
 
@@ -186,7 +191,7 @@ function loadTopics(subjectId, callback) {
 (function (window, $) {
     'use strict';
 
-    var MAX_OPTIONS = 10; // internal state (reset via resetMax)
+    var MAX_OPTIONS = 5; // internal state (reset via resetMax)
     var initialOptionCount = 0; // captured on first run
     var EVENTS_NS_ADD = 'click.questionOptionsAdd';
     var EVENTS_NS_REMOVE = 'click.questionOptionsRemove';
@@ -198,14 +203,14 @@ function loadTopics(subjectId, callback) {
     }
 
     function resetMax(val) {
-        MAX_OPTIONS = (typeof val === 'number' && val > 0) ? val : 10;
+        MAX_OPTIONS = (typeof val === 'number' && val > 0) ? val : 5;
     }
 
     // Remove any dynamically added options beyond the original initialOptionCount
     function resetOptions() {
         captureInitialCount();
         $('#options-wrapper .option-group').each(function () {
-            var idx = parseInt($(this).attr('data-option-index'), 10);
+            var idx = parseInt($(this).attr('data-option-index'), );
             if (idx > initialOptionCount) {
                 var editorId = $(this).find('.editor-container').attr('id');
                 if (window.__quillEditors && window.__quillEditors[editorId]) {
@@ -221,7 +226,7 @@ function loadTopics(subjectId, callback) {
     function nextOptionIndex() {
         var max = 0;
         $('#options-wrapper .option-group').each(function () {
-            var v = parseInt($(this).attr('data-option-index'), 10);
+            var v = parseInt($(this).attr('data-option-index'), 5);
             if (!isNaN(v) && v > max) max = v;
         });
         return max + 1;
@@ -572,6 +577,19 @@ $(function () {
             questionType.TypeName.toLowerCase().includes('t/f')
         );
         
+        // Check if it's a Descriptive question type based on type name
+        const isDescriptiveType = questionType && (
+            questionType.TypeName.toLowerCase().includes('descriptive') || 
+            questionType.TypeName.toLowerCase().includes('subjective')
+        );
+        
+        // Check if it's a Pairing question type based on type name
+        const isPairingType = questionType && (
+            questionType.TypeName.toLowerCase().includes('matching') || 
+            questionType.TypeName.toLowerCase().includes('pair') ||
+            questionType.TypeName.toLowerCase().includes('match')
+        );
+        
         // Create form data from form values
         var formData = new FormData(this);
         
@@ -623,6 +641,119 @@ $(function () {
                 // Debug output
                 console.log("True option - ChoiceId:", trueChoiceId, "IsCorrect:", trueIsSelected);
                 console.log("False option - ChoiceId:", falseChoiceId, "IsCorrect:", falseIsSelected);
+            }
+        } 
+        else if (isDescriptiveType) {
+            console.log("Processing Descriptive question type:", questionType);
+            
+            // Remove all option fields from the form data first
+            const keysToRemove = [];
+            for (let key of formData.keys()) {
+                if (key.startsWith('Options[')) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => formData.delete(key));
+            
+            // Validate descriptive options
+            let hasValidOption = false;
+            let hasEmptyInput = false;
+            
+            // Process each descriptive option
+            $('#descriptive-options-wrapper .descriptive-option-group').each(function(i) {
+                const $group = $(this);
+                const textareaValue = $group.find('.descriptive-input').val().trim();
+                
+                // Check if any textarea is empty
+                if (!textareaValue) {
+                    hasEmptyInput = true;
+                    $group.find('.option-error').html('<span class="error-message" style="color:brown;">This text input cannot be empty</span>');
+                } else {
+                    $group.find('.option-error').empty();
+                    hasValidOption = true;
+                    
+                    // Format the text with paragraph tags
+                    const htmlValue = '<p>' + textareaValue.replace(/\n/g, '</p><p>') + '</p>';
+                    
+                    // Get ChoiceId if it exists
+                    const choiceId = $group.find('.option-choiceid-field').val() || '';
+                    
+                    // Add to form data
+                    formData.append(`Options[${i}].Text`, htmlValue);
+                    formData.append(`Options[${i}].IsCorrect`, 'true' ); // All descriptive options are "correct"
+                    formData.append(`Options[${i}].ChoiceId`, choiceId);
+                }
+            });
+            
+            // Show validation message if needed
+            if (hasEmptyInput) {
+                $('#descriptiveOptionsValidation').html('<span class="error-message" style="color:brown;">All text inputs must have content</span>');
+                valid = false;
+            } else if (!hasValidOption) {
+                $('#descriptiveOptionsValidation').html('<span class="error-message" style="color:brown;">At least one text input is required</span>');
+                valid = false;
+            } else {
+                $('#descriptiveOptionsValidation').empty();
+            }
+        }
+        else if (isPairingType) {
+            console.log("Processing Pairing question type:", questionType);
+            
+            // Remove all pairing fields from the form data first
+            const keysToRemove = [];
+            for (let key of formData.keys()) {
+                if (key.startsWith('Pairs[')) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => formData.delete(key));
+            
+            // Validate pairing options
+            let hasValidPair = false;
+            let hasEmptyInput = false;
+            
+            // Process each pairing option
+            $('#pairs-wrapper .pair-group').each(function(i) {
+                const $group = $(this);
+                const leftValue = $group.find('.pair-left-input').val().trim();
+                const rightValue = $group.find('.pair-right-input').val().trim();
+                
+                // Check if any input is empty
+                if (!leftValue || !rightValue) {
+                    hasEmptyInput = true;
+                    if (!leftValue) {
+                        $group.find('#valPairLeft' + (i+1)).html('<span class="error-message" style="color:brown;">Left item cannot be empty</span>');
+                    }
+                    if (!rightValue) {
+                        $group.find('#valPairRight' + (i+1)).html('<span class="error-message" style="color:brown;">Right item cannot be empty</span>');
+                    }
+                } else {
+                    $group.find('.pair-error').empty();
+                    hasValidPair = true;
+                    
+                    // Format the text with paragraph tags
+                    const leftHtmlValue = '<p>' + leftValue.replace(/\n/g, '</p><p>') + '</p>';
+                    const rightHtmlValue = '<p>' + rightValue.replace(/\n/g, '</p><p>') + '</p>';
+                    
+                    // Get PairId if it exists
+                    const pairId = $group.find('.pair-id-hidden').val() || '';
+                    
+                    // Add to form data
+                    formData.append(`Pairs[${i}].LeftText`, leftHtmlValue);
+                    formData.append(`Pairs[${i}].RightText`, rightHtmlValue);
+                    formData.append(`Pairs[${i}].PairId`, pairId);
+                }
+            });
+            
+            // Show validation message if needed
+            if (hasEmptyInput) {
+                $('#pairOptionsValidation').html('<span class="error-message" style="color:brown;">All pairing inputs must have content</span>');
+                valid = false;
+            } else if (!hasValidPair) {
+                $('#pairOptionsValidation').html('<span class="error-message" style="color:brown;">At least one pair is required</span>');
+                valid = false;
+            } else {
+                $('#pairOptionsValidation').empty();
             }
         } else {
             // Options (static and dynamic) for MCQ or other question types
@@ -826,6 +957,19 @@ $(document).on('questionTypesLoaded', function() {
         questionType.TypeName.toLowerCase().includes('subjective')
     );
 
+    // Check if it's a Pairing type
+    const isPairingType = questionType && (
+        questionType.TypeName.toLowerCase().includes('matching') || 
+        questionType.TypeName.toLowerCase().includes('pair') ||
+        questionType.TypeName.toLowerCase().includes('match')
+    );
+    
+    if (isPairingType) {
+        console.log("This is a pairing question type");
+        //console.log("Question ID:", model.QuestionId);
+        //console.log("Pairs data:", JSON.stringify(model.Pairs || []));
+    }
+
     console.log("Question type:", questionType ? questionType.TypeName : "Unknown");
 
     if (isTrueFalseType) {
@@ -945,6 +1089,85 @@ $(document).on('questionTypesLoaded', function() {
             $('#btnAddDescriptiveOption').trigger('click');
         }
     } 
+    else if (isPairingType) {
+        console.log("Loading Pairing question for editing");
+        console.log("Pairs data:", window.modelData.Pairs || "No pairs found");
+        
+        // First, clear existing pairs
+        $('#pairs-wrapper').find('.pair-group').remove();
+        pairCount = 0;
+        
+        // If we have pairs, load them
+        if (window.modelData.Pairs && window.modelData.Pairs.length > 0) {
+            // Load each pair from the model data
+            for (let i = 0; i < window.modelData.Pairs.length && i < MAX_PAIRS; i++) {
+                const pair = window.modelData.Pairs[i];
+                
+                // Add a new pair
+                pairCount++;
+                const idx = pairCount;
+                
+                const html = `
+                    <div class="form-group pair-group" data-pair-index="${idx}">
+                        <div class="pair-label">Pair ${idx}</div>
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label>Left Item</label>
+                                    <textarea class="form-control pair-left-input" rows="2" placeholder="Enter left item..."></textarea>
+                                    <input type="hidden" class="pair-left-hidden" data-pair-index="${idx}" name="Pairs[${idx-1}].LeftText" />
+                                    <input type="hidden" class="pair-id-hidden" data-pair-index="${idx}" name="Pairs[${idx-1}].PairId" />
+                                    <span class="text-danger pair-error" id="valPairLeft${idx}"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label>Right Item</label>
+                                    <textarea class="form-control pair-right-input" rows="2" placeholder="Enter right item..."></textarea>
+                                    <input type="hidden" class="pair-right-hidden" data-pair-index="${idx}" name="Pairs[${idx-1}].RightText" />
+                                    <span class="text-danger pair-error" id="valPairRight${idx}"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-danger btn-xs btn-remove-pair mt-4" title="Remove Pair">
+                                    <i class="glyphicon glyphicon-trash"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                $('#pairs-wrapper').append(html);
+                
+                // Remove <p> tags to get plain text for textarea
+                let leftPlainText = pair.LeftText || '';
+                leftPlainText = leftPlainText.replace(/<p>/g, '').replace(/<\/p>/g, '\n').trim();
+                
+                let rightPlainText = pair.RightText || '';
+                rightPlainText = rightPlainText.replace(/<p>/g, '').replace(/<\/p>/g, '\n').trim();
+                
+                const $newPair = $('#pairs-wrapper .pair-group').last();
+                $newPair.find('.pair-left-input').val(leftPlainText);
+                $newPair.find('.pair-left-hidden').val(pair.LeftText || '');
+                $newPair.find('.pair-right-input').val(rightPlainText);
+                $newPair.find('.pair-right-hidden').val(pair.RightText || '');
+                $newPair.find('.pair-id-hidden').val(pair.PairId || '');
+                
+                // Manually trigger the input events to ensure hidden fields are updated
+                $newPair.find('.pair-left-input').trigger('input');
+                $newPair.find('.pair-right-input').trigger('input');
+            }
+            
+            // Make sure the textarea input handlers are bound
+            bindPairInputHandlers();
+            
+            // Update all field names
+            updatePairFieldNames();
+        } else {
+            // Add a default empty pair if none exist
+            $('#btnAddPair').trigger('click');
+        }
+    }
     else {
         // Add extra option groups if needed for MCQ
         if (window.modelData.Options && window.modelData.Options.length > 4) {
@@ -983,3 +1206,124 @@ $(document).on('questionTypesLoaded', function() {
     // Trigger the question type change to show/hide appropriate sections
     $('#ddlQuestionType').trigger('change');
 });
+
+$(function () {
+    // Add pair button
+    $(document).off('click', '#btnAddPair').on('click', '#btnAddPair', function() {
+        if (pairCount >= MAX_PAIRS) {
+            alert('Maximum of ' + MAX_PAIRS + ' pairs allowed');
+            return;
+        }
+        
+        pairCount++;
+        const idx = pairCount;
+        
+        const html = `
+            <div class="form-group pair-group" data-pair-index="${idx}">
+                <div class="pair-label">Pair ${idx}</div>
+                <div class="row">
+                    <div class="col-md-5">
+                        <div class="form-group">
+                            <label>Left Item</label>
+                            <textarea class="form-control pair-left-input" rows="2" placeholder="Enter left item..."></textarea>
+                            <input type="hidden" class="pair-left-hidden" data-pair-index="${idx}" name="Pairs[${idx-1}].LeftText" />
+                            <input type="hidden" class="pair-id-hidden" data-pair-index="${idx}" name="Pairs[${idx-1}].PairId" />
+                            <span class="text-danger pair-error" id="valPairLeft${idx}"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="form-group">
+                            <label>Right Item</label>
+                            <textarea class="form-control pair-right-input" rows="2" placeholder="Enter right item..."></textarea>
+                            <input type="hidden" class="pair-right-hidden" data-pair-index="${idx}" name="Pairs[${idx-1}].RightText" />
+                            <span class="text-danger pair-error" id="valPairRight${idx}"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-danger btn-xs btn-remove-pair mt-4" title="Remove Pair">
+                            <i class="glyphicon glyphicon-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        $('#pairs-wrapper').append(html);
+        updatePairFieldNames();
+        
+        // Make sure the textarea input handlers are applied to the new textareas
+        bindPairInputHandlers();
+    });
+    
+    // Remove pair button
+    $(document).off('click', '.btn-remove-pair').on('click', '.btn-remove-pair', function() {
+        $(this).closest('.pair-group').fadeOut(200, function() {
+            $(this).remove();
+            pairCount--;
+            updatePairFieldNames();
+        });
+    });
+    
+    // Initial bind of pair input handlers
+    bindPairInputHandlers();
+});
+
+// Function to bind pair textarea input handlers
+function bindPairInputHandlers() {
+    // Sync left textarea content to hidden field on input
+    $(document).off('input', '.pair-left-input').on('input', '.pair-left-input', function() {
+        const textValue = $(this).val();
+        // Wrap in <p> tags for consistency
+        const htmlValue = '<p>' + textValue.replace(/\n/g, '</p><p>') + '</p>';
+        $(this).closest('.pair-group').find('.pair-left-hidden').val(htmlValue);
+    });
+    
+    // Sync right textarea content to hidden field on input
+    $(document).off('input', '.pair-right-input').on('input', '.pair-right-input', function() {
+        const textValue = $(this).val();
+        // Wrap in <p> tags for consistency
+        const htmlValue = '<p>' + textValue.replace(/\n/g, '</p><p>') + '</p>';
+        $(this).closest('.pair-group').find('.pair-right-hidden').val(htmlValue);
+    });
+}
+
+// Function to update field names for all pairs
+function updatePairFieldNames() {
+    $('#pairs-wrapper .pair-group').each(function(i) {
+        var $group = $(this);
+        
+        // Update index in UI
+        $group.attr('data-pair-index', i + 1);
+        $group.find('.pair-label').text('Pair ' + (i + 1));
+        
+        // Left text field
+        var $leftHidden = $group.find('.pair-left-hidden');
+        if ($leftHidden.length) {
+            $leftHidden.attr('name', 'Pairs[' + i + '].LeftText');
+            $leftHidden.attr('data-pair-index', i + 1);
+        }
+        
+        // Right text field
+        var $rightHidden = $group.find('.pair-right-hidden');
+        if ($rightHidden.length) {
+            $rightHidden.attr('name', 'Pairs[' + i + '].RightText');
+            $rightHidden.attr('data-pair-index', i + 1);
+        }
+        
+        // PairId field
+        var $pairId = $group.find('.pair-id-hidden');
+        if ($pairId.length) {
+            $pairId.attr('name', 'Pairs[' + i + '].PairId');
+            $pairId.attr('data-pair-index', i + 1);
+        }
+        
+        // Update validation span IDs
+        $group.find('.pair-error').each(function() {
+            var oldId = $(this).attr('id');
+            if (oldId) {
+                var newId = oldId.replace(/\d+$/, (i + 1));
+                $(this).attr('id', newId);
+            }
+        });
+    });
+}
