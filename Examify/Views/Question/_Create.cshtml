@@ -369,6 +369,58 @@
         width: 100%;
         min-height: 60px;
     }
+
+    /* Ordering questions section */
+    .ordering-section {
+        display: none; /* Initially hidden */
+        background: #fff;
+        border: 1px solid #e1e5e9;
+        border-radius: 6px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+    
+    .order-group {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 15px;
+        position: relative;
+        transition: all 0.2s;
+    }
+    
+    .order-group:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+    }
+    
+    .order-label {
+        position: absolute;
+        top: -8px;
+        left: 15px;
+        background: #fff;
+        padding: 0 8px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #6c757d;
+    }
+    
+    .order-input {
+        width: 100%;
+        min-height: 60px;
+    }
+    
+    .order-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: bold;
+        color: #495057;
+        min-width: 40px;
+    }
 </style>
 
 <form asp-action="Create" method="post" id="questionForm">
@@ -752,6 +804,41 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Ordering Options Section -->
+        <div class="ordering-section" id="ordering-section" style="display: none;">
+            <div class="section-title">
+                Ordering Items
+            </div>
+            <p class="text-muted mb-3">Add items that students will arrange in the correct order during the exam.</p>
+            <div class="form-group">
+                <button type="button" id="btnAddOrderItem" class="btn btn-outline-primary mb-3">
+                    <i class="glyphicon glyphicon-plus"></i> Add Item
+                </button>
+                <span class="text-danger" id="orderOptionsValidation"></span>
+            </div>
+            <div id="orders-wrapper">
+                <div class="form-group order-group" data-order-index="1">
+                    <div class="order-label">Item 1</div>
+                    <div class="row">
+                        <div class="col-md-10">
+                            <div class="form-group">
+                                <textarea class="form-control order-item-input" rows="2" placeholder="Enter item text..."></textarea>
+                                <input type="hidden" class="order-item-hidden" data-order-index="1" name="Orders[0].ItemText" />
+                                <input type="hidden" class="order-id-hidden" data-order-index="1" name="Orders[0].OrderId" />
+                                <input type="hidden" class="order-correct-hidden" data-order-index="1" name="Orders[0].CorrectOrder" value="1" />
+                                <span class="text-danger order-error" id="valOrderItem1"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-danger btn-xs btn-remove-order-item mt-2" title="Remove Item">
+                                <i class="glyphicon glyphicon-trash"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="d-flex justify-content-end">
             <button class="btn btn-outline-primary mb-2" style="margin-top: 20px; margin-right: 10px;width: 80px;">
                 Cancel
@@ -771,7 +858,6 @@
 
 <script>
     // Inject model data for edit mode
-    debugger;
     window.modelData = @Html.Raw(JsonSerializer.Serialize(Model));
     
     // Make sure arrays exist
@@ -840,30 +926,48 @@
                 questionType.TypeName.toLowerCase().includes('match')
             );
             
+            const isOrderingType = questionType && (
+                questionType.TypeName.toLowerCase().includes('ordering') || 
+                questionType.TypeName.toLowerCase().includes('order') ||
+                questionType.TypeName.toLowerCase().includes('sequence') ||
+                questionType.TypeName.toLowerCase().includes('arrange')
+            );
+            
             // Toggle visibility based on question type
             if (isTrueFalseType) {
                 $('#options-section').hide();
                 $('#descriptive-section').hide();
                 $('#pairing-section').hide();
+                $('#ordering-section').hide();
                 $('#true-false-section').show();
                 $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
             } else if (isDescriptiveType) {
                 $('#options-section').hide();
                 $('#true-false-section').hide();
                 $('#pairing-section').hide();
+                $('#ordering-section').hide();
                 $('#descriptive-section').show();
                 $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
             } else if (isPairingType) {
                 $('#options-section').hide();
                 $('#true-false-section').hide();
                 $('#descriptive-section').hide();
+                $('#ordering-section').hide();
                 $('#pairing-section').show();
+                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
+            } else if (isOrderingType) {
+                $('#options-section').hide();
+                $('#true-false-section').hide();
+                $('#descriptive-section').hide();
+                $('#pairing-section').hide();
+                $('#ordering-section').show();
                 $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
             } else {
                 $('#options-section').show();
                 $('#true-false-section').hide();
                 $('#descriptive-section').hide();
                 $('#pairing-section').hide();
+                $('#ordering-section').hide();
                 $('#IsMultiSelect').prop('disabled', false);
             }
         });
@@ -1076,6 +1180,276 @@
         });
     });
 </script>
+
+<script>
+$("document").ready(function() {
+    // Initialization code here
+    console.log("Document is ready. Setting up event handlers and initial states.");
+
+    // Example: Setting default values or states
+    $('#ddlSubject').val('');
+    $('#ddlQuestionType').val('');
+    $('#ddlTopic').val('');
+
+    // Bind change event for Subject dropdown
+    $(document).on('change', '#ddlSubject', function() {
+        var subjectId = $(this).val();
+        console.log("Subject changed:", subjectId);
+        
+        // Load topics based on selected subject
+        loadTopics(subjectId);
+    });
+
+    // Bind click event for add option button
+    $(document).on('click', '#btnAddOption', function() {
+        console.log("Add option button clicked");
+        // Add new option logic here
+        addNewOption();
+    });
+
+    // Initialization for editor containers
+    initializeEditors();
+});
+
+function initializeEditors() {
+    // Initialize Quill editors or other rich text editors
+    console.log("Initializing editor containers");
+    if (window.__quillEditors) {
+        for (var editorId in window.__quillEditors) {
+            if (window.__quillEditors.hasOwnProperty(editorId)) {
+                var quill = window.__quillEditors[editorId];
+                // Set initial content or other configurations if needed
+                console.log("Initializing editor:", editorId, "Content:", quill.root.innerHTML);
+            }
+        }
+    }
+}
+
+@* function loadTopics(subjectId, callback) {
+    console.log("Loading topics for subject:", subjectId);
+    // AJAX or other methods to load topics
+    // On success, call the callback if provided
+    if (callback && typeof callback === 'function') {
+        callback();
+    }
+} *@
+
+function addNewOption() {
+    console.log("Adding new option");
+    // Logic to add a new option field/group
+    var optionIndex = $('.option-group').length + 1;
+    var newOptionGroup = `
+        <div class="form-group option-group" data-option-index="${optionIndex}">
+            <div class="option-label">Option ${optionIndex}</div>
+            <div class="row">
+                <div class="col-md-10">
+                    <div class="editor-container" style="height: 50px !important" id="editor-option${optionIndex}" data-name="Option ${optionIndex}"></div>
+                    <input type="hidden" class="option-hidden-field" data-option-index="${optionIndex}" name="Options[${optionIndex - 1}].Text" />
+                    <input type="hidden" class="option-choiceid-field" data-option-index="${optionIndex}" name="Options[${optionIndex - 1}].ChoiceId" />
+                    <input type="hidden" class="option-correct-hidden" name="Options[${optionIndex - 1}].IsCorrect" value="false" />
+                    <span class="text-danger option-error" id="valOption${optionIndex}"></span>
+                </div>
+                <div class="col-md-2 option-controls">
+                    <div class="option-checkbox checkbox">
+                        <label>
+                            <input type="checkbox" /> Is Correct
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    $('#options-wrapper').append(newOptionGroup);
+    // Re-initialize editors if using Quill or similar
+    initializeEditors();
+}
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

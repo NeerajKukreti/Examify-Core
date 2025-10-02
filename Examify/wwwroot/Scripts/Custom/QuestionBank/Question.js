@@ -6,6 +6,10 @@ var MAX_DESCRIPTIVE_OPTIONS = 4; // Maximum number of descriptive options allowe
 var pairCount = 1; // Start with 1 (the default one) 
 var MAX_PAIRS = 10; // Maximum number of pairs allowed
 
+// Global variables for ordering questions
+var orderItemCount = 1; // Start with 1 (the default one)
+var MAX_ORDER_ITEMS = 4; // Maximum number of order items allowed
+
 var API_BASE_URL_QUESTION = 'https://localhost:7271/api/Question'; // fallback
 var API_BASE_URL_SUBJECT = 'https://localhost:7271/api/Subject'; // fallback
 
@@ -32,6 +36,7 @@ $(document).ready(function () {
 
     // Load topics when subject changes
     $(document).off('change.questionOptions', '#ddlSubject').on('change.questionOptions', '#ddlSubject', function () {
+        debugger;
         var subjectId = $(this).val();
         loadTopics(subjectId);
     });
@@ -590,6 +595,14 @@ $(function () {
             questionType.TypeName.toLowerCase().includes('match')
         );
         
+        // Check if it's an Ordering type
+        const isOrderingType = questionType && (
+            questionType.TypeName.toLowerCase().includes('ordering') || 
+            questionType.TypeName.toLowerCase().includes('order') ||
+            questionType.TypeName.toLowerCase().includes('sequence') ||
+            questionType.TypeName.toLowerCase().includes('arrange')
+        );
+
         // Create form data from form values
         var formData = new FormData(this);
         
@@ -754,6 +767,62 @@ $(function () {
                 valid = false;
             } else {
                 $('#pairOptionsValidation').empty();
+            }
+        }
+        else if (isOrderingType) {
+            console.log("Processing Ordering question type:", questionType);
+            
+            // Remove all ordering fields from the form data first
+            const keysToRemove = [];
+            for (let key of formData.keys()) {
+                if (key.startsWith('Orders[')) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => formData.delete(key));
+            
+            // Validate ordering items
+            let hasValidItem = false;
+            let hasEmptyInput = false;
+            
+            // Process each order item
+            $('#orders-wrapper .order-group').each(function(i) {
+                const $group = $(this);
+                const itemValue = $group.find('.order-item-input').val().trim();
+                
+                // Check if any input is empty
+                if (!itemValue) {
+                    hasEmptyInput = true;
+                    $group.find('.order-error').html('<span class="error-message" style="color:brown;">Item text cannot be empty</span>');
+                } else {
+                    $group.find('.order-error').empty();
+                    hasValidItem = true;
+                    
+                    // Format the text with paragraph tags
+                    const htmlValue = '<p>' + itemValue.replace(/\n/g, '</p><p>') + '</p>';
+                    
+                    // Get OrderId if it exists
+                    const orderId = $group.find('.order-id-hidden').val() || '';
+                    
+                    // Get CorrectOrder (position in the list)
+                    const correctOrder = i + 1;
+                    
+                    // Add to form data
+                    formData.append(`Orders[${i}].ItemText`, htmlValue);
+                    formData.append(`Orders[${i}].OrderId`, orderId);
+                    formData.append(`Orders[${i}].CorrectOrder`, correctOrder.toString());
+                }
+            });
+            
+            // Show validation message if needed
+            if (hasEmptyInput) {
+                $('#orderOptionsValidation').html('<span class="error-message" style="color:brown;">All items must have content</span>');
+                valid = false;
+            } else if (!hasValidItem) {
+                $('#orderOptionsValidation').html('<span class="error-message" style="color:brown;">At least one item is required</span>');
+                valid = false;
+            } else {
+                $('#orderOptionsValidation').empty();
             }
         } else {
             // Options (static and dynamic) for MCQ or other question types
@@ -964,11 +1033,13 @@ $(document).on('questionTypesLoaded', function() {
         questionType.TypeName.toLowerCase().includes('match')
     );
     
-    if (isPairingType) {
-        console.log("This is a pairing question type");
-        //console.log("Question ID:", model.QuestionId);
-        //console.log("Pairs data:", JSON.stringify(model.Pairs || []));
-    }
+    // Check if it's an Ordering type
+    const isOrderingType = questionType && (
+        questionType.TypeName.toLowerCase().includes('ordering') || 
+        questionType.TypeName.toLowerCase().includes('order') ||
+        questionType.TypeName.toLowerCase().includes('sequence') ||
+        questionType.TypeName.toLowerCase().includes('arrange')
+    );
 
     console.log("Question type:", questionType ? questionType.TypeName : "Unknown");
 
@@ -1168,6 +1239,72 @@ $(document).on('questionTypesLoaded', function() {
             $('#btnAddPair').trigger('click');
         }
     }
+    else if (isOrderingType) {
+        console.log("Loading Ordering question for editing");
+        console.log("Orders data:", window.modelData.Orders || "No order items found");
+        
+        // First, clear existing order items
+        $('#orders-wrapper').find('.order-group').remove();
+        orderItemCount = 0;
+        
+        // If we have order items, load them
+        if (window.modelData.Orders && window.modelData.Orders.length > 0) {
+            // Load each order item from the model data
+            for (let i = 0; i < window.modelData.Orders.length && i < MAX_ORDER_ITEMS; i++) {
+                const orderItem = window.modelData.Orders[i];
+                
+                // Add a new order item
+                orderItemCount++;
+                const idx = orderItemCount;
+                
+                const html = `
+                    <div class="form-group order-group" data-order-index="${idx}">
+                        <div class="order-label">Item ${idx}</div>
+                        <div class="row">
+                            <div class="col-md-10">
+                                <div class="form-group">
+                                    <textarea class="form-control order-item-input" rows="2" placeholder="Enter item text..."></textarea>
+                                    <input type="hidden" class="order-item-hidden" data-order-index="${idx}" name="Orders[${idx-1}].ItemText" />
+                                    <input type="hidden" class="order-id-hidden" data-order-index="${idx}" name="Orders[${idx-1}].OrderId" />
+                                    <input type="hidden" class="order-correct-hidden" data-order-index="${idx}" name="Orders[${idx-1}].CorrectOrder" value="${idx}" />
+                                    <span class="text-danger order-error" id="valOrderItem${idx}"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-danger btn-xs btn-remove-order-item mt-2" title="Remove Item">
+                                    <i class="glyphicon glyphicon-trash"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                $('#orders-wrapper').append(html);
+                
+                // Remove <p> tags to get plain text for textarea
+                let plainText = orderItem.ItemText || '';
+                plainText = plainText.replace(/<p>/g, '').replace(/<\/p>/g, '\n').trim();
+                
+                const $newOrderItem = $('#orders-wrapper .order-group').last();
+                $newOrderItem.find('.order-item-input').val(plainText);
+                $newOrderItem.find('.order-item-hidden').val(orderItem.ItemText || '');
+                $newOrderItem.find('.order-id-hidden').val(orderItem.OrderId || '');
+                $newOrderItem.find('.order-correct-hidden').val(i + 1);
+                
+                // Manually trigger the input event to ensure hidden field is updated
+                $newOrderItem.find('.order-item-input').trigger('input');
+            }
+            
+            // Make sure the textarea input handlers are bound
+            bindOrderItemInputHandlers();
+            
+            // Update all field names
+            updateOrderItemFieldNames();
+        } else {
+            // Add a default empty order item if none exist
+            $('#btnAddOrderItem').trigger('click');
+        }
+    }
     else {
         // Add extra option groups if needed for MCQ
         if (window.modelData.Options && window.modelData.Options.length > 4) {
@@ -1325,5 +1462,109 @@ function updatePairFieldNames() {
                 $(this).attr('id', newId);
             }
         });
+    });
+}
+
+$(function () {
+    // Add order item button
+    $(document).off('click', '#btnAddOrderItem').on('click', '#btnAddOrderItem', function() {
+        if (orderItemCount >= MAX_ORDER_ITEMS) {
+            alert('Maximum of ' + MAX_ORDER_ITEMS + ' items allowed');
+            return;
+        }
+        
+        orderItemCount++;
+        const idx = orderItemCount;
+        
+        const html = `
+            <div class="form-group order-group" data-order-index="${idx}">
+                <div class="order-label">Item ${idx}</div>
+                <div class="row">
+                    <div class="col-md-10">
+                        <div class="form-group">
+                            <textarea class="form-control order-item-input" rows="2" placeholder="Enter item text..."></textarea>
+                            <input type="hidden" class="order-item-hidden" data-order-index="${idx}" name="Orders[${idx-1}].ItemText" />
+                            <input type="hidden" class="order-id-hidden" data-order-index="${idx}" name="Orders[${idx-1}].OrderId" />
+                            <input type="hidden" class="order-correct-hidden" data-order-index="${idx}" name="Orders[${idx-1}].CorrectOrder" value="${idx}" />
+                            <span class="text-danger order-error" id="valOrderItem${idx}"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-danger btn-xs btn-remove-order-item mt-2" title="Remove Item">
+                            <i class="glyphicon glyphicon-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        $('#orders-wrapper').append(html);
+        updateOrderItemFieldNames();
+        
+        // Make sure the textarea input handler is applied to the new textarea
+        bindOrderItemInputHandlers();
+    });
+    
+    // Remove order item button
+    $(document).off('click', '.btn-remove-order-item').on('click', '.btn-remove-order-item', function() {
+        $(this).closest('.order-group').fadeOut(200, function() {
+            $(this).remove();
+            orderItemCount--;
+            updateOrderItemFieldNames();
+        });
+    });
+    
+    // Initial bind of order item input handlers
+    bindOrderItemInputHandlers();
+});
+
+// Function to bind order item textarea input handlers
+function bindOrderItemInputHandlers() {
+    // Sync textarea content to hidden field on input
+    $(document).off('input', '.order-item-input').on('input', '.order-item-input', function() {
+        const textValue = $(this).val();
+        // Wrap in <p> tags for consistency
+        const htmlValue = '<p>' + textValue.replace(/\n/g, '</p><p>') + '</p>';
+        $(this).closest('.order-group').find('.order-item-hidden').val(htmlValue);
+    });
+}
+
+// Function to update field names for all order items
+function updateOrderItemFieldNames() {
+    $('#orders-wrapper .order-group').each(function(i) {
+        const $group = $(this);
+        const orderIndex = i + 1;
+        
+        // Update index in UI
+        $group.attr('data-order-index', orderIndex);
+        $group.find('.order-label').text('Item ' + orderIndex);
+        
+        // Item text field
+        const $itemHidden = $group.find('.order-item-hidden');
+        if ($itemHidden.length) {
+            $itemHidden.attr('name', 'Orders[' + i + '].ItemText');
+            $itemHidden.attr('data-order-index', orderIndex);
+        }
+        
+        // OrderId field
+        const $orderId = $group.find('.order-id-hidden');
+        if ($orderId.length) {
+            $orderId.attr('name', 'Orders[' + i + '].OrderId');
+            $orderId.attr('data-order-index', orderIndex);
+        }
+        
+        // CorrectOrder field
+        const $correctOrder = $group.find('.order-correct-hidden');
+        if ($correctOrder.length) {
+            $correctOrder.attr('name', 'Orders[' + i + '].CorrectOrder');
+            $correctOrder.attr('data-order-index', orderIndex);
+            $correctOrder.val(orderIndex); // Update correct order based on position
+        }
+        
+        // Update validation span ID
+        const $error = $group.find('.order-error');
+        if ($error.length && $error.attr('id')) {
+            $error.attr('id', 'valOrderItem' + orderIndex);
+        }
     });
 }

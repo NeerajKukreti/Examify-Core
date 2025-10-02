@@ -70,6 +70,16 @@ namespace DAL.Repository
                     RightText = (string)p.RightText
                 }).ToList();
             }
+            else if (question.TypeName == "Ordering")
+            {
+                var orderRows = await multi.ReadAsync();
+                question.Orders = orderRows.Select(p => new OrderModel
+                {
+                    OrderId = p.OrderId,
+                    ItemText = (string)p.ItemText,
+                    CorrectOrder = (int)p.CorrectOrder
+                }).ToList(); 
+            }
 
             return question;
         }
