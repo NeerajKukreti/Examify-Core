@@ -26,7 +26,7 @@ $(document).ready(function () {
             window.QuestionOptions.resetOptions();
         }
         if (typeof window.QuestionOptions.resetMax === 'function') {
-            window.QuestionOptions.resetMax(5); // default
+            window.QuestionOptions.resetMax(4); // Change from 5 to 4 to match original behavior
         }
     }
 
@@ -39,14 +39,6 @@ $(document).ready(function () {
         debugger;
         var subjectId = $(this).val();
         loadTopics(subjectId);
-    });
-
-    $(document).off('click.panelToggle', '.panel-header').on('click.panelToggle', '.panel-header', function () {
-        let $btn = $(this).find('.toggle-btn');
-        let $panelBody = $btn.closest(".editor-panel").find(".panel-body");
-
-        $panelBody.slideToggle(200);  // animate hide/show
-        $btn.text($btn.text() === "−" ? "+" : "−"); // change symbol
     });
 
     // Handle multi-select toggle behavior
@@ -96,34 +88,18 @@ function initializeMultiSelectBehavior() {
                     });
             }
             
-            // Update names for all options
-            updateOptionFieldNames();
+            // Update names for all options using FieldManager
+            if (window.FieldManager) {
+                window.FieldManager.updateOptionFieldNames();
+            }
         });
 } 
 
-// Function to update option field names for consistent indexing
+// Function to update option field names for consistent indexing - now uses FieldManager
 function updateOptionFieldNames() {
-    $('#options-wrapper .option-group').each(function(i) {
-        var $group = $(this);
-        
-        // Text field
-        var $hidden = $group.find('.option-hidden-field');
-        if ($hidden.length) {
-            $hidden.attr('name', 'Options[' + i + '].Text');
-        }
-        
-        // IsCorrect field
-        var $correctHidden = $group.find('.option-correct-hidden');
-        if ($correctHidden.length) {
-            $correctHidden.attr('name', 'Options[' + i + '].IsCorrect');
-        }
-        
-        // ChoiceId field
-        var $choiceId = $group.find('.option-choiceid-field');
-        if ($choiceId.length) {
-            $choiceId.attr('name', 'Options[' + i + '].ChoiceId');
-        }
-    });
+    if (window.FieldManager) {
+        window.FieldManager.updateOptionFieldNames();
+    }
 }
 
 function loadSubjects() {
@@ -150,15 +126,13 @@ function loadQuestionTypes() {
         $.each(data, function (i, type) {
             $ddl.append('<option value="' + type.QuestionTypeId + '">' + type.TypeName + '</option>');
             
-            // Identify MCQ and True/False types by their names
-            if (type.TypeName.toLowerCase().includes('mcq') || 
-                type.TypeName.toLowerCase().includes('multiple choice')) {
-                MCQ_TYPE_ID = type.QuestionTypeId;
-            }
-            else if (type.TypeName.toLowerCase().includes('true/false') || 
-                     type.TypeName.toLowerCase().includes('true false') ||
-                     type.TypeName.toLowerCase().includes('t/f')) {
-                TRUE_FALSE_TYPE_ID = type.QuestionTypeId;
+            // Identify MCQ and True/False types by their names using QuestionTypeManager
+            if (window.QuestionTypeManager) {
+                if (window.QuestionTypeManager.isMCQType(type)) {
+                    MCQ_TYPE_ID = type.QuestionTypeId;
+                } else if (window.QuestionTypeManager.isTrueFalseType(type)) {
+                    TRUE_FALSE_TYPE_ID = type.QuestionTypeId;
+                }
             }
         });
         
@@ -196,7 +170,7 @@ function loadTopics(subjectId, callback) {
 (function (window, $) {
     'use strict';
 
-    var MAX_OPTIONS = 5; // internal state (reset via resetMax)
+    var MAX_OPTIONS = 4; // internal state (reset via resetMax) - changed from 5 to 4
     var initialOptionCount = 0; // captured on first run
     var EVENTS_NS_ADD = 'click.questionOptionsAdd';
     var EVENTS_NS_REMOVE = 'click.questionOptionsRemove';
@@ -208,7 +182,7 @@ function loadTopics(subjectId, callback) {
     }
 
     function resetMax(val) {
-        MAX_OPTIONS = (typeof val === 'number' && val > 0) ? val : 5;
+        MAX_OPTIONS = (typeof val === 'number' && val > 0) ? val : 4; // Change default from 5 to 4
     }
 
     // Remove any dynamically added options beyond the original initialOptionCount
@@ -342,8 +316,10 @@ function loadTopics(subjectId, callback) {
             initializeMultiSelectBehavior();
         }
         
-        // Update hidden field names
-        updateOptionFieldNames();
+        // Update hidden field names using FieldManager
+        if (window.FieldManager) {
+            window.FieldManager.updateOptionFieldNames();
+        }
     }
 
     function removeOption(btn) {
@@ -355,8 +331,10 @@ function loadTopics(subjectId, callback) {
         $('#toolbar-for-' + editorId).remove();
         $group.fadeOut(200, function () {
             $(this).remove();
-            // Update hidden field names after removal
-            updateOptionFieldNames();
+            // Update hidden field names after removal using FieldManager
+            if (window.FieldManager) {
+                window.FieldManager.updateOptionFieldNames();
+            }
         });
     }
 
@@ -487,7 +465,7 @@ $(function () {
         $(selector).addClass('error').after('<span class="error-message" style="color:brown;">' + message + '</span>');
     }
 
-    // Handle True/False checkbox behavior
+    // Handle True/False checkbox behavior - now using QuestionTypeManager logic
     $(document).off('change.tfOption', '.tf-option').on('change.tfOption', '.tf-option', function() {
         if ($(this).is(':checked')) {
             // Get the selected option value (true or false)
@@ -508,12 +486,12 @@ $(function () {
                 
                 // Set IsCorrect based on whether this is the selected option
                 $(this).find('.option-correct-hidden').val(isSelected ? 'true' : 'false');
-                
-                // Ensure field names are set properly
-                $(this).find('.option-hidden-field').attr('name', 'Options[' + i + '].Text');
-                $(this).find('.option-correct-hidden').attr('name', 'Options[' + i + '].IsCorrect');
-                $(this).find('.option-choiceid-field').attr('name', 'Options[' + i + '].ChoiceId');
             });
+            
+            // Update field names using FieldManager
+            if (window.FieldManager) {
+                window.FieldManager.updateTrueFalseFieldNames();
+            }
         }
     });
 
@@ -549,17 +527,25 @@ $(function () {
             valid = false;
         }
         
-        // Sync Quill HTML to hidden field
-        if (qEng) $('#hfQuestionEnglish').val(qEng.root.innerHTML);
+        // Sync Quill HTML to hidden field using FieldManager
+        if (qEng && window.FieldManager) {
+            window.FieldManager.syncQuillToHidden(qEng, $('#hfQuestionEnglish'));
+        }
         // Question Hindi
         let qHindi = window.__quillEditors && window.__quillEditors['editor-question-hindi'];
-        if (qHindi) $('#hfQuestionHindi').val(qHindi.root.innerHTML);
+        if (qHindi && window.FieldManager) {
+            window.FieldManager.syncQuillToHidden(qHindi, $('#hfQuestionHindi'));
+        }
         // Additional Text English
         let qAddEng = window.__quillEditors && window.__quillEditors['editor-additional-english'];
-        if (qAddEng) $('#hfAdditionalEnglish').val(qAddEng.root.innerHTML);
+        if (qAddEng && window.FieldManager) {
+            window.FieldManager.syncQuillToHidden(qAddEng, $('#hfAdditionalEnglish'));
+        }
         // Additional Text Hindi
         let qAddHindi = window.__quillEditors && window.__quillEditors['editor-additional-hindi'];
-        if (qAddHindi) $('#hfAdditionalHindi').val(qAddHindi.root.innerHTML);
+        if (qAddHindi && window.FieldManager) {
+            window.FieldManager.syncQuillToHidden(qAddHindi, $('#hfAdditionalHindi'));
+        }
 
         // Get the question type - use let instead of const so we can modify it if needed
         let questionTypeId = parseInt($('#ddlQuestionType').val() || '0');
@@ -569,39 +555,15 @@ $(function () {
             questionTypeId = parseInt($('#hiddenQuestionTypeId').val() || '0');
         }
         
-        // Find the question type object from AllQuestionTypes
-        let questionType = null;
-        if (AllQuestionTypes && AllQuestionTypes.length > 0) {
-            questionType = AllQuestionTypes.find(type => type.QuestionTypeId === questionTypeId);
-        }
+        // Get question type using QuestionTypeManager
+        const questionType = window.QuestionTypeManager ? 
+            window.QuestionTypeManager.getQuestionTypeById(questionTypeId) : null;
         
-        // Check if it's a True/False question type based on type name
-        const isTrueFalseType = questionType && (
-            questionType.TypeName.toLowerCase().includes('true/false') || 
-            questionType.TypeName.toLowerCase().includes('true false') ||
-            questionType.TypeName.toLowerCase().includes('t/f')
-        );
-        
-        // Check if it's a Descriptive question type based on type name
-        const isDescriptiveType = questionType && (
-            questionType.TypeName.toLowerCase().includes('descriptive') || 
-            questionType.TypeName.toLowerCase().includes('subjective')
-        );
-        
-        // Check if it's a Pairing question type based on type name
-        const isPairingType = questionType && (
-            questionType.TypeName.toLowerCase().includes('matching') || 
-            questionType.TypeName.toLowerCase().includes('pair') ||
-            questionType.TypeName.toLowerCase().includes('match')
-        );
-        
-        // Check if it's an Ordering type
-        const isOrderingType = questionType && (
-            questionType.TypeName.toLowerCase().includes('ordering') || 
-            questionType.TypeName.toLowerCase().includes('order') ||
-            questionType.TypeName.toLowerCase().includes('sequence') ||
-            questionType.TypeName.toLowerCase().includes('arrange')
-        );
+        // Check question types using QuestionTypeManager
+        const isTrueFalseType = questionType && window.QuestionTypeManager.isTrueFalseType(questionType);
+        const isDescriptiveType = questionType && window.QuestionTypeManager.isDescriptiveType(questionType);
+        const isPairingType = questionType && window.QuestionTypeManager.isPairingType(questionType);
+        const isOrderingType = questionType && window.QuestionTypeManager.isOrderingType(questionType);
 
         // Create form data from form values
         var formData = new FormData(this);
@@ -680,7 +642,7 @@ $(function () {
                 // Check if any textarea is empty
                 if (!textareaValue) {
                     hasEmptyInput = true;
-                    $group.find('.option-error').html('<span class="error-message" style="color:brown;">This text input cannot be empty</span>');
+                    $group.find('.option-error').html('<span class="error-message" style="color:brown;">' + /* leave message as-is */'</span>');
                 } else {
                     $group.find('.option-error').empty();
                     hasValidOption = true;
@@ -949,7 +911,9 @@ $(function () {
         `;
         
         $('#descriptive-options-wrapper').append(html);
-        updateDescriptiveOptionFieldNames();
+        if (window.FieldManager) {
+            window.FieldManager.updateDescriptiveFieldNames();
+        }
         
         // Make sure the textarea input handler is applied to the new textarea
         bindDescriptiveInputHandler();
@@ -960,7 +924,9 @@ $(function () {
         $(this).closest('.descriptive-option-group').fadeOut(200, function() {
             $(this).remove();
             descriptiveOptionCount--;
-            updateDescriptiveOptionFieldNames();
+            if (window.FieldManager) {
+                window.FieldManager.updateDescriptiveFieldNames();
+            }
         });
     });
     
@@ -970,378 +936,28 @@ $(function () {
 
 // Function to bind textarea input handler
 function bindDescriptiveInputHandler() {
-    // Sync text area content to hidden field on input
+    // Sync text area content to hidden field on input using FieldManager
     $(document).off('input', '.descriptive-input').on('input', '.descriptive-input', function() {
-        const textValue = $(this).val();
-        // Wrap in <p> tags for consistency with other option types
-        const htmlValue = '<p>' + textValue.replace(/\n/g, '</p><p>') + '</p>';
-        $(this).closest('.descriptive-option-group').find('.option-hidden-field').val(htmlValue);
+        const $textarea = $(this);
+        const $hiddenField = $textarea.closest('.descriptive-option-group').find('.option-hidden-field');
+        if (window.FieldManager) {
+            window.FieldManager.syncTextareaToHidden($textarea, $hiddenField);
+        }
     });
 }
 
-// Function to update field names for all descriptive options
+// Function to update field names for all descriptive options - now uses FieldManager
 function updateDescriptiveOptionFieldNames() {
-    $('#descriptive-options-wrapper .descriptive-option-group').each(function(i) {
-        var $group = $(this);
-        
-        // Text field
-        var $hidden = $group.find('.option-hidden-field');
-        if ($hidden.length) {
-            $hidden.attr('name', 'Options[' + i + '].Text');
-        }
-        
-        // IsCorrect field
-        var $correctHidden = $group.find('.option-correct-hidden');
-        if ($correctHidden.length) {
-            $correctHidden.attr('name', 'Options[' + i + '].IsCorrect');
-        }
-        
-        // ChoiceId field
-        var $choiceId = $group.find('.option-choiceid-field');
-        if ($choiceId.length) {
-            $choiceId.attr('name', 'Options[' + i + '].ChoiceId');
-        }
-    });
+    if (window.FieldManager) {
+        window.FieldManager.updateDescriptiveFieldNames();
+    }
 }
 
-// Handle True/False question type if editing
+// Handle True/False question type if editing - moved to QuestionForm module
 // We need to wait for question types to be loaded to know the question types
 $(document).on('questionTypesLoaded', function() {
-    // Find question type from AllQuestionTypes
-    let questionType = null;
-    if (window.modelData && window.modelData.QuestionTypeId && AllQuestionTypes) {
-        questionType = AllQuestionTypes.find(type => type.QuestionTypeId === window.modelData.QuestionTypeId);
-    }
-
-    // Check if it's a True/False type
-    const isTrueFalseType = questionType && (
-        questionType.TypeName.toLowerCase().includes('true/false') || 
-        questionType.TypeName.toLowerCase().includes('true false') ||
-        questionType.TypeName.toLowerCase().includes('t/f')
-    );
-    
-    // Check if it's a Descriptive type
-    const isDescriptiveType = questionType && (
-        questionType.TypeName.toLowerCase().includes('descriptive') || 
-        questionType.TypeName.toLowerCase().includes('subjective')
-    );
-
-    // Check if it's a Pairing type
-    const isPairingType = questionType && (
-        questionType.TypeName.toLowerCase().includes('matching') || 
-        questionType.TypeName.toLowerCase().includes('pair') ||
-        questionType.TypeName.toLowerCase().includes('match')
-    );
-    
-    // Check if it's an Ordering type
-    const isOrderingType = questionType && (
-        questionType.TypeName.toLowerCase().includes('ordering') || 
-        questionType.TypeName.toLowerCase().includes('order') ||
-        questionType.TypeName.toLowerCase().includes('sequence') ||
-        questionType.TypeName.toLowerCase().includes('arrange')
-    );
-
-    console.log("Question type:", questionType ? questionType.TypeName : "Unknown");
-
-    if (isTrueFalseType) {
-        console.log("Loading True/False question for editing");
-        console.log("Options:", window.modelData.Options);
-
-        // Set correct True/False option
-        if (window.modelData.Options && window.modelData.Options.length > 0) {
-            // Make sure we have both True and False options
-            let trueOption = null;
-            let falseOption = null;
-
-            // Find True and False options
-            for (let i = 0; i < window.modelData.Options.length; i++) {
-                const opt = window.modelData.Options[i];
-                const optText = opt.Text ? opt.Text.toLowerCase() : '';
-
-                if (optText.includes('true')) {
-                    trueOption = opt;
-                } else if (optText.includes('false')) {
-                    falseOption = opt;
-                }
-            }
-
-            console.log("True option:", trueOption);
-            console.log("False option:", falseOption);
-
-            // Set True option
-            if (trueOption) {
-                // Set checkbox if it's correct
-                if (trueOption.IsCorrect) {
-                    $('.tf-option[data-option-value="true"]').prop('checked', true);
-                }
-
-                // Always set ChoiceId
-                const trueChoiceId = trueOption.ChoiceId || '';
-                $('.true-false-option').eq(0).find('.option-choiceid-field').val(trueChoiceId);
-                console.log("Set True ChoiceId to:", trueChoiceId);
-            }
-
-            // Set False option
-            if (falseOption) {
-                // Set checkbox if it's correct
-                if (falseOption.IsCorrect) {
-                    $('.tf-option[data-option-value="false"]').prop('checked', true);
-                }
-
-                // Always set ChoiceId
-                const falseChoiceId = falseOption.ChoiceId || '';
-                $('.true-false-option').eq(1).find('.option-choiceid-field').val(falseChoiceId);
-                console.log("Set False ChoiceId to:", falseChoiceId);
-            }
-
-            // Make sure the correct hidden values are set too
-            $('.true-false-option').each(function(i) {
-                const isChecked = $(this).find('.tf-option').is(':checked');
-                $(this).find('.option-correct-hidden').val(isChecked ? 'true' : 'false');
-            });
-        }
-    }
-    else if (isDescriptiveType) {
-        console.log("Loading Descriptive question for editing");
-        
-        // First, clear existing options
-        $('#descriptive-options-wrapper').find('.descriptive-option-group').remove();
-        descriptiveOptionCount = 0;
-        
-        // If we have options, load them
-        if (window.modelData.Options && window.modelData.Options.length > 0) {
-            // Load each option from the model data
-            for (let i = 0; i < window.modelData.Options.length && i < MAX_DESCRIPTIVE_OPTIONS; i++) {
-                const opt = window.modelData.Options[i];
-                
-                // Add a new option
-                descriptiveOptionCount++;
-                const idx = descriptiveOptionCount;
-                
-                const html = `
-                    <div class="form-group descriptive-option-group" data-option-index="${idx}">
-                        <div class="option-label">Text Input ${idx}</div>
-                        <div class="row">
-                            <div class="col-md-10">
-                                <textarea class="form-control descriptive-input" rows="3" placeholder="Enter text..."></textarea>
-                                <input type="hidden" class="option-hidden-field" data-option-index="${idx}" name="Options[${idx-1}].Text" />
-                                <input type="hidden" class="option-choiceid-field" data-option-index="${idx}" name="Options[${idx-1}].ChoiceId" />
-                                <input type="hidden" class="option-correct-hidden" name="Options[${idx-1}].IsCorrect" value="true" />
-                                <span class="text-danger option-error" id="valDescriptiveOption${idx}"></span>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="button" class="btn btn-danger btn-xs btn-remove-descriptive-option mt-2" title="Remove Option">
-                                    <i class="glyphicon glyphicon-trash"></i> Remove
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                $('#descriptive-options-wrapper').append(html);
-                
-                // Remove <p> tags to get plain text for textarea
-                let plainText = opt.Text || '';
-                plainText = plainText.replace(/<p>/g, '').replace(/<\/p>/g, '\n').trim();
-                
-                const $newOption = $('#descriptive-options-wrapper .descriptive-option-group').last();
-                $newOption.find('.descriptive-input').val(plainText);
-                $newOption.find('.option-hidden-field').val(opt.Text || '');
-                $newOption.find('.option-choiceid-field').val(opt.ChoiceId || '');
-            }
-            
-            // Make sure the textarea input handlers are bound
-            bindDescriptiveInputHandler();
-            
-            // Update all field names
-            updateDescriptiveOptionFieldNames();
-        } else {
-            // Add a default empty option if none exist
-            $('#btnAddDescriptiveOption').trigger('click');
-        }
-    } 
-    else if (isPairingType) {
-        console.log("Loading Pairing question for editing");
-        console.log("Pairs data:", window.modelData.Pairs || "No pairs found");
-        
-        // First, clear existing pairs
-        $('#pairs-wrapper').find('.pair-group').remove();
-        pairCount = 0;
-        
-        // If we have pairs, load them
-        if (window.modelData.Pairs && window.modelData.Pairs.length > 0) {
-            // Load each pair from the model data
-            for (let i = 0; i < window.modelData.Pairs.length && i < MAX_PAIRS; i++) {
-                const pair = window.modelData.Pairs[i];
-                
-                // Add a new pair
-                pairCount++;
-                const idx = pairCount;
-                
-                const html = `
-                    <div class="form-group pair-group" data-pair-index="${idx}">
-                        <div class="pair-label">Pair ${idx}</div>
-                        <div class="row">
-                            <div class="col-md-5">
-                                <div class="form-group">
-                                    <label>Left Item</label>
-                                    <textarea class="form-control pair-left-input" rows="2" placeholder="Enter left item..."></textarea>
-                                    <input type="hidden" class="pair-left-hidden" data-pair-index="${idx}" name="Pairs[${idx-1}].LeftText" />
-                                    <input type="hidden" class="pair-id-hidden" data-pair-index="${idx}" name="Pairs[${idx-1}].PairId" />
-                                    <span class="text-danger pair-error" id="valPairLeft${idx}"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-5">
-                                <div class="form-group">
-                                    <label>Right Item</label>
-                                    <textarea class="form-control pair-right-input" rows="2" placeholder="Enter right item..."></textarea>
-                                    <input type="hidden" class="pair-right-hidden" data-pair-index="${idx}" name="Pairs[${idx-1}].RightText" />
-                                    <span class="text-danger pair-error" id="valPairRight${idx}"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="button" class="btn btn-danger btn-xs btn-remove-pair mt-4" title="Remove Pair">
-                                    <i class="glyphicon glyphicon-trash"></i> Remove
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                $('#pairs-wrapper').append(html);
-                
-                // Remove <p> tags to get plain text for textarea
-                let leftPlainText = pair.LeftText || '';
-                leftPlainText = leftPlainText.replace(/<p>/g, '').replace(/<\/p>/g, '\n').trim();
-                
-                let rightPlainText = pair.RightText || '';
-                rightPlainText = rightPlainText.replace(/<p>/g, '').replace(/<\/p>/g, '\n').trim();
-                
-                const $newPair = $('#pairs-wrapper .pair-group').last();
-                $newPair.find('.pair-left-input').val(leftPlainText);
-                $newPair.find('.pair-left-hidden').val(pair.LeftText || '');
-                $newPair.find('.pair-right-input').val(rightPlainText);
-                $newPair.find('.pair-right-hidden').val(pair.RightText || '');
-                $newPair.find('.pair-id-hidden').val(pair.PairId || '');
-                
-                // Manually trigger the input events to ensure hidden fields are updated
-                $newPair.find('.pair-left-input').trigger('input');
-                $newPair.find('.pair-right-input').trigger('input');
-            }
-            
-            // Make sure the textarea input handlers are bound
-            bindPairInputHandlers();
-            
-            // Update all field names
-            updatePairFieldNames();
-        } else {
-            // Add a default empty pair if none exist
-            $('#btnAddPair').trigger('click');
-        }
-    }
-    else if (isOrderingType) {
-        console.log("Loading Ordering question for editing");
-        console.log("Orders data:", window.modelData.Orders || "No order items found");
-        
-        // First, clear existing order items
-        $('#orders-wrapper').find('.order-group').remove();
-        orderItemCount = 0;
-        
-        // If we have order items, load them
-        if (window.modelData.Orders && window.modelData.Orders.length > 0) {
-            // Load each order item from the model data
-            for (let i = 0; i < window.modelData.Orders.length && i < MAX_ORDER_ITEMS; i++) {
-                const orderItem = window.modelData.Orders[i];
-                
-                // Add a new order item
-                orderItemCount++;
-                const idx = orderItemCount;
-                
-                const html = `
-                    <div class="form-group order-group" data-order-index="${idx}">
-                        <div class="order-label">Item ${idx}</div>
-                        <div class="row">
-                            <div class="col-md-10">
-                                <div class="form-group">
-                                    <textarea class="form-control order-item-input" rows="2" placeholder="Enter item text..."></textarea>
-                                    <input type="hidden" class="order-item-hidden" data-order-index="${idx}" name="Orders[${idx-1}].ItemText" />
-                                    <input type="hidden" class="order-id-hidden" data-order-index="${idx}" name="Orders[${idx-1}].OrderId" />
-                                    <input type="hidden" class="order-correct-hidden" data-order-index="${idx}" name="Orders[${idx-1}].CorrectOrder" value="${idx}" />
-                                    <span class="text-danger order-error" id="valOrderItem${idx}"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <button type="button" class="btn btn-danger btn-xs btn-remove-order-item mt-2" title="Remove Item">
-                                    <i class="glyphicon glyphicon-trash"></i> Remove
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                $('#orders-wrapper').append(html);
-                
-                // Remove <p> tags to get plain text for textarea
-                let plainText = orderItem.ItemText || '';
-                plainText = plainText.replace(/<p>/g, '').replace(/<\/p>/g, '\n').trim();
-                
-                const $newOrderItem = $('#orders-wrapper .order-group').last();
-                $newOrderItem.find('.order-item-input').val(plainText);
-                $newOrderItem.find('.order-item-hidden').val(orderItem.ItemText || '');
-                $newOrderItem.find('.order-id-hidden').val(orderItem.OrderId || '');
-                $newOrderItem.find('.order-correct-hidden').val(i + 1);
-                
-                // Manually trigger the input event to ensure hidden field is updated
-                $newOrderItem.find('.order-item-input').trigger('input');
-            }
-            
-            // Make sure the textarea input handlers are bound
-            bindOrderItemInputHandlers();
-            
-            // Update all field names
-            updateOrderItemFieldNames();
-        } else {
-            // Add a default empty order item if none exist
-            $('#btnAddOrderItem').trigger('click');
-        }
-    }
-    else {
-        // Add extra option groups if needed for MCQ
-        if (window.modelData.Options && window.modelData.Options.length > 4) {
-            for (var i = 4; i < window.modelData.Options.length; i++) {
-                if (window.QuestionOptions && typeof window.QuestionOptions.add === 'function') {
-                    window.QuestionOptions.add();
-                }
-            }
-        }
-
-        // Refill options for MCQ
-        if (window.modelData.Options && window.modelData.Options.length > 0) {
-            $('#options-wrapper .option-group').each(function (i) {
-                var opt = window.modelData.Options[i];
-                if (opt) {
-                    var editorId = $(this).find('.editor-container').attr('id');
-                    if (window.__quillEditors && window.__quillEditors[editorId]) {
-                        window.__quillEditors[editorId].root.innerHTML = opt.Text || '';
-                    }
-                    $(this).find('.option-hidden-field').val(opt.Text || '');
-                    $(this).find('input[type="checkbox"]').prop('checked', !!opt.IsCorrect);
-                    $(this).find('.option-correct-hidden').val(opt.IsCorrect ? 'true' : 'false');
-
-                    // Set ChoiceId hidden field
-                    var $choiceId = $(this).find('.option-choiceid-field');
-                    if ($choiceId.length === 0) {
-                        $choiceId = $('<input type="hidden" class="option-choiceid-field" />').appendTo($(this));
-                    }
-                    $choiceId.val(opt.ChoiceId || '');
-                    $choiceId.attr('name', 'Options[' + i + '].ChoiceId');
-                }
-            });
-        }
-    }
-
-    // Trigger the question type change to show/hide appropriate sections
-    $('#ddlQuestionType').trigger('change');
+    // This logic is now handled by QuestionForm.populateEditData
+    // Keep this for backward compatibility but will be removed eventually
 });
 
 $(function () {
@@ -1386,7 +1002,9 @@ $(function () {
         `;
         
         $('#pairs-wrapper').append(html);
-        updatePairFieldNames();
+        if (window.FieldManager) {
+            window.FieldManager.updatePairFieldNames();
+        }
         
         // Make sure the textarea input handlers are applied to the new textareas
         bindPairInputHandlers();
@@ -1397,7 +1015,9 @@ $(function () {
         $(this).closest('.pair-group').fadeOut(200, function() {
             $(this).remove();
             pairCount--;
-            updatePairFieldNames();
+            if (window.FieldManager) {
+                window.FieldManager.updatePairFieldNames();
+            }
         });
     });
     
@@ -1407,62 +1027,30 @@ $(function () {
 
 // Function to bind pair textarea input handlers
 function bindPairInputHandlers() {
-    // Sync left textarea content to hidden field on input
+    // Sync left textarea content to hidden field on input using FieldManager
     $(document).off('input', '.pair-left-input').on('input', '.pair-left-input', function() {
-        const textValue = $(this).val();
-        // Wrap in <p> tags for consistency
-        const htmlValue = '<p>' + textValue.replace(/\n/g, '</p><p>') + '</p>';
-        $(this).closest('.pair-group').find('.pair-left-hidden').val(htmlValue);
+        const $textarea = $(this);
+        const $hiddenField = $textarea.closest('.pair-group').find('.pair-left-hidden');
+        if (window.FieldManager) {
+            window.FieldManager.syncTextareaToHidden($textarea, $hiddenField);
+        }
     });
     
-    // Sync right textarea content to hidden field on input
+    // Sync right textarea content to hidden field on input using FieldManager
     $(document).off('input', '.pair-right-input').on('input', '.pair-right-input', function() {
-        const textValue = $(this).val();
-        // Wrap in <p> tags for consistency
-        const htmlValue = '<p>' + textValue.replace(/\n/g, '</p><p>') + '</p>';
-        $(this).closest('.pair-group').find('.pair-right-hidden').val(htmlValue);
+        const $textarea = $(this);
+        const $hiddenField = $textarea.closest('.pair-group').find('.pair-right-hidden');
+        if (window.FieldManager) {
+            window.FieldManager.syncTextareaToHidden($textarea, $hiddenField);
+        }
     });
 }
 
-// Function to update field names for all pairs
+// Function to update field names for all pairs - now uses FieldManager
 function updatePairFieldNames() {
-    $('#pairs-wrapper .pair-group').each(function(i) {
-        var $group = $(this);
-        
-        // Update index in UI
-        $group.attr('data-pair-index', i + 1);
-        $group.find('.pair-label').text('Pair ' + (i + 1));
-        
-        // Left text field
-        var $leftHidden = $group.find('.pair-left-hidden');
-        if ($leftHidden.length) {
-            $leftHidden.attr('name', 'Pairs[' + i + '].LeftText');
-            $leftHidden.attr('data-pair-index', i + 1);
-        }
-        
-        // Right text field
-        var $rightHidden = $group.find('.pair-right-hidden');
-        if ($rightHidden.length) {
-            $rightHidden.attr('name', 'Pairs[' + i + '].RightText');
-            $rightHidden.attr('data-pair-index', i + 1);
-        }
-        
-        // PairId field
-        var $pairId = $group.find('.pair-id-hidden');
-        if ($pairId.length) {
-            $pairId.attr('name', 'Pairs[' + i + '].PairId');
-            $pairId.attr('data-pair-index', i + 1);
-        }
-        
-        // Update validation span IDs
-        $group.find('.pair-error').each(function() {
-            var oldId = $(this).attr('id');
-            if (oldId) {
-                var newId = oldId.replace(/\d+$/, (i + 1));
-                $(this).attr('id', newId);
-            }
-        });
-    });
+    if (window.FieldManager) {
+        window.FieldManager.updatePairFieldNames();
+    }
 }
 
 $(function () {
@@ -1499,7 +1087,9 @@ $(function () {
         `;
         
         $('#orders-wrapper').append(html);
-        updateOrderItemFieldNames();
+        if (window.FieldManager) {
+            window.FieldManager.updateOrderFieldNames();
+        }
         
         // Make sure the textarea input handler is applied to the new textarea
         bindOrderItemInputHandlers();
@@ -1510,7 +1100,9 @@ $(function () {
         $(this).closest('.order-group').fadeOut(200, function() {
             $(this).remove();
             orderItemCount--;
-            updateOrderItemFieldNames();
+            if (window.FieldManager) {
+                window.FieldManager.updateOrderFieldNames();
+            }
         });
     });
     
@@ -1520,51 +1112,19 @@ $(function () {
 
 // Function to bind order item textarea input handlers
 function bindOrderItemInputHandlers() {
-    // Sync textarea content to hidden field on input
+    // Sync textarea content to hidden field on input using FieldManager
     $(document).off('input', '.order-item-input').on('input', '.order-item-input', function() {
-        const textValue = $(this).val();
-        // Wrap in <p> tags for consistency
-        const htmlValue = '<p>' + textValue.replace(/\n/g, '</p><p>') + '</p>';
-        $(this).closest('.order-group').find('.order-item-hidden').val(htmlValue);
+        const $textarea = $(this);
+        const $hiddenField = $textarea.closest('.order-group').find('.order-item-hidden');
+        if (window.FieldManager) {
+            window.FieldManager.syncTextareaToHidden($textarea, $hiddenField);
+        }
     });
 }
 
-// Function to update field names for all order items
+// Function to update field names for all order items - now uses FieldManager
 function updateOrderItemFieldNames() {
-    $('#orders-wrapper .order-group').each(function(i) {
-        const $group = $(this);
-        const orderIndex = i + 1;
-        
-        // Update index in UI
-        $group.attr('data-order-index', orderIndex);
-        $group.find('.order-label').text('Item ' + orderIndex);
-        
-        // Item text field
-        const $itemHidden = $group.find('.order-item-hidden');
-        if ($itemHidden.length) {
-            $itemHidden.attr('name', 'Orders[' + i + '].ItemText');
-            $itemHidden.attr('data-order-index', orderIndex);
-        }
-        
-        // OrderId field
-        const $orderId = $group.find('.order-id-hidden');
-        if ($orderId.length) {
-            $orderId.attr('name', 'Orders[' + i + '].OrderId');
-            $orderId.attr('data-order-index', orderIndex);
-        }
-        
-        // CorrectOrder field
-        const $correctOrder = $group.find('.order-correct-hidden');
-        if ($correctOrder.length) {
-            $correctOrder.attr('name', 'Orders[' + i + '].CorrectOrder');
-            $correctOrder.attr('data-order-index', orderIndex);
-            $correctOrder.val(orderIndex); // Update correct order based on position
-        }
-        
-        // Update validation span ID
-        const $error = $group.find('.order-error');
-        if ($error.length && $error.attr('id')) {
-            $error.attr('id', 'valOrderItem' + orderIndex);
-        }
-    });
+    if (window.FieldManager) {
+        window.FieldManager.updateOrderFieldNames();
+    }
 }

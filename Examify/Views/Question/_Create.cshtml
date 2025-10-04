@@ -10,7 +10,6 @@
         color: brown !important;
     }
 
-
     .no-gutter {
         margin-right: 0;
         margin-left: 0;
@@ -225,16 +224,8 @@
         .multi-select-container .checkbox {
             margin: 0;
             padding: 8px 0px;
-            /* background: #f8f9fa;
-                                                                border: 1px solid #e9ecef;
-                                                                border-radius: 4px; */
             transition: all 0.2s;
         }
-
-            .multi-select-container .checkbox:hover {
-                /* background: #e9ecef;
-                                                                    border-color: #007bff; */
-            }
 
     /* Option controls alignment */
     .option-controls {
@@ -248,10 +239,6 @@
 
     .option-checkbox {
         margin: 0;
-        /* padding: 5px 8px; */
-        /*  background: #fff;
-                                                            border: 1px solid #dee2e6;
-                                                            border-radius: 4px; */
         min-width: 120px;
     }
 
@@ -840,7 +827,7 @@
             </div>
         </div>
         <div class="d-flex justify-content-end">
-            <button class="btn btn-outline-primary mb-2" style="margin-top: 20px; margin-right: 10px;width: 80px;">
+            <button type="button" class="btn btn-outline-primary mb-2" id="btnCancel" style="margin-top: 20px; margin-right: 10px;width: 80px;">
                 Cancel
             </button>
             <button class="btn btn-outline-primary mb-2" style="margin-top: 20px; width: 80px;" type="submit">
@@ -848,19 +835,22 @@
             </button>
         </div>
 
-
     </div>
 
 </form>
 
-<script src="@Url.Content("~/scripts/custom/questionbank/question.js")"></script>
+<!-- Shared JavaScript Modules -->
+<script src="@Url.Content("~/Scripts/Custom/QuestionBank/QuestionTypeManager.js")"></script>
+<script src="@Url.Content("~/Scripts/Custom/QuestionBank/FieldManager.js")"></script>
+<script src="@Url.Content("~/Scripts/Custom/QuestionBank/QuestionForm.js")"></script>
+<script src="@Url.Content("~/Scripts/Custom/QuestionBank/Question.js")"></script>
 <script src="@Url.Content("~/theme/plugins/jquery-validation 1.19.5/jquery.validate.js")"></script>
 
 <script>
-    // Inject model data for edit mode
+    // Inject model data for edit mode and initialize the form
     window.modelData = @Html.Raw(JsonSerializer.Serialize(Model));
     
-    // Make sure arrays exist
+    // Ensure required arrays exist
     if (window.modelData) {
         window.modelData.Options = window.modelData.Options || [];
         window.modelData.Pairs = window.modelData.Pairs || [];
@@ -868,650 +858,36 @@
     }
 
     $(function () {
-        // Default to MCQ question type for new questions
-        if (!window.modelData || !window.modelData.QuestionId || window.modelData.QuestionId === 0) {
-            // Wait for the question types to be loaded before setting default
-            $(document).on('questionTypesLoaded', function() {
-                if (AllQuestionTypes && AllQuestionTypes.length > 0) {
-                    // Find MCQ type from AllQuestionTypes
-                    const mcqType = AllQuestionTypes.find(type => 
-                        type.TypeName.toLowerCase().includes('mcq') || 
-                        type.TypeName.toLowerCase().includes('multiple choice')
-                    );
-                    
-                    if (mcqType) {
-                        setTimeout(function() {
-                            $('#ddlQuestionType').val(mcqType.QuestionTypeId).trigger('change');
-                        }, 100);
-                    } else if (AllQuestionTypes.length > 0) {
-                        // Default to first type if MCQ not found
-                        setTimeout(function() {
-                            $('#ddlQuestionType').val(AllQuestionTypes[0].QuestionTypeId).trigger('change');
-                        }, 100);
-                    }
-                }
-            });
+        // Initialize the question form using the centralized QuestionForm module
+        if (window.QuestionForm && typeof window.QuestionForm.initialize === 'function') {
+            window.QuestionForm.initialize(window.modelData);
+            console.log('Question form initialized with modular architecture');
+        } else {
+            console.warn('QuestionForm module not loaded. Falling back to legacy initialization.');
+            // Fallback for legacy behavior if modules fail to load
+            legacyFormInitialization();
         }
+    });
 
-        // Handle question type change
-        $(document).off('change.questionType', '#ddlQuestionType').on('change.questionType', '#ddlQuestionType', function() {
-            const typeId = parseInt($(this).val());
-            
-            // Update hidden field if in edit mode
-            if ($('#hiddenQuestionTypeId').length) {
-                $('#hiddenQuestionTypeId').val(typeId);
-            }
-            
-            // Find question type from AllQuestionTypes
-            let questionType = null;
-            if (AllQuestionTypes && AllQuestionTypes.length > 0) {
-                questionType = AllQuestionTypes.find(type => type.QuestionTypeId === typeId);
-            }
-            
-            // Check question type based on the type name
-            const isTrueFalseType = questionType && (
-                questionType.TypeName.toLowerCase().includes('true/false') || 
-                questionType.TypeName.toLowerCase().includes('true false') ||
-                questionType.TypeName.toLowerCase().includes('t/f')
-            );
-            
-            const isDescriptiveType = questionType && (
-                questionType.TypeName.toLowerCase().includes('descriptive') || 
-                questionType.TypeName.toLowerCase().includes('subjective')
-            );
-            
-            const isPairingType = questionType && (
-                questionType.TypeName.toLowerCase().includes('matching') || 
-                questionType.TypeName.toLowerCase().includes('pair') ||
-                questionType.TypeName.toLowerCase().includes('match')
-            );
-            
-            const isOrderingType = questionType && (
-                questionType.TypeName.toLowerCase().includes('ordering') || 
-                questionType.TypeName.toLowerCase().includes('order') ||
-                questionType.TypeName.toLowerCase().includes('sequence') ||
-                questionType.TypeName.toLowerCase().includes('arrange')
-            );
-            
-            // Toggle visibility based on question type
-            if (isTrueFalseType) {
-                $('#options-section').hide();
-                $('#descriptive-section').hide();
-                $('#pairing-section').hide();
-                $('#ordering-section').hide();
-                $('#true-false-section').show();
-                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
-            } else if (isDescriptiveType) {
-                $('#options-section').hide();
-                $('#true-false-section').hide();
-                $('#pairing-section').hide();
-                $('#ordering-section').hide();
-                $('#descriptive-section').show();
-                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
-            } else if (isPairingType) {
-                $('#options-section').hide();
-                $('#true-false-section').hide();
-                $('#descriptive-section').hide();
-                $('#ordering-section').hide();
-                $('#pairing-section').show();
-                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
-            } else if (isOrderingType) {
-                $('#options-section').hide();
-                $('#true-false-section').hide();
-                $('#descriptive-section').hide();
-                $('#pairing-section').hide();
-                $('#ordering-section').show();
-                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
-            } else {
-                $('#options-section').show();
-                $('#true-false-section').hide();
-                $('#descriptive-section').hide();
-                $('#pairing-section').hide();
-                $('#ordering-section').hide();
-                $('#IsMultiSelect').prop('disabled', false);
-            }
-        });
-
-        // Handle True/False checkbox behavior (only one can be selected)
-        $(document).off('change.tfOption', '.tf-option').on('change.tfOption', '.tf-option', function() {
-            if ($(this).is(':checked')) {
-                // Uncheck other options
-                $('.tf-option').not(this).prop('checked', false);
-                
-                // Update hidden field values
-                $('.true-false-option').each(function(i) {
-                    const isChecked = $(this).find('.tf-option').is(':checked');
-                    $(this).find('.option-correct-hidden').val(isChecked ? 'true' : 'false');
-                });
-            }
-        });
-
-        // Refill Quill editors if model data exists
+    // Legacy fallback function (simplified version of old initialization)
+    function legacyFormInitialization() {
+        console.log('Using legacy form initialization');
+        
+        // Basic form setup
         if (window.modelData) {
-            if (window.__quillEditors && window.__quillEditors['editor-question-english']) {
-                window.__quillEditors['editor-question-english'].root.innerHTML = window.modelData.QuestionEnglish || '';
-            }
-            if (window.__quillEditors && window.__quillEditors['editor-question-hindi']) {
-                window.__quillEditors['editor-question-hindi'].root.innerHTML = window.modelData.QuestionHindi || '';
-            }
-            if (window.__quillEditors && window.__quillEditors['editor-additional-english']) {
-                window.__quillEditors['editor-additional-english'].root.innerHTML = window.modelData.AdditionalTextEnglish || '';
-            }
-            if (window.__quillEditors && window.__quillEditors['editor-additional-hindi']) {
-                window.__quillEditors['editor-additional-hindi'].root.innerHTML = window.modelData.AdditionalTextHindi || '';
-            }
-
-            // Handle True/False question type if editing
-            // We need to wait for question types to be loaded to know the question types
-            $(document).on('questionTypesLoaded', function() {
-                // Find question type from AllQuestionTypes
-                let questionType = null;
-                if (window.modelData && window.modelData.QuestionTypeId && AllQuestionTypes) {
-                    questionType = AllQuestionTypes.find(type => type.QuestionTypeId === window.modelData.QuestionTypeId);
-                }
-                
-                // Check if it's a True/False type
-                const isTrueFalseType = questionType && (
-                    questionType.TypeName.toLowerCase().includes('true/false') || 
-                    questionType.TypeName.toLowerCase().includes('true false') ||
-                    questionType.TypeName.toLowerCase().includes('t/f')
-                );
-                
-                // Check if it's a pairing type
-                const isPairingType = questionType && (
-                    questionType.TypeName.toLowerCase().includes('matching') || 
-                    questionType.TypeName.toLowerCase().includes('pair') ||
-                    questionType.TypeName.toLowerCase().includes('match')
-                );
-                
-                console.log("Question type:", questionType ? questionType.TypeName : "Unknown", "Is Pairing:", isPairingType);
-                
-                if (isTrueFalseType) {
-                    console.log("Loading True/False question for editing");
-                    console.log("Options:", window.modelData.Options);
-                    
-                    // Set correct True/False option
-                    if (window.modelData.Options && window.modelData.Options.length > 0) {
-                        // Make sure we have both True and False options
-                        let trueOption = null;
-                        let falseOption = null;
-                        
-                        // Find True and False options
-                        for (let i = 0; i < window.modelData.Options.length; i++) {
-                            const opt = window.modelData.Options[i];
-                            const optText = opt.Text ? opt.Text.toLowerCase() : '';
-                            
-                            if (optText.includes('true')) {
-                                trueOption = opt;
-                            } else if (optText.includes('false')) {
-                                falseOption = opt;
-                            }
-                        }
-                        
-                        console.log("True option:", trueOption);
-                        console.log("False option:", falseOption);
-                        
-                        // Set True option
-                        if (trueOption) {
-                            // Set checkbox if it's correct
-                            if (trueOption.IsCorrect) {
-                                $('.tf-option[data-option-value="true"]').prop('checked', true);
-                            }
-                            
-
-                            // Always set ChoiceId
-                            const trueChoiceId = trueOption.ChoiceId || '';
-                            $('.true-false-option').eq(0).find('.option-choiceid-field').val(trueChoiceId);
-                            console.log("Set True ChoiceId to:", trueChoiceId);
-                        }
-                        
-                        // Set False option
-                        if (falseOption) {
-                            // Set checkbox if it's correct
-                            if (falseOption.IsCorrect) {
-                                $('.tf-option[data-option-value="false"]').prop('checked', true);
-                            }
-                            
-
-                            // Always set ChoiceId
-                            const falseChoiceId = falseOption.ChoiceId || '';
-                            $('.true-false-option').eq(1).find('.option-choiceid-field').val(falseChoiceId);
-                            console.log("Set False ChoiceId to:", falseChoiceId);
-                        }
-                        
-                        // Make sure the correct hidden values are set too
-                        $('.true-false-option').each(function(i) {
-                            const isChecked = $(this).find('.tf-option').is(':checked');
-                            $(this).find('.option-correct-hidden').val(isChecked ? 'true' : 'false');
-                        });
-                    }
-                } else {
-                    // Add extra option groups if needed for MCQ
-                    if (window.modelData.Options && window.modelData.Options.length > 4) {
-                        for (var i = 4; i < window.modelData.Options.length; i++) {
-                            if (window.QuestionOptions && typeof window.QuestionOptions.add === 'function') {
-                                window.QuestionOptions.add();
-                            }
-                        }
-                    }
-
-                    // Refill options for MCQ
-                    if (window.modelData.Options && window.modelData.Options.length > 0) {
-                        $('#options-wrapper .option-group').each(function (i) {
-                            var opt = window.modelData.Options[i];
-                            if (opt) {
-                                var editorId = $(this).find('.editor-container').attr('id');
-                                if (window.__quillEditors && window.__quillEditors[editorId]) {
-                                    window.__quillEditors[editorId].root.innerHTML = opt.Text || '';
-                                }
-                                $(this).find('.option-hidden-field').val(opt.Text || '');
-                                $(this).find('input[type="checkbox"]').prop('checked', !!opt.IsCorrect);
-                                $(this).find('.option-correct-hidden').val(opt.IsCorrect ? 'true' : 'false');
-
-                                // Set ChoiceId hidden field
-                                var $choiceId = $(this).find('.option-choiceid-field');
-                                if ($choiceId.length === 0) {
-                                    $choiceId = $('<input type="hidden" class="option-choiceid-field" />').appendTo($(this));
-                                }
-                                $choiceId.val(opt.ChoiceId || '');
-                                $choiceId.attr('name', 'Options[' + i + '].ChoiceId');
-                            }
-                        });
-                    }
-                }
-                
-                // Trigger the question type change to show/hide appropriate sections
-                $('#ddlQuestionType').trigger('change');
-            });
-
-            // Set dropdowns and other controls
-            $('#ddlSubject').val(window.modelData.SubjectId);
-            $('#ddlQuestionType').val(window.modelData.QuestionTypeId);
-            $('#ddlTopic').val(window.modelData.TopicId);
+            $('#ddlSubject').val(window.modelData.SubjectId || '');
+            $('#ddlQuestionType').val(window.modelData.QuestionTypeId || '');
+            $('#ddlTopic').val(window.modelData.TopicId || '');
             $('#IsMultiSelect').prop('checked', !!window.modelData.IsMultiSelect);
             $('textarea[asp-for="Explanation"]').val(window.modelData.Explanation || '');
         }
-
-        $(document).on('subjectsLoaded', function () {
-            if (window.modelData && window.modelData.SubjectId) {
-                $('#ddlSubject').val(window.modelData.SubjectId);
-                // Trigger topic load if editing
-                loadTopics(window.modelData.SubjectId, function () {
-                    $('#ddlTopic').val(window.modelData.TopicId);
-                });
+        
+        // Basic event handlers
+        $(document).on('change', '#ddlSubject', function() {
+            var subjectId = $(this).val();
+            if (typeof loadTopics === 'function') {
+                loadTopics(subjectId);
             }
         });
-        
-        $(document).on('questionTypesLoaded', function () {
-            if (window.modelData && window.modelData.QuestionId > 0) {
-                // Log data about the question type and available pairs
-                if (window.modelData.QuestionTypeId && AllQuestionTypes) {
-                    const questionType = AllQuestionTypes.find(type => type.QuestionTypeId === window.modelData.QuestionTypeId);
-                    if (questionType) {
-                        console.log("Loading question of type:", questionType.TypeName);
-                        
-                        // Check if it's a pairing question
-                        const isPairingType = questionType.TypeName.toLowerCase().includes('matching') || 
-                                             questionType.TypeName.toLowerCase().includes('pair') ||
-                                             questionType.TypeName.toLowerCase().includes('match');
-                        
-                        if (isPairingType && window.modelData.Pairs) {
-                            console.log("Pairing question detected with pairs:", window.modelData.Pairs);
-                        }
-                    }
-                }
-                
-                $('#ddlQuestionType').val(window.modelData.QuestionTypeId).trigger('change');
-            } else if (AllQuestionTypes && AllQuestionTypes.length > 0) {
-                // Find MCQ type from AllQuestionTypes for new questions
-                const mcqType = AllQuestionTypes.find(type => 
-                    type.TypeName.toLowerCase().includes('mcq') || 
-                    type.TypeName.toLowerCase().includes('multiple choice')
-                );
-                
-                if (mcqType) {
-                    // Default to MCQ for new questions
-                    $('#ddlQuestionType').val(mcqType.QuestionTypeId).trigger('change');
-                } else if (AllQuestionTypes.length > 0) {
-                    // Default to first type if MCQ not found
-                    $('#ddlQuestionType').val(AllQuestionTypes[0].QuestionTypeId).trigger('change');
-                }
-            }
-        });
-    });
-</script>
-
-<script>
-$("document").ready(function() {
-    // Initialization code here
-    console.log("Document is ready. Setting up event handlers and initial states.");
-
-    // Example: Setting default values or states
-    $('#ddlSubject').val('');
-    $('#ddlQuestionType').val('');
-    $('#ddlTopic').val('');
-
-    // Bind change event for Subject dropdown
-    $(document).on('change', '#ddlSubject', function() {
-        var subjectId = $(this).val();
-        console.log("Subject changed:", subjectId);
-        
-        // Load topics based on selected subject
-        loadTopics(subjectId);
-    });
-
-    // Bind click event for add option button
-    $(document).on('click', '#btnAddOption', function() {
-        console.log("Add option button clicked");
-        // Add new option logic here
-        addNewOption();
-    });
-
-    // Initialization for editor containers
-    initializeEditors();
-});
-
-function initializeEditors() {
-    // Initialize Quill editors or other rich text editors
-    console.log("Initializing editor containers");
-    if (window.__quillEditors) {
-        for (var editorId in window.__quillEditors) {
-            if (window.__quillEditors.hasOwnProperty(editorId)) {
-                var quill = window.__quillEditors[editorId];
-                // Set initial content or other configurations if needed
-                console.log("Initializing editor:", editorId, "Content:", quill.root.innerHTML);
-            }
-        }
     }
-}
-
-@* function loadTopics(subjectId, callback) {
-    console.log("Loading topics for subject:", subjectId);
-    // AJAX or other methods to load topics
-    // On success, call the callback if provided
-    if (callback && typeof callback === 'function') {
-        callback();
-    }
-} *@
-
-function addNewOption() {
-    console.log("Adding new option");
-    // Logic to add a new option field/group
-    var optionIndex = $('.option-group').length + 1;
-    var newOptionGroup = `
-        <div class="form-group option-group" data-option-index="${optionIndex}">
-            <div class="option-label">Option ${optionIndex}</div>
-            <div class="row">
-                <div class="col-md-10">
-                    <div class="editor-container" style="height: 50px !important" id="editor-option${optionIndex}" data-name="Option ${optionIndex}"></div>
-                    <input type="hidden" class="option-hidden-field" data-option-index="${optionIndex}" name="Options[${optionIndex - 1}].Text" />
-                    <input type="hidden" class="option-choiceid-field" data-option-index="${optionIndex}" name="Options[${optionIndex - 1}].ChoiceId" />
-                    <input type="hidden" class="option-correct-hidden" name="Options[${optionIndex - 1}].IsCorrect" value="false" />
-                    <span class="text-danger option-error" id="valOption${optionIndex}"></span>
-                </div>
-                <div class="col-md-2 option-controls">
-                    <div class="option-checkbox checkbox">
-                        <label>
-                            <input type="checkbox" /> Is Correct
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    $('#options-wrapper').append(newOptionGroup);
-    // Re-initialize editors if using Quill or similar
-    initializeEditors();
-}
-
 </script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
