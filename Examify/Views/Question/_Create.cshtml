@@ -858,15 +858,39 @@
     }
 
     $(function () {
-        // Initialize the question form using the centralized QuestionForm module
+        // OPTIMIZED: Initialize the question form using the centralized QuestionForm module
+        // This approach eliminates duplicate change event calls by:
+        // 1. Using a single initialization point
+        // 2. Implementing debouncing for change events
+        // 3. Using direct method calls instead of triggering events
+        // 4. Adding proper event cleanup to prevent duplicate bindings
         if (window.QuestionForm && typeof window.QuestionForm.initialize === 'function') {
             window.QuestionForm.initialize(window.modelData);
-            console.log('Question form initialized with modular architecture');
+            console.log('✅ Question form initialized with optimized event handling');
         } else {
             console.warn('QuestionForm module not loaded. Falling back to legacy initialization.');
             // Fallback for legacy behavior if modules fail to load
             legacyFormInitialization();
         }
+        
+        // IMPORTANT: Trigger custom event to inform parent page that initialization is complete
+        // This allows QuestionDatatable.js to run cleanup for new questions
+        setTimeout(function() {
+            // Create and dispatch custom event
+            var event = new CustomEvent('questionFormReady', {
+                detail: {
+                    isNewQuestion: !window.modelData || window.modelData.QuestionId === 0,
+                    modelData: window.modelData
+                }
+            });
+            
+            // Dispatch the event on the document
+            document.dispatchEvent(event);
+            console.log('📢 questionFormReady event dispatched', {
+                isNewQuestion: !window.modelData || window.modelData.QuestionId === 0,
+                questionId: window.modelData ? window.modelData.QuestionId : 0
+            });
+        }, 100); // Small delay to ensure everything is ready
     });
 
     // Legacy fallback function (simplified version of old initialization)

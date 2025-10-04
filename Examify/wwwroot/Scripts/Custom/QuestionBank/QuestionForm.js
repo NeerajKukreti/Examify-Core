@@ -9,6 +9,7 @@
         // Form initialization
         initialize: function(modelData) {
             this.modelData = modelData;
+            this.isInitializing = true; // Flag to prevent unnecessary triggers during init
             this.setupEventHandlers();
             this.loadInitialData();
             
@@ -27,31 +28,32 @@
         
         // Setup centralized event handlers
         setupEventHandlers: function() {
-            // Question type change handler
-            $(document).off('change.questionType', '#ddlQuestionType')
-                .on('change.questionType', '#ddlQuestionType', (e) => {
-                    debugger;
+            // Remove any existing handlers first to prevent duplicates
+            $(document).off('change.questionType', '#ddlQuestionType');
+            $(document).off('change.tfOption', '.tf-option');
+            $(document).off('click.panelToggle', '.panel-header');
+            $(document).off('click.cancelBtn', '#btnCancel');
+            $(document).off('change.subjectChange', '#ddlSubject');
+            
+            // Question type change handler with debouncing
+            $(document).on('change.questionType', '#ddlQuestionType', this.debounce((e) => {
                 const questionTypeId = parseInt($(e.target).val());
-                if (questionTypeId) {
-                    window.QuestionTypeManager.handleQuestionTypeChange(questionTypeId);
+                if (questionTypeId && !this.isInitializing) {
+                    this.handleQuestionTypeChange(questionTypeId);
                 }
-            });
+            }, 100));
             
             // True/False checkbox behavior
-            $(document).off('change.tfOption', '.tf-option')
-                      .on('change.tfOption', '.tf-option', this.handleTrueFalseChange.bind(this));
+            $(document).on('change.tfOption', '.tf-option', this.handleTrueFalseChange.bind(this));
             
             // Panel toggle functionality
-            $(document).off('click.panelToggle', '.panel-header')
-                      .on('click.panelToggle', '.panel-header', this.handlePanelToggle);
+            $(document).on('click.panelToggle', '.panel-header', this.handlePanelToggle);
             
             // Cancel button handler
-            $(document).off('click.cancelBtn', '#btnCancel')
-                      .on('click.cancelBtn', '#btnCancel', this.handleCancel.bind(this));
+            $(document).on('click.cancelBtn', '#btnCancel', this.handleCancel.bind(this));
             
             // Subject change handler
-            $(document).off('change.subjectChange', '#ddlSubject')
-                      .on('change.subjectChange', '#ddlSubject', (e) => {
+            $(document).on('change.subjectChange', '#ddlSubject', (e) => {
                 const subjectId = $(e.target).val();
                 if (typeof loadTopics === 'function') {
                     loadTopics(subjectId);
@@ -61,6 +63,70 @@
             // Event listeners for when data is loaded
             $(document).on('subjectsLoaded', this.onSubjectsLoaded.bind(this));
             $(document).on('questionTypesLoaded', this.onQuestionTypesLoaded.bind(this));
+        },
+        
+        // Debounce utility to prevent rapid successive calls
+        debounce: function(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        },
+        
+        // Centralized question type change handler (no longer calls QuestionTypeManager directly)
+        handleQuestionTypeChange: function (questionTypeId) {
+            const questionType = window.QuestionTypeManager ? 
+                window.QuestionTypeManager.getQuestionTypeById(questionTypeId) : null;
+            
+            if (!questionType) return;
+            
+            // Update hidden field if in edit mode
+            if ($('#hiddenQuestionTypeId').length) {
+                $('#hiddenQuestionTypeId').val(questionTypeId);
+            }
+            
+            // Show appropriate section directly (bypass QuestionTypeManager to avoid double processing)
+            this.showSectionByType(questionType);
+            
+            console.log('Question type changed to:', questionType.TypeName);
+        },
+        
+        // Direct section management (moved from QuestionTypeManager to reduce calls)
+        showSectionByType: function(questionType) {
+            this.hideAllSections();
+            
+            if (window.QuestionTypeManager.isTrueFalseType(questionType)) {
+                $('#true-false-section').show();
+                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
+                $('.multi-select-container').hide();
+            } else if (window.QuestionTypeManager.isDescriptiveType(questionType)) {
+                $('#descriptive-section').show();
+                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
+                $('.multi-select-container').hide();
+            } else if (window.QuestionTypeManager.isPairingType(questionType)) {
+                $('#pairing-section').show();
+                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
+                $('.multi-select-container').hide();
+            } else if (window.QuestionTypeManager.isOrderingType(questionType)) {
+                $('#ordering-section').show();
+                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
+                $('.multi-select-container').hide();
+            } else {
+                // Default to MCQ/options section
+                $('#options-section').show();
+                $('#IsMultiSelect').prop('disabled', false);
+                $('.multi-select-container').show();
+            }
+        },
+        
+        hideAllSections: function() {
+            $('#options-section, #true-false-section, #descriptive-section, #pairing-section, #ordering-section').hide();
+            $('.multi-select-container').hide();
         },
         
         // Load initial data
@@ -134,17 +200,22 @@
             }
         },
         
-        // Set default question type for new questions
+        // Set default question type for new questions (without triggering change event)
         setDefaultQuestionType: function() {
             if (!this.modelData || !this.modelData.QuestionId || this.modelData.QuestionId === 0) {
-                debugger;
-                const defaultType = window.QuestionTypeManager.getDefaultQuestionType();
+                const defaultType = window.QuestionTypeManager ? 
+                    window.QuestionTypeManager.getDefaultQuestionType() : null;
                 if (defaultType) {
-                    setTimeout(() => {
-                        $('#ddlQuestionType').val(defaultType.QuestionTypeId).trigger('change');
-                    }, 100);
+                    // Set value directly without triggering change event
+                    $('#ddlQuestionType').val(defaultType.QuestionTypeId);
+                    // Handle the change manually
+                    this.handleQuestionTypeChange(defaultType.QuestionTypeId);
                 }
             }
+            // Mark initialization as complete
+            setTimeout(() => {
+                this.isInitializing = false;
+            }, 200);
         },
         
         // Handle subjects loaded event
@@ -160,13 +231,16 @@
             }
         },
         
-        // Handle question types loaded event
-        onQuestionTypesLoaded: function () {
-            debugger;
-
+        // Handle question types loaded event (optimized to avoid unnecessary triggers)
+        onQuestionTypesLoaded: function() {
             if (this.modelData && this.modelData.QuestionId > 0) {
-                // Editing mode
-                $('#ddlQuestionType').val(this.modelData.QuestionTypeId).trigger('change');
+                // Editing mode - set value directly without triggering change
+                $('#ddlQuestionType').val(this.modelData.QuestionTypeId);
+                // Handle the change manually
+                const questionTypeId = this.modelData.QuestionTypeId;
+                if (questionTypeId) {
+                    this.handleQuestionTypeChange(questionTypeId);
+                }
             } else {
                 // New question mode
                 this.setDefaultQuestionType();
@@ -175,7 +249,8 @@
         
         // Populate form with edit data
         populateEditData: function(modelData) {
-            const questionType = window.QuestionTypeManager.getQuestionTypeById(modelData.QuestionTypeId);
+            const questionType = window.QuestionTypeManager ? 
+                window.QuestionTypeManager.getQuestionTypeById(modelData.QuestionTypeId) : null;
             
             // Populate basic form fields
             this.populateBasicFields(modelData);
@@ -184,13 +259,13 @@
             this.populateQuillEditors(modelData);
             
             // Populate question type specific data
-            if (window.QuestionTypeManager.isTrueFalseType(questionType)) {
+            if (questionType && window.QuestionTypeManager.isTrueFalseType(questionType)) {
                 this.populateTrueFalseData(modelData);
-            } else if (window.QuestionTypeManager.isDescriptiveType(questionType)) {
+            } else if (questionType && window.QuestionTypeManager.isDescriptiveType(questionType)) {
                 this.populateDescriptiveData(modelData);
-            } else if (window.QuestionTypeManager.isPairingType(questionType)) {
+            } else if (questionType && window.QuestionTypeManager.isPairingType(questionType)) {
                 this.populatePairingData(modelData);
-            } else if (window.QuestionTypeManager.isOrderingType(questionType)) {
+            } else if (questionType && window.QuestionTypeManager.isOrderingType(questionType)) {
                 this.populateOrderingData(modelData);
             } else {
                 this.populateMCQData(modelData);
@@ -198,10 +273,8 @@
         },
         
         // Populate basic form fields
-        populateBasicFields: function (modelData) {
-            debugger;
+        populateBasicFields: function(modelData) {
             $('#ddlSubject').val(modelData.SubjectId || '');
-            $('#ddlQuestionType').val(modelData.QuestionTypeId || '');
             $('#ddlTopic').val(modelData.TopicId || '');
             $('#IsMultiSelect').prop('checked', !!modelData.IsMultiSelect);
             $('textarea[asp-for="Explanation"]').val(modelData.Explanation || '');

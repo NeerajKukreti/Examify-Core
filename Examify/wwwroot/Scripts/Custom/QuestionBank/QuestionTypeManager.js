@@ -1,6 +1,6 @@
 /**
  * QuestionTypeManager.js - Centralized question type management
- * Handles question type detection and section visibility management
+ * Handles question type detection only (section management moved to QuestionForm)
  */
 (function(window) {
     'use strict';
@@ -47,33 +47,6 @@
             );
         },
         
-        // Section visibility management
-        showSectionByType: function(questionType) {
-            this.hideAllSections();
-            
-            if (this.isTrueFalseType(questionType)) {
-                $('#true-false-section').show();
-                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
-            } else if (this.isDescriptiveType(questionType)) {
-                $('#descriptive-section').show();
-                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
-            } else if (this.isPairingType(questionType)) {
-                $('#pairing-section').show();
-                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
-            } else if (this.isOrderingType(questionType)) {
-                $('#ordering-section').show();
-                $('#IsMultiSelect').prop('checked', false).prop('disabled', true);
-            } else {
-                // Default to MCQ/options section
-                $('#options-section').show();
-                $('#IsMultiSelect').prop('disabled', false);
-            }
-        },
-        
-        hideAllSections: function() {
-            $('#options-section, #true-false-section, #descriptive-section, #pairing-section, #ordering-section').hide();
-        },
-        
         getQuestionTypeById: function(questionTypeId) {
             if (!window.AllQuestionTypes || !questionTypeId) {
                 return null;
@@ -95,24 +68,10 @@
             
             // Return first type if MCQ not found
             return window.AllQuestionTypes[0];
-        },
-        
-        // Centralized question type change handler
-        handleQuestionTypeChange: function(questionTypeId) {
-            const questionType = this.getQuestionTypeById(questionTypeId);
-            
-            // Update hidden field if in edit mode
-            if ($('#hiddenQuestionTypeId').length) {
-                $('#hiddenQuestionTypeId').val(questionTypeId);
-            }
-            
-            // Show appropriate section
-            if (questionType) {
-                this.showSectionByType(questionType);
-            }
-            
-            return questionType;
         }
+        
+        // Note: Section management methods removed - now handled by QuestionForm
+        // This eliminates the duplicate handleQuestionTypeChange calls
     };
     
     // Expose to global scope
