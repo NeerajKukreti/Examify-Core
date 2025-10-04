@@ -29,7 +29,8 @@
         setupEventHandlers: function() {
             // Question type change handler
             $(document).off('change.questionType', '#ddlQuestionType')
-                      .on('change.questionType', '#ddlQuestionType', (e) => {
+                .on('change.questionType', '#ddlQuestionType', (e) => {
+                    debugger;
                 const questionTypeId = parseInt($(e.target).val());
                 if (questionTypeId) {
                     window.QuestionTypeManager.handleQuestionTypeChange(questionTypeId);
@@ -136,6 +137,7 @@
         // Set default question type for new questions
         setDefaultQuestionType: function() {
             if (!this.modelData || !this.modelData.QuestionId || this.modelData.QuestionId === 0) {
+                debugger;
                 const defaultType = window.QuestionTypeManager.getDefaultQuestionType();
                 if (defaultType) {
                     setTimeout(() => {
@@ -159,7 +161,9 @@
         },
         
         // Handle question types loaded event
-        onQuestionTypesLoaded: function() {
+        onQuestionTypesLoaded: function () {
+            debugger;
+
             if (this.modelData && this.modelData.QuestionId > 0) {
                 // Editing mode
                 $('#ddlQuestionType').val(this.modelData.QuestionTypeId).trigger('change');
@@ -194,7 +198,8 @@
         },
         
         // Populate basic form fields
-        populateBasicFields: function(modelData) {
+        populateBasicFields: function (modelData) {
+            debugger;
             $('#ddlSubject').val(modelData.SubjectId || '');
             $('#ddlQuestionType').val(modelData.QuestionTypeId || '');
             $('#ddlTopic').val(modelData.TopicId || '');
@@ -223,7 +228,8 @@
         },
         
         // Populate True/False question data
-        populateTrueFalseData: function(modelData) {
+        populateTrueFalseData: function (modelData) {
+             
             if (!modelData.Options || modelData.Options.length === 0) return;
             
             let trueOption = null;
@@ -328,7 +334,7 @@
             $('#descriptive-options-wrapper .descriptive-option-group:not(:first)').remove();
             
             // Enforce maximum of 4 options for descriptive questions (to match MAX_DESCRIPTIVE_OPTIONS)
-            const maxAllowedOptions = 4;
+            const maxAllowedOptions = MAX_DESCRIPTIVE_OPTIONS;
             const optionsToProcess = modelData.Options.slice(0, maxAllowedOptions);
             
             optionsToProcess.forEach((opt, i) => {
@@ -413,7 +419,7 @@
             $('#pairs-wrapper .pair-group:not(:first)').remove();
             
             // Use the defined MAX_PAIRS limit (currently 10)
-            const maxAllowedPairs = 10; // This matches MAX_PAIRS in question.js
+            const maxAllowedPairs = MAX_PAIRS; // This matches MAX_PAIRS in question.js
             const pairsToProcess = modelData.Pairs.slice(0, maxAllowedPairs);
             
             pairsToProcess.forEach((pair, i) => {
@@ -512,7 +518,7 @@
             $('#orders-wrapper .order-group:not(:first)').remove();
             
             // Enforce maximum of 4 items for ordering questions (to match MAX_ORDER_ITEMS)
-            const maxAllowedItems = 4;
+            const maxAllowedItems = MAX_ORDER_ITEMS;
             const itemsToProcess = modelData.Orders.slice(0, maxAllowedItems);
             
             itemsToProcess.forEach((orderItem, i) => {

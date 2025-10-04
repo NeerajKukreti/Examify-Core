@@ -1,14 +1,14 @@
 ﻿// Global variables for descriptive questions
 var descriptiveOptionCount = 1; // Start with 1 (the default one)
-var MAX_DESCRIPTIVE_OPTIONS = 4; // Maximum number of descriptive options allowed
+var MAX_DESCRIPTIVE_OPTIONS = 5; // Maximum number of descriptive options allowed
 
 // Global variables for pairing questions
 var pairCount = 1; // Start with 1 (the default one) 
-var MAX_PAIRS = 10; // Maximum number of pairs allowed
+var MAX_PAIRS = 5; // Maximum number of pairs allowed
 
 // Global variables for ordering questions
 var orderItemCount = 1; // Start with 1 (the default one)
-var MAX_ORDER_ITEMS = 4; // Maximum number of order items allowed
+var MAX_ORDER_ITEMS = 5; // Maximum number of order items allowed
 
 var API_BASE_URL_QUESTION = 'https://localhost:7271/api/Question'; // fallback
 var API_BASE_URL_SUBJECT = 'https://localhost:7271/api/Subject'; // fallback
@@ -36,7 +36,7 @@ $(document).ready(function () {
 
     // Load topics when subject changes
     $(document).off('change.questionOptions', '#ddlSubject').on('change.questionOptions', '#ddlSubject', function () {
-        debugger;
+         
         var subjectId = $(this).val();
         loadTopics(subjectId);
     });
