@@ -36,13 +36,13 @@ builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IExamService, ExamService>();
 builder.Services.AddScoped<IInstituteLoginService, InstituteLoginService>();
 builder.Services.AddScoped<IStudentLoginService, StudentLoginService>();
-builder.Services.AddScoped<IInstituteService, InstituteService>();
-builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<IInstituteService, InstituteService>(); 
 builder.Services.AddScoped<ISubjectService, SubjectService>();  
 builder.Services.AddScoped<IStateService, StateService>();
 builder.Services.AddScoped<IAdminLoginService, AdminLoginService>();
 builder.Services.AddScoped<Examify.Services.AuthService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
 
 var app = builder.Build();
 

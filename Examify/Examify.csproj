@@ -40,10 +40,6 @@
     <None Include="wwwroot\Scripts\Custom\Institute\InstituteValidation.js" />
     <None Include="wwwroot\Scripts\Custom\Institute\InsUpdateInstitute.js" />
     <None Include="wwwroot\Scripts\Custom\QuestionBank\Question.js" />
-    <None Include="wwwroot\Scripts\Custom\Student\Student.js" />
-    <None Include="wwwroot\Scripts\Custom\Student\StudentDatatable.js" />
-    <None Include="wwwroot\Scripts\Custom\Student\StudentValidation.js" />
-    <None Include="wwwroot\Scripts\Custom\Student\StUpdateStudent.js" />
     <None Include="wwwroot\Scripts\Custom\Subject\Subject.js" />
     <None Include="wwwroot\Scripts\Custom\Subject\SubjectDatatable.js" />
     <None Include="wwwroot\Scripts\Custom\Subject\SubjectValidation.js" />

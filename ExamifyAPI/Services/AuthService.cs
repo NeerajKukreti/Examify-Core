@@ -1,6 +1,6 @@
 ﻿// Services/AuthService.cs
-using DAL;
 using DataModel;
+using ExamifyAPI.Services;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -14,23 +14,24 @@ namespace ExamAPI.Services
         Task<int> Register(string username, string password, string role);
         int GetCurrentUserID();
     }
+    
     public class AuthService : IAuthService
     {
-        private readonly IUserRepository _repo;
+        private readonly IUserService _userService;
         private readonly IConfiguration _config;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthService(IUserRepository repo, IConfiguration config, IHttpContextAccessor httpContextAccessor)
+        public AuthService(IUserService userService, IConfiguration config, IHttpContextAccessor httpContextAccessor)
         {
-            _repo = repo;
+            _userService = userService;
             _config = config;
             _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<string?> Authenticate(string username, string password)
         {
-            var user = await _repo.GetUserByUsername(username);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            var user = await _userService.GetUserByUsernameAsync(username);
+            if (user == null || !_userService.VerifyPassword(password, user.PasswordHash))
                 return null;
 
             var claims = new[]
@@ -56,10 +57,9 @@ namespace ExamAPI.Services
 
         public async Task<int> Register(string username, string password, string role)
         {
-            var hashedPwd = BCrypt.Net.BCrypt.HashPassword(password);
-            var user = new User { Username = username, PasswordHash = hashedPwd, Role = role };
-            return await _repo.CreateUser(user);
+            return await _userService.CreateUserAsync(username, password, role);
         }
+        
         public int GetCurrentUserID()
         {
             var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);

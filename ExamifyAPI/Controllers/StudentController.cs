@@ -15,29 +15,30 @@ public class StudentController : ControllerBase
         _authService = authService;
     }
 
-    [HttpGet("list/{instituteId:int}")]
-    public async Task<IActionResult> GetAllStudents(int instituteId)
-    {
-        var students = await _studentService.GetAllStudentsAsync(instituteId);
-        return Ok(new { Success = true, Count = students?.Count() ?? 0, Data = students });
-    }
-
     [HttpGet("{instituteId:int}/{studentId:int}")]
-    public async Task<IActionResult> GetStudentById(int instituteId, int studentId)
+    public async Task<IActionResult> GetAllStudents(int instituteId, int? studentId = 0)
     {
-        var student = await _studentService.GetStudentByIdAsync(instituteId, studentId);
-        if (student == null) return NotFound(new { Success = false, Message = "Student not found" });
-        return Ok(new { Success = true, Message = "Student retrieved successfully", Data = student });
+        var students = await _studentService.GetAllStudentsAsync(instituteId, studentId);
+        if (students == null) return NotFound(new { Success = false, Message = "Student not found" });
+        return Ok(new { Success = true, Count = students?.Count() ?? 0, Data = students });
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateStudent([FromBody] StudentDTO dto)
     {
+        if (dto.StudentId == 0)
+        {
+            // create student → require password
+            if (string.IsNullOrWhiteSpace(dto.Password))
+                return BadRequest("Password is required for new students.");
+        }
+
         if (!ModelState.IsValid) return BadRequest(new { Success = false, Errors = ModelState });
+
         var createdBy = _authService.GetCurrentUserID(); // logged-in user ID
         var newId = await _studentService.InsertOrUpdateStudentAsync(dto, null, createdBy, null);
 
-        return CreatedAtAction(nameof(GetStudentById),
+        return CreatedAtAction(nameof(GetAllStudents),
             new { instituteId = dto.InstituteId, studentId = newId },
             new { Success = true, StudentId = newId, Message = "Student created successfully." });
     }
@@ -47,13 +48,30 @@ public class StudentController : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(new { Success = false, Errors = ModelState });
 
-        var existingStudent = await _studentService.GetStudentByIdAsync(dto.InstituteId, id);
-        if (existingStudent == null) return NotFound(new { Success = false, Message = "Student not found" });
+        var existingStudent = await _studentService.GetAllStudentsAsync(dto.InstituteId, id);
+        var student = existingStudent?.FirstOrDefault();
+        if (student == null) return NotFound(new { Success = false, Message = "Student not found" });
 
-        dto.UserId = existingStudent.UserId;
+        dto.UserId = student.UserId;
         var modifiedBy = _authService.GetCurrentUserID(); // logged-in user ID
         var updatedId = await _studentService.InsertOrUpdateStudentAsync(dto, id, null, modifiedBy);
 
         return Ok(new { Success = true, StudentId = updatedId, Message = "Student updated successfully." });
+    }
+
+    [HttpPut("ChangeStatus")]
+    public async Task<IActionResult> ChangeStatus([FromQuery] int id)
+    {
+        // Toggle status and get success
+        var success = await _studentService.ChangeStatus(id);
+
+        if (success)
+        {
+            return Ok( new { Success = true, StudentId = id, Message = "Student updated successfully." });
+        }
+        else
+        {
+            return NotFound( new { Success = false, StudentId = id, Message = "Student not found or update failed." });
+        }
     }
 }

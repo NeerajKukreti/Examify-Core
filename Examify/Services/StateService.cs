@@ -1,37 +1,58 @@
 ﻿using DataModel;
-using Microsoft.Extensions.Options;
 using Examify.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web; 
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace Examify.Services
 {
     public interface IStateService
     {
-        Task<List<StateModel>> GetState();
+        Task<List<StateModel>> GetAllAsync();
     }
 
-    public class StateService: IStateService
+    public class StateService : IStateService
     {
-        private readonly AppSettings _settings;
+        private readonly HttpClient _httpClient;
+        private readonly ApiSettings _apiSettings;
 
-        public StateService(IOptions<AppSettings> settings)
+        public StateService(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings)
         {
-            _settings = settings.Value;
-
+            _httpClient = httpClientFactory.CreateClient("ExamifyAPI");
+            _apiSettings = apiSettings.Value;
         }
+
+        public async Task<List<StateModel>> GetAllAsync()
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync("State");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+                    
+                    if (apiResponse?.Success == true && apiResponse?.Data != null)
+                    {
+                        var states = JsonConvert.DeserializeObject<List<StateModel>>(apiResponse.Data.ToString());
+                        return states ?? new List<StateModel>();
+                    }
+                }
+                
+                return new List<StateModel>();
+            }
+            catch (Exception ex)
+            {
+                // Log exception
+                return new List<StateModel>();
+            }
+        }
+
+        // Keep the old method for backward compatibility
+        [Obsolete("Use GetAllAsync() instead")]
         public async Task<List<StateModel>> GetState()
         {
-            var states = await HTTPClientWrapper<List<DataModel.StateModel>>
-                .Get(_settings.Api, "StateApi/GetState", new StringBuilder());
-            
-            return states;
+            return await GetAllAsync();
         }
-
     }
 }

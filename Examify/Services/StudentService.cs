@@ -1,109 +1,160 @@
-﻿using DataModel;
-using Microsoft.Extensions.Options;
+using DataModel;
 using Examify.Common;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
-using System.Net.Http;
+using Microsoft.Extensions.Options;
+using Model.DTO;
+using Newtonsoft.Json;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Examify.Services
 {
     public interface IStudentService
     {
-        Task<List<StudentModel>> GetStudent(string studentId);
-        Task<List<StudentModel>> GetStudent();
-        Task<int> CreateStudent(StudentModel model);
-        Task<int> DeleteStudent(bool delete, string studentId);
-        Task<int> ActivateStudent(bool activate, string studentId);
-        Task<StudentChangePasswordModel> StudentChangePassword(StudentChangePasswordModel model);
+        Task<IEnumerable<StudentModel>> GetAllAsync(int instituteId, int? studentId = null);
+        Task<StudentModel> GetByIdAsync(int studentId, int instituteId);
+        Task<bool> CreateAsync(StudentDTO model);
+        Task<bool> UpdateAsync(StudentDTO model);
+        Task<bool> DeleteAsync(int studentId);
+        Task<bool> ChangeStatusAsync(int studentId);
     }
 
-    public class StudentService: IStudentService
+    public class StudentService : IStudentService
     {
-        private readonly AppSettings _settings;
+        private readonly HttpClient _httpClient;
+        private readonly ApiSettings _apiSettings;
 
-        public StudentService(IOptions<AppSettings> settings)
+        public StudentService(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings)
         {
-            _settings = settings.Value;
-        }  
+            _httpClient = httpClientFactory.CreateClient("ExamifyAPI");
+            _apiSettings = apiSettings.Value;
+        }
 
-        public  async Task<List<StudentModel>> GetStudent(string StudentId)
+        public async Task<IEnumerable<StudentModel>> GetAllAsync(int instituteId, int? studentId = null)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-
-            parameters.Add("StudentId", StudentId);
-
-            var values = new StringBuilder();
-
-            foreach (KeyValuePair<string, string> parameter in parameters)
+            try
             {
-                values.Append(parameter.Key + "=" + parameter.Value + "&");
+                var endpoint = studentId.HasValue 
+                    ? $"Student/{instituteId}/{studentId}" 
+                    : $"Student/{instituteId}/0";
+                    
+                var response = await _httpClient.GetAsync(endpoint);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+                    
+                    if (apiResponse?.Success == true && apiResponse?.Data != null)
+                    {
+                        return JsonConvert.DeserializeObject<IEnumerable<StudentModel>>(apiResponse.Data.ToString());
+                    }
+                }
+                
+                return new List<StudentModel>();
             }
-
-            var Students = await HTTPClientWrapper<List<DataModel.StudentModel>>
-                .Get(_settings.Api,"StudentApi/GetStudent", values);
-
-            return Students;
-        }
-
-        public  async Task<List<StudentModel>> GetStudent()
-        {
-            var Students = await HTTPClientWrapper<List<DataModel.StudentModel>>.Get(_settings.Api,url: "StudentApi/GetStudent");
-                 
-            return Students;
-        }
-
-        public  async Task<int> CreateStudent(StudentModel StudentModel)
-        {
-            var x = await HTTPClientWrapper<StudentModel>.PostRequest(_settings.Api, "StudentApi/CreateStudent", StudentModel);
-
-            return x.StudentId;
-        }
-
-        public  async Task<int> DeleteStudent(bool Delete, string StudentId)
-        {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters.Add("Delete", Delete.ToString());
-            parameters.Add("StudentId", StudentId);
-
-            var values = new StringBuilder();
-
-            foreach (KeyValuePair<string, string> parameter in parameters)
+            catch (Exception ex)
             {
-                values.Append(parameter.Key + "=" + parameter.Value + "&");
+                // Log exception
+                return new List<StudentModel>();
             }
-
-            var x = await HTTPClientWrapper<int>.PostRequest(_settings.Api, "StudentApi/DeleteStudent", values);
-
-            return x;
         }
 
-        public  async Task<int> ActivateStudent(bool Activate, string StudentId)
+        public async Task<StudentModel> GetByIdAsync(int studentId, int instituteId)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters.Add("Activate", Activate.ToString());
-            parameters.Add("StudentId", StudentId);
-
-            var values = new StringBuilder();
-
-            foreach (KeyValuePair<string, string> parameter in parameters)
+            try
             {
-                values.Append(parameter.Key + "=" + parameter.Value + "&");
+                var students = await GetAllAsync(instituteId, studentId);
+                return students?.FirstOrDefault();
             }
-
-            var x = await HTTPClientWrapper<int>.PostRequest(_settings.Api, "StudentApi/ActivateStudent", values);
-
-            return x;
+            catch (Exception ex)
+            {
+                // Log exception
+                return null;
+            }
         }
 
-        public  async Task<StudentChangePasswordModel> StudentChangePassword(StudentChangePasswordModel StudentChangePasswordModel)
+        public async Task<bool> CreateAsync(StudentDTO model)
         {
-            var x = await HTTPClientWrapper<StudentChangePasswordModel>.PostRequest(_settings.Api, "StudentApi/StudentChangePassword", StudentChangePasswordModel);
-
-            return x;
+            try
+            {
+                var json = JsonConvert.SerializeObject(model);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                
+                var response = await _httpClient.PostAsync("Student", content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                    return apiResponse?.Success == true;
+                }
+                
+                return false;
+            }
+            catch (Exception ex)
+            {
+                // Log exception
+                return false;
+            }
         }
 
+        public async Task<bool> UpdateAsync(StudentDTO model)
+        {
+            try
+            {
+                var json = JsonConvert.SerializeObject(model);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                
+                var response = await _httpClient.PutAsync($"Student/{model.StudentId}", content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                    return apiResponse?.Success == true;
+                }
+                
+                return false;
+            }
+            catch (Exception ex)
+            {
+                // Log exception
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteAsync(int studentId)
+        {
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"Student/{studentId}");
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                // Log exception
+                return false;
+            }
+        }
+        public async Task<bool> ChangeStatusAsync(int studentId)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsync($"Student/ChangeStatus?id={studentId}", null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+                    return apiResponse?.Success == true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                // Log exception
+                return false;
+            }
+        }
     }
 }

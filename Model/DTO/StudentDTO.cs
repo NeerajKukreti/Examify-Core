@@ -55,16 +55,15 @@ namespace Model.DTO
         [DataType(DataType.Date)]
         public DateTime? Validity { get; set; }
 
-        public bool? IsActive { get; set; }
+        public bool IsActive { get; set; }
 
         // User info for creation
         [Required(ErrorMessage = "Username is required")]
         [StringLength(256, ErrorMessage = "Username cannot exceed 256 characters")]
         public required string UserName { get; set; }   // same as Mobile
-
-        [Required(ErrorMessage = "Password is required")]
+         
         [StringLength(100, ErrorMessage = "Password cannot exceed 100 characters")]
-        public required string Password { get; set; }
+        public string? Password { get; set; }
 
         public int UserId { get; set; } // Assigned after user creation
 

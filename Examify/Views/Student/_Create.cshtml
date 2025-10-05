@@ -1,0 +1,401 @@
+﻿@model Model.DTO.StudentDTO
+@using System.Text.Json
+@{
+    ViewBag.Title = "Create/Edit Student";
+    Layout = null;
+}
+
+<style>
+    label.error {
+        color: brown !important;
+    }
+
+    .form-section {
+        background: #fff;
+        border: 1px solid #e1e5e9;
+        border-radius: 6px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 20px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #007bff;
+        display: flex;
+        align-items: center;
+    }
+
+        .section-title i {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+    .form-group label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 5px;
+    }
+
+    .form-control {
+        border-radius: 4px;
+        border: 1px solid #ced4da;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+    .required {
+        color: #dc3545;
+    }
+
+    .checkbox {
+        margin: 15px 0;
+    }
+
+        .checkbox label {
+            font-weight: 500;
+            color: #495057;
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox input[type="checkbox"] {
+            margin-right: 8px;
+        }
+</style>
+
+<form id="studentForm" method="post">
+
+    <div class="container-fluid">
+        <input type="hidden" asp-for="StudentId" />
+        <input type="hidden" asp-for="UserId" />
+        <input type="hidden" asp-for="InstituteId" />
+
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <!-- Personal Information Section -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-user"></i>
+                Personal Information
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="StudentName">Student Name <span class="required">*</span></label>
+                        <input asp-for="StudentName" class="form-control" placeholder="Enter student name" />
+                        <span asp-validation-for="StudentName" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="FatherName">Father Name</label>
+                        <input asp-for="FatherName" class="form-control" placeholder="Enter father name" />
+                        <span asp-validation-for="FatherName" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="DateOfBirth">Date of Birth</label>
+                        <input asp-for="DateOfBirth" type="date" class="form-control" />
+                        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="Category">Category</label>
+                        <select asp-for="Category" class="form-control">
+                            <option value="">Select Category</option>
+                            @if (Model.Categories != null)
+                            {
+                                @foreach (var category in Model.Categories)
+                                {
+                                    <option value="@category">@category</option>
+                                }
+                            }
+                        </select>
+                        <span asp-validation-for="Category" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information Section -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-phone"></i>
+                Contact Information
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="Mobile">Mobile Number <span class="required">*</span></label>
+                        <input asp-for="Mobile" class="form-control" placeholder="Enter 10-digit mobile number" maxlength="10" />
+                        <span asp-validation-for="Mobile" class="text-danger"></span>
+                        <small class="form-text text-muted">This will be used as username for login</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="Email">Email Address</label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="Enter email address" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="SecondaryContact">Secondary Contact</label>
+                        <input asp-for="SecondaryContact" class="form-control" placeholder="Enter secondary contact" maxlength="10" />
+                        <span asp-validation-for="SecondaryContact" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="ParentContact">Parent Contact</label>
+                        <input asp-for="ParentContact" class="form-control" placeholder="Enter parent contact" maxlength="10" />
+                        <span asp-validation-for="ParentContact" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Address Information Section -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-map-marker-alt"></i>
+                Address Information
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label asp-for="Address">Address</label>
+                        <textarea asp-for="Address" class="form-control" rows="3" placeholder="Enter full address"></textarea>
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="City">City</label>
+                        <input asp-for="City" class="form-control" placeholder="Enter city" />
+                        <span asp-validation-for="City" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="StateId">State</label>
+                        <select asp-for="StateId" class="form-control">
+                            <option value="">Select State</option>
+                            @if (Model.States != null)
+                            {
+                                @foreach (var state in Model.States)
+                                {
+                                    <option value="@state.StateId">@state.StateName</option>
+                                }
+                            }
+                        </select>
+                        <span asp-validation-for="StateId" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Pincode">Pincode</label>
+                        <input asp-for="Pincode" class="form-control" placeholder="Enter 6-digit pincode" maxlength="6" />
+                        <span asp-validation-for="Pincode" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Information Section -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-key"></i>
+                Account Information
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="UserName">Username <span class="required">*</span></label>
+                        <input asp-for="UserName" class="form-control" placeholder="Username (same as mobile)" readonly />
+                        <span asp-validation-for="UserName" class="text-danger"></span>
+                        <small class="form-text text-muted">Username will be same as mobile number</small>
+                    </div>
+                </div>
+                @if (Model.StudentId == 0)
+                {
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="Password">Password <span class="required">*</span></label>
+                            <input asp-for="Password" type="password" class="form-control" placeholder="Enter password" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                            @if (Model.StudentId > 0)
+                            {
+                                <small class="form-text text-muted">Leave blank to keep current password</small>
+                            }
+                        </div>
+                    </div>
+                }
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="ActivationDate">Activation Date</label>
+                        <input asp-for="ActivationDate" type="date" class="form-control" />
+                        <span asp-validation-for="ActivationDate" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="Validity">Validity Date</label>
+                        <input asp-for="Validity" type="date" class="form-control" />
+                        <span asp-validation-for="Validity" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">
+                Cancel
+            </button>
+            <button type="submit" class="btn btn-primary">
+                @(Model.StudentId > 0 ? "Update Student" : "Add Student")
+            </button>
+        </div>
+    </div>
+</form>
+
+<script src="@Url.Content("~/theme/plugins/jquery-validation 1.19.5/jquery.validate.js")">
+</script>
+
+<script>
+
+    // Inject model data for form handling
+    window.studentModelData = @Html.Raw(JsonSerializer.Serialize(Model));
+
+    $(function () {
+        // Auto-fill username when mobile number changes
+        $('#Mobile').on('input', function() {
+            $('#UserName').val($(this).val());
+        });
+
+        // Initialize username field if mobile is already filled
+        if ($('#Mobile').val()) {
+            $('#UserName').val($('#Mobile').val());
+        }
+        debugger;
+        // Form validation and submission
+        $('#studentForm').validate({
+            rules: {
+                StudentName: { required: true, maxlength: 60 },
+                Mobile: { required: true, digits: true, minlength: 10, maxlength: 10 },
+                UserName: {
+                required: true,
+                remote: {
+                    url: endPoint + 'api/User/check-username', // make sure endPoint has trailing slash
+                    type: 'GET',
+                    data: {
+                            // Use functions to get dynamic values
+                            userName: function() {
+                                return $('#UserName').val();
+                            },
+                            userId: function() {
+                                return window.studentModelData?.UserId || '';
+                            }
+                        },
+                        dataFilter: function(response) {
+                            debugger;
+                            var json = JSON.parse(response);
+                            return json.Exists ? "false" : "true";
+                        }
+                    }
+                },
+                Password: { required: function() { return window.studentModelData.StudentId === 0; } }, // Required only for new students
+                Email: { email: true },
+                Pincode: { digits: true, minlength: 6, maxlength: 6 }
+            },
+            messages: {
+                StudentName: { required: "Student name is required", maxlength: "Student name cannot exceed 60 characters" },
+                Mobile: {
+                    required: "Mobile number is required",
+                    digits: "Please enter only digits",
+                    minlength: "Mobile number must be 10 digits",
+                    maxlength: "Mobile number must be 10 digits"
+                },
+                UserName: {
+                    required: "Username is required",
+                    remote: "This username is already registered"
+                },
+                Password: { required: "Password is required for new students" },
+                Email: { email: "Please enter a valid email address" },
+                Pincode: {
+                    digits: "Please enter only digits",
+                    minlength: "Pincode must be 6 digits",
+                    maxlength: "Pincode must be 6 digits"
+                }
+            },
+            submitHandler: function(form) {
+                var formData = $(form).serialize();
+                var url = window.studentModelData.StudentId > 0 ?
+                    '@Url.Action("Edit", "Student")' :
+                    '@Url.Action("Create", "Student")';
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            $('#studentModel').modal('hide'); // Fixed: matches HTML modal ID
+
+                            // Reload the DataTable
+                            if (typeof window.reloadStudentTable === 'function') {
+                                window.reloadStudentTable();
+                            }
+
+                            // Show success message
+                            if (typeof toastr !== 'undefined') {
+                                toastr.success(response.message || 'Student saved successfully!');
+                            } else {
+                                alert(response.message || 'Student saved successfully!');
+                            }
+                        } else {
+                            // Show validation errors
+                            if (response.errors) {
+                                response.errors.forEach(function(error) {
+                                    if (typeof toastr !== 'undefined') {
+                                        error.Errors.forEach(function(err) {
+                                            toastr.error(err);
+                                        });
+                                    }
+                                });
+                            } else if (response.message) {
+                                if (typeof toastr !== 'undefined') {
+                                    toastr.error(response.message);
+                                } else {
+                                    alert(response.message);
+                                }
+                            }
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        if (typeof toastr !== 'undefined') {
+                            toastr.error('An error occurred while saving the student.');
+                        } else {
+                            alert('An error occurred while saving the student.');
+                        }
+                    }
+                });
+            }
+        });
+
+        console.log('✅ Student form initialized');
+    });
+</script>

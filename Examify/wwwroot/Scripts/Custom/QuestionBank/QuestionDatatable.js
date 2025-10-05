@@ -17,7 +17,8 @@
                 {
                     "title": "", "data": "questionId",
                     fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                        var str = ' <a class="btn" data-id=' + oData.questionId + ' data-bs-target="#questionModel"  data-bs-toggle="modal" id="EditQuestion">' +
+                        var str = ' <a class="btn" data-id=' + oData.questionId +
+                            ' data-bs-target="#questionModel"  data-bs-toggle="modal" id="EditQuestion">' +
                             '<span class="fas fa-edit"></span>' +
                             '</a>';
                         $(nTd).html(str);

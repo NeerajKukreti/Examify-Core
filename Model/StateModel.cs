@@ -8,7 +8,7 @@ namespace DataModel
 {
     public class StateModel
     {
-        public int StateId;
-        public string State;
+        public int StateId { get; set; }    
+        public string StateName { get; set; } = string.Empty;
     }
 }

@@ -1,150 +1,215 @@
-﻿using DataModel;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.Extensions.Options;
-using Examify.Common;
-using Examify.Helpers;
+using DataModel;
 using Examify.Services;
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Web; 
+using Microsoft.AspNetCore.Mvc;
+using Model.DTO;
 
-namespace Examify.Controllers
+namespace Examify.Controllers.Admin
 {
     public class StudentController : Controller
     {
-        private readonly AppSettings _settings;
-        private readonly IFileService _fileService;
         private readonly IStudentService _studentService;
         private readonly IStateService _stateService;
+        private readonly IWebHostEnvironment _env;
 
-        public StudentController(IFileService fileService, 
-            IOptions<AppSettings> settings, 
-            IStudentService studentService,
-            IStateService StateService)
+        public StudentController(IStudentService studentService, IStateService stateService, IWebHostEnvironment env)
         {
-            _fileService = fileService;
-            _settings = settings.Value;
             _studentService = studentService;
-            _stateService = StateService;
+            _stateService = stateService;
+            _env = env;
         }
 
-        public async Task<ActionResult> CreateStudent()
+        // GET: Admin/Student
+        public IActionResult Index()
         {
-            StudentModel ob = new StudentModel();
-
-            var category = _settings.CasteCategory;
-
-            //var categorylist = category.Split(',');
-            //ob.CategoryList = categorylist.Select(x => new SelectListItem { Value = x, Text = x }).ToList();
-
-            //var states = await _stateService.GetState();
-
-            //ob.StateList = states.Select(x =>
-            //new SelectListItem
-            //{
-            //    Text = x.State,
-            //    Value = x.StateId.ToString()
-            //}).ToList();
-
-            return View("CreateStudent", ob);
+            return View("Index");
         }
+
+        // GET: Admin/Student/LoadStudents
+        [HttpGet]
+        public async Task<IActionResult> LoadStudents()
+        {
+            // Get InstituteId from session (similar to how questions work)
+            var instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3; // Default to 1 for now
+            
+            var students = await _studentService.GetAllAsync(instituteId);
+            return Json(new { data = students });
+        }
+
+        // GET: Admin/Student/Create
+        public async Task<IActionResult> Create()
+        {
+            var model = new StudentDTO
+            {
+                StudentName = "",
+                Mobile = "",
+                UserName = "",
+                Password = "",
+                InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 1
+            };
+            
+            // Load lookup data
+            await LoadLookupData(model);
+            
+            return PartialView("_Create", model);
+        }
+
+        // POST: Admin/Student/Create
+        [HttpPost]
+        public async Task<IActionResult> Create(StudentDTO model)
+        {
+            if (ModelState.IsValid)
+            {
+                model.InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+                model.UserName = model.Mobile; // Username is same as mobile
+                model.IsActive = true;
+                
+                var success = await _studentService.CreateAsync(model);
+                if (success)
+                    return Json(new { success = true, message = "Student created successfully!" });
+                else
+                    return Json(new { success = false, message = "Failed to create student. Please try again." });
+            }
+            
+            // Return validation errors
+            var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
+                .Select(x => new { Field = x.Key, Errors = x.Value.Errors.Select(e => e.ErrorMessage) })
+                .ToList();
+            return Json(new { success = false, errors });
+        }
+
+        // GET: Admin/Student/Edit/{id}
+        public async Task<IActionResult> Edit(int id)
+        {
+            var instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+            var student = await _studentService.GetByIdAsync(id, instituteId);
+
+            if (student == null) return NotFound();
+
+            // Convert to DTO for editing
+            var model = new StudentDTO
+            {
+                StudentId = student.StudentId,
+                InstituteId = student.InstituteId,
+                StudentName = student.StudentName,
+                FatherName = student.FatherName,
+                DateOfBirth = student.DateOfBirth,
+                Category = student.Category,
+                StateId = student.StateId,
+                Address = student.Address,
+                City = student.City,
+                Pincode = student.Pincode,
+                Mobile = student.Mobile,
+                SecondaryContact = student.SecondaryContact,
+                ParentContact = student.ParentContact,
+                Email = student.Email,
+                ActivationDate = student.ActivationDate,
+                Validity = student.Validity, 
+                UserId = student.UserId,
+                UserName = student.Mobile, // Username is same as mobile
+                Password = "********" // Don't show actual password
+            };
+
+            // Load lookup data
+            await LoadLookupData(model);
+
+            return PartialView("_Create", model);
+        }
+
+        // POST: Admin/Student/Edit
+        [HttpPost]
+        public async Task<IActionResult> Edit(StudentDTO model)
+        {
+            if (ModelState.IsValid)
+            {
+                model.InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+                model.UserName = model.Mobile; // Username is same as mobile
+                
+                var success = await _studentService.UpdateAsync(model);
+                if (success)
+                    return Json(new { success = true, message = "Student updated successfully!" });
+                else
+                    return Json(new { success = false, message = "Failed to update student. Please try again." });
+            }
+            
+            // Return validation errors
+            var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
+                .Select(x => new { Field = x.Key, Errors = x.Value.Errors.Select(e => e.ErrorMessage) })
+                .ToList();
+            return Json(new { success = false, errors });
+        }
+
+        // POST: Admin/Student/Delete/{id}
+        [HttpPost]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var success = await _studentService.DeleteAsync(id);
+            if (success)
+                return Json(new { success = true, message = "Student deleted successfully!" });
+            else
+                return Json(new { success = false, message = "Failed to delete student. Please try again." });
+        }  
 
         [HttpPost]
-        public async Task<int> CreateStudent(StudentModel Student, List<IFormFile> files)
+        public async Task<IActionResult> ChangeStatus(int id)
         {
-            Student.Email = await _fileService.SaveUploadedFile(files[0]);
-            return await _studentService.CreateStudent(Student);
+            try
+            {
+                var success = await _studentService.ChangeStatusAsync(id);
+                
+                if (success)
+                {
+                    return Json(new { 
+                        success = true, 
+                        message = "Student status updated successfully!" 
+                    });
+                }
+                else
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = "Failed to update student status. Please try again." 
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { 
+                    success = false, 
+                    message = "An error occurred while updating student status." 
+                });
+            }
         }
 
-        // GET: Admin
-        public ActionResult Index()
+        private async Task LoadLookupData(StudentDTO model)
         {
-            return View("StudentList");
+            try
+            {
+                // Load states
+                var states = await _stateService.GetAllAsync();
+                model.States = states?.ToList();
+
+                // Load categories (hardcoded for now, can be moved to config/database)
+                model.Categories = new List<string>
+                {
+                    "General",
+                    "OBC",
+                    "SC",
+                    "ST",
+                    "EWS"
+                };
+
+                // TODO: Load Classes and Batches when those services are ready
+                model.Classes = new List<ClassDTO>();
+                model.Batches = new List<BatchDTO>();
+            }
+            catch (Exception ex)
+            {
+                // Log exception and provide empty lists
+                model.States = new List<StateModel>();
+                model.Categories = new List<string>();
+                model.Classes = new List<ClassDTO>();
+                model.Batches = new List<BatchDTO>();
+            }
         }
-
-        public async Task<ActionResult> LoadStudent()
-        {
-            List<StudentModel> ob = await _studentService.GetStudent();
-
-            return Json(new { data = ob });
-        }
-
-        public async Task<ActionResult> StStudentProfile()
-        {
-            StudentLoginModel Student = new StudentLoginModel();//Session["Student"] as StudentLoginModel;
-            return await EditStudent(Student.StatusCode.ToString(), "Update");
-        }
-         
-        public async Task<ActionResult> EditStudent(string StudentId, string CallFrom)
-        {
-            var serviceData = await _studentService.GetStudent(StudentId);
-
-            var Student = serviceData.FirstOrDefault();
-
-            //var category =  _settings.CasteCategory;
-            //var categorylist = category.Split(',');
-            //Student.CategoryList = categorylist.Select(x => new SelectListItem { Value = x, Text = x }).ToList();
-
-            //var states = await _stateService.GetState();
-
-            //Student.StateList = states.Select(x =>
-            
-            //new SelectListItem
-            //{
-            //    Text = x.State,
-            //    Value = x.StateId.ToString()
-            //}).ToList();
-
-            //var uploadPath = _settings.UploadPath;
-
-            //Student.ImagePath = uploadPath + Student.Image;
-            //if (true)//((Session["Student"]) != null)
-            //{
-            //    Student.CallFrom = CallFrom;
-            //    return View("UpdateStudent", Student);
-            //}
-            //else
-            //{
-                return View("CreateStudent", Student);
-            //}
-
-            
-        }
-
-        
-
-        public async Task<int> ActivateStudent(bool Activate, string StudentId)
-        {
-            return await _studentService.ActivateStudent(Activate, StudentId);
-        }
-
-        public async Task<int> DeleteStudent(bool Delete, string StudentId)
-        {
-            return await _studentService.DeleteStudent(Delete, StudentId);
-        }
-
-        // GET: Admin
-        public ActionResult ChangePassword()
-        {
-            return View("ChangePassword", new StudentChangePasswordModel());
-        }
-
-        [HttpPost]
-        //[ValidateAntiForgeryToken]
-        public async Task<int> ChangePassword(StudentChangePasswordModel StudentChangePassword)
-        {
-            StudentChangePassword.StudentId = 1;//SessionState.GetStudent().StatusCode;
-            StudentChangePassword = await _studentService.StudentChangePassword(StudentChangePassword);
-
-            return StudentChangePassword.StatusCode;
-        }
-
-
     }
 }

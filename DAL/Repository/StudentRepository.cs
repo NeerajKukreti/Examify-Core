@@ -12,8 +12,8 @@ namespace DAL.Repository
         Task<int> InsertOrUpdateStudentAsync(StudentDTO dto, int? studentId = null, int? createdBy = null, int? modifiedBy = null);
         Task<int> InsertStudentClassAsync(int studentId, int classId, int createdBy);
         Task<int> InsertStudentBatchAsync(int studentId, int batchId, int createdBy, DateTime? enrollmentDate = null);
-        Task<IEnumerable<StudentModel>> GetAllStudentsAsync(int instituteId);
-        Task<StudentModel?> GetStudentByIdAsync(int instituteId, int studentId);
+        Task<IEnumerable<StudentModel>> GetAllStudentsAsync(int instituteId, int? studentId);
+        Task<bool> ChangeStatus(int studentId);
     }
 
     public class StudentRepository : IStudentRepository
@@ -41,8 +41,7 @@ namespace DAL.Repository
             parameters.Add("@ParentContact", dto.ParentContact);
             parameters.Add("@Email", dto.Email);
             parameters.Add("@ActivationDate", dto.ActivationDate);
-            parameters.Add("@Validity", dto.Validity);
-            parameters.Add("@IsActive", dto.IsActive);
+            parameters.Add("@Validity", dto.Validity); 
             parameters.Add("@UserId", dto.UserId);
             parameters.Add("@InstituteId", dto.InstituteId);
             parameters.Add("@CreatedBy", createdBy);
@@ -86,24 +85,29 @@ namespace DAL.Repository
             );
         }
 
-        public async Task<IEnumerable<StudentModel>> GetAllStudentsAsync(int instituteId)
+        public async Task<IEnumerable<StudentModel>> GetAllStudentsAsync(int instituteId, int? studentId)
         {
             using var connection = Connection;
             return await connection.QueryAsync<StudentModel>(
                 "_sp_GetAllStudents",
-                new { InstituteId = instituteId },
-                commandType: CommandType.StoredProcedure
-            );
-        }
-
-        public async Task<StudentModel?> GetStudentByIdAsync(int instituteId, int studentId)
-        {
-            using var connection = Connection;
-            return await connection.QueryFirstOrDefaultAsync<StudentModel>(
-                "_sp_GetStudentById",
                 new { InstituteId = instituteId, StudentId = studentId },
                 commandType: CommandType.StoredProcedure
             );
         }
+        public async Task<bool> ChangeStatus(int studentId)
+        {
+            using var connection = Connection;
+            // Toggle IsActive for the given studentId
+            var rowsAffected = await connection.ExecuteAsync(
+                "UPDATE Student SET IsActive = ~IsActive WHERE StudentId = @StudentId",
+                new { StudentId = studentId },
+                commandType: CommandType.Text
+            );
+
+            // Return true if at least one row was updated
+            return rowsAffected > 0;
+        }
+
+
     }
 }

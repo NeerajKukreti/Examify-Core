@@ -11,6 +11,7 @@ namespace DAL
     {
         Task<User?> GetUserByUsername(string username);
         Task<int> CreateUser(User user);
+        Task<bool> CheckUserNameExistsAsync(string userName, int? userId = null);
     }
     // Repositories/UserRepository.cs
 
@@ -45,6 +46,22 @@ namespace DAL
             );
 
             return userId;
+        }
+
+        public async Task<bool> CheckUserNameExistsAsync(string userName, int? userId = null)
+        {
+            using var connection = Connection;
+            var parameters = new DynamicParameters();
+            parameters.Add("@UserName", userName);
+            parameters.Add("@UserId", userId);
+
+            var result = await connection.QuerySingleAsync<bool>(
+                "_sp_CheckUserNameExists",
+                parameters,
+                commandType: CommandType.StoredProcedure
+            );
+
+            return result;
         }
     }
 
