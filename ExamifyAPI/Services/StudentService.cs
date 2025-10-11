@@ -55,12 +55,6 @@ namespace ExamifyAPI.Services
                 // Save Student
                 var newStudentId = await _studentRepository.InsertOrUpdateStudentAsync(dto, studentId, createdBy, modifiedBy);
 
-                // Assign class if provided
-                if (dto.ClassId.HasValue)
-                {
-                    await _studentRepository.InsertStudentClassAsync(newStudentId, dto.ClassId.Value, createdBy ?? dto.UserId);
-                }
-
                 // Assign batch if provided
                 if (dto.BatchId.HasValue)
                 {

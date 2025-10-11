@@ -6,8 +6,7 @@ namespace ExamifyAPI.Services
 {
     public interface IClassService
     {
-        Task<IEnumerable<ClassModel>> GetAllClassesAsync(int instituteId);
-        Task<ClassModel?> GetClassByIdAsync(int classId);
+        Task<IEnumerable<ClassModel>> GetAllClassesAsync(int instituteId, int? classId = null);
         Task<int> InsertOrUpdateClassAsync(
             ClassDTO dto,
             int? classId = null,
@@ -27,14 +26,9 @@ namespace ExamifyAPI.Services
             _batchRepository = batchRepository;
         }
 
-        public async Task<IEnumerable<ClassModel>> GetAllClassesAsync(int instituteId)
+        public async Task<IEnumerable<ClassModel>> GetAllClassesAsync(int instituteId, int? classId = null)
         {
-            return await _classRepository.GetAllClassesAsync(instituteId);
-        }
-
-        public async Task<ClassModel?> GetClassByIdAsync(int classId)
-        {
-            return await _classRepository.GetClassByIdAsync(classId);
+            return await _classRepository.GetAllClassesAsync(instituteId, classId);
         }
 
         public async Task<int> InsertOrUpdateClassAsync(ClassDTO dto, int? classId = null, int? createdBy = null, int? modifiedBy = null)

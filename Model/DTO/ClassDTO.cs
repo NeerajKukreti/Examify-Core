@@ -15,7 +15,7 @@ namespace Model.DTO
 
         public bool? IsActive { get; set; }
 
-        // optional: list of batches, mainly for GET APIs
+        // Batches collection for class creation/editing
         public List<BatchDTO>? Batches { get; set; }
     }
 }

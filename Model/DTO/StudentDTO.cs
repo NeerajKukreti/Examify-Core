@@ -66,9 +66,6 @@ namespace Model.DTO
         public string? Password { get; set; }
 
         public int UserId { get; set; } // Assigned after user creation
-
-        // Class/Batch selection
-        public int? ClassId { get; set; }
         public int? BatchId { get; set; }
 
         // Lookup lists for UI (existing models/DTOs)

@@ -9,8 +9,7 @@ namespace DAL.Repository
 {
     public interface IClassRepository
     {
-        Task<IEnumerable<ClassModel>> GetAllClassesAsync(int instituteId);
-        Task<ClassModel?> GetClassByIdAsync(int classId);
+        Task<IEnumerable<ClassModel>> GetAllClassesAsync(int instituteId, int? classId = null);
         Task<int> InsertOrUpdateClassAsync(ClassDTO dto, int? classId = null, int? createdBy = null, int? modifiedBy = null);
     }
 
@@ -21,26 +20,38 @@ namespace DAL.Repository
 
         private IDbConnection Connection => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
 
-        public async Task<IEnumerable<ClassModel>> GetAllClassesAsync(int instituteId)
+        public async Task<IEnumerable<ClassModel>> GetAllClassesAsync(int instituteId, int? classId = null)
         {
             using var connection = Connection;
-            return await connection.QueryAsync<ClassModel>(
-                "_sp_GetAllClass", new { InstituteId = instituteId },
+            
+            // Execute the stored procedure that returns multiple result sets
+            using var multi = await connection.QueryMultipleAsync(
+                "_sp_GetAllClass", 
+                new { InstituteId = instituteId, ClassId = classId },
                 commandType: CommandType.StoredProcedure
             );
+
+            // Read the first result set (Classes)
+            var classes = (await multi.ReadAsync<ClassModel>()).ToList();
+            
+            // Read the second result set (Batches)
+            var batches = (await multi.ReadAsync<BatchModel>()).ToList();
+
+            // Group batches by ClassId and assign to corresponding classes
+            var batchGroups = batches.GroupBy(b => b.ClassId).ToDictionary(g => g.Key, g => g.ToList());
+            
+            foreach (var classModel in classes)
+            {
+                // Initialize the Batches collection
+                classModel.Batches = batchGroups.TryGetValue(classModel.ClassId, out var classBatches) 
+                    ? classBatches 
+                    : new List<BatchModel>();
+            }
+
+            return classes;
         }
 
-        public async Task<ClassModel?> GetClassByIdAsync(int classId)
-        {
-            using var connection = Connection;
-            return await connection.QueryFirstOrDefaultAsync<ClassModel>(
-                "_sp_GetClassById",
-                new { ClassId = classId },
-                commandType: CommandType.StoredProcedure
-            );
-        }
-
-        public async Task<int> InsertOrUpdateClassAsync(ClassDTO dto, int? classId = null, int? createdBy = null, int? modifiedBy = null)
+         public async Task<int> InsertOrUpdateClassAsync(ClassDTO dto, int? classId = null, int? createdBy = null, int? modifiedBy = null)
         {
             using var connection = Connection;
             var parameters = new DynamicParameters();

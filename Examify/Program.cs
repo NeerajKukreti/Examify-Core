@@ -43,6 +43,7 @@ builder.Services.AddScoped<IAdminLoginService, AdminLoginService>();
 builder.Services.AddScoped<Examify.Services.AuthService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<IClassService, ClassService>();
 
 var app = builder.Build();
 
