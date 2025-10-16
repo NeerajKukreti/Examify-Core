@@ -1,100 +1,149 @@
-﻿using Microsoft.Extensions.Options;
 using DataModel;
 using Examify.Common;
-using Examify.Helpers;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
-using System.Net.Http;
+using Microsoft.Extensions.Options;
+using Model.DTO;
+using Newtonsoft.Json;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Examify.Services
 {
     public interface IExamService
     {
-        Task<List<ExamModel>> GetExam(string ExamId);
-        Task<List<ExamModel>> GetExam();
-        Task<int> CreateExam(ExamModel examModel);
-        Task<int> DeleteExam(bool delete, string examId);
-        Task<int> ActivateExam(bool activate, string examId);
+        Task<IEnumerable<ExamModel>> GetAllAsync();
+        Task<ExamModel> GetByIdAsync(int examId);
+        Task<bool> CreateAsync(ExamDTO model);
+        Task<bool> UpdateAsync(ExamDTO model);
+        Task<bool> ChangeStatusAsync(int examId);
     }
-    public class ExamService: IExamService
+
+    public class ExamService : IExamService
     {
-        private readonly AppSettings _settings;
+        private readonly HttpClient _httpClient;
+        private readonly ApiSettings _apiSettings;
 
-        public ExamService( IOptions<AppSettings> settings)
-        { 
-            _settings = settings.Value;
+        public ExamService(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings)
+        {
+            _httpClient = httpClientFactory.CreateClient("ExamifyAPI");
+            _apiSettings = apiSettings.Value;
         }
 
-        public async Task<List<ExamModel>> GetExam(string ExamId)
+        public async Task<IEnumerable<ExamModel>> GetAllAsync()
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-
-            parameters.Add("ExamId", ExamId);
-
-            var values = new StringBuilder();
-
-            foreach (KeyValuePair<string, string> parameter in parameters)
+            try
             {
-                values.Append(parameter.Key + "=" + parameter.Value + "&");
-            }
-
-            var Exams = 
-                await HTTPClientWrapper<List<ExamModel>>.Get(_settings.Api, "ExamApi/GetExam", values);
-
-            return Exams;
-        }
-
-        public  async Task<List<ExamModel>> GetExam()
-        {
-            var Exams = await HTTPClientWrapper<List<ExamModel>>.Get(_settings.Api, url: "ExamApi/GetExam");
-                 
-            return Exams;
-        }
-
-        public  async Task<int> CreateExam(ExamModel ExamModel)
-        {
-            var x = await HTTPClientWrapper<ExamModel>.PostRequest(_settings.Api,"ExamApi/CreateExam", ExamModel);
-
-            return x.ExamId;
-        }
-
-        public  async Task<int> DeleteExam(bool Delete, string ExamId)
-        {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters.Add("Delete", Delete.ToString());
-            parameters.Add("ExamId", ExamId);
-
-            var values = new StringBuilder();
-
-            foreach (KeyValuePair<string, string> parameter in parameters)
-            {
-                values.Append(parameter.Key + "=" + parameter.Value + "&");
-            }
-
-            var x = await HTTPClientWrapper<int>.PostRequest(_settings.Api, "ExamApi/DeleteExam", values);
-
-            return x;
-        }
-
-        public  async Task<int> ActivateExam(bool Activate, string ExamId)
-        {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters.Add("Activate", Activate.ToString());
-            parameters.Add("ExamId", ExamId);
-
-            var values = new StringBuilder();
-
-            foreach (KeyValuePair<string, string> parameter in parameters)
-            {
-                values.Append(parameter.Key + "=" + parameter.Value + "&");
-            }
+                var response = await _httpClient.GetAsync("Exam/list");
                 
-            var x = await HTTPClientWrapper<int>.PostRequest(_settings.Api, "ExamApi/ActivateExam", values);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+                    
+                    if (apiResponse?.Success == true && apiResponse?.Data != null)
+                    {
+                        return JsonConvert.DeserializeObject<IEnumerable<ExamModel>>(apiResponse.Data.ToString());
+                    }
+                }
+                
+                return new List<ExamModel>();
+            }
+            catch (Exception ex)
+            {
+                return new List<ExamModel>();
+            }
+        }
 
-            return x;
+        public async Task<ExamModel> GetByIdAsync(int examId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"Exam/{examId}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+                    
+                    if (apiResponse?.Success == true && apiResponse?.Data != null)
+                    {
+                        return JsonConvert.DeserializeObject<ExamModel>(apiResponse.Data.ToString());
+                    }
+                }
+                
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
+        public async Task<bool> CreateAsync(ExamDTO model)
+        {
+            try
+            {
+                var json = JsonConvert.SerializeObject(model);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                
+                var response = await _httpClient.PostAsync("Exam", content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                    return apiResponse?.Success == true;
+                }
+                
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateAsync(ExamDTO model)
+        {
+            try
+            {
+                var json = JsonConvert.SerializeObject(model);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                
+                var response = await _httpClient.PutAsync($"Exam/{model.ExamId}", content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                    return apiResponse?.Success == true;
+                }
+                
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> ChangeStatusAsync(int examId)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsync($"Exam/ChangeStatus?id={examId}", null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+                    return apiResponse?.Success == true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
     }
 }

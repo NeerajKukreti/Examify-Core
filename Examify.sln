@@ -5,11 +5,11 @@ VisualStudioVersion = 17.14.36414.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examify", "Examify\Examify.csproj", "{F24A9F5F-C271-430F-B0B3-96E681E361B2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Model", "Model\Model.csproj", "{BD38E9EB-5EC4-429E-B25F-BDD216E04C65}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExamifyApi", "ExamifyAPI\ExamifyApi.csproj", "{B5A31620-FFFC-41B4-A3EF-9FF5E34FFBBC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DAL", "DAL\DAL.csproj", "{31386B27-08B6-481C-9F68-FF8DA5D091D8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Model", "Model\Model.csproj", "{BD38E9EB-5EC4-429E-B25F-BDD216E04C65}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examify.Logs", "Examify.Logs\Examify.Logs.csproj", "{F99C5975-8C23-4031-9596-16A008844013}"
 EndProject

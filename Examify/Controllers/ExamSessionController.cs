@@ -5,13 +5,13 @@ using System.Text.Json;
 using DataModel;
 using Examify.Common.constants;
 
-public class ExamController : Controller
+public class ExamSessionController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ApiSettings _apiSettings;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ExamController(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings, IHttpContextAccessor httpContextAccessor)
+    public ExamSessionController(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings, IHttpContextAccessor httpContextAccessor)
     {
         _httpClientFactory = httpClientFactory;
         _apiSettings = apiSettings.Value;

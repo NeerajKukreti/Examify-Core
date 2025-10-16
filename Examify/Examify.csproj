@@ -21,9 +21,10 @@
   <ItemGroup>
     <Content Remove="Views\Institute\CreateInstitute.cshtml" />
     <Content Remove="Views\Institute\UpdateInstitute.cshtml" />
-    <Content Remove="wwwroot\Scripts\Custom\Exam\Exam.js" />
+    <Content Remove="wwwroot\Scripts\Custom\ExamSession\Exam.js" />
+    <Content Remove="wwwroot\Scripts\Custom\ExamSession\ExamDatatable.js" />
+    <Content Remove="wwwroot\Scripts\Custom\ExamSession\ExamValidation.js" />
     <Content Remove="wwwroot\Scripts\Custom\Exam\ExamDatatable.js" />
-    <Content Remove="wwwroot\Scripts\Custom\Exam\ExamValidation.js" />
     <Content Remove="wwwroot\Scripts\Custom\global.js" />
     <Content Remove="wwwroot\Scripts\Custom\QuestionBank\Question.js" />
     <Content Remove="wwwroot\Scripts\Custom\Tabs.js" />
@@ -31,9 +32,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="wwwroot\Scripts\Custom\Exam\Exam.js" />
+    <None Include="wwwroot\Scripts\Custom\ExamSession\Exam.js" />
+    <None Include="wwwroot\Scripts\Custom\ExamSession\ExamDatatable.js" />
+    <None Include="wwwroot\Scripts\Custom\ExamSession\ExamValidation.js" />
     <None Include="wwwroot\Scripts\Custom\Exam\ExamDatatable.js" />
-    <None Include="wwwroot\Scripts\Custom\Exam\ExamValidation.js" />
     <None Include="wwwroot\Scripts\Custom\global.js" />
     <None Include="wwwroot\Scripts\Custom\Institute\Institute.js" />
     <None Include="wwwroot\Scripts\Custom\Institute\InstituteDatatable.js" />

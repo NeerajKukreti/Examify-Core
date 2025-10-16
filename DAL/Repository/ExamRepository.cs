@@ -3,6 +3,7 @@ using DataModel;
 using DataModel.Exam;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using Model.DTO;
 using System.Data;
 
 namespace DAL.Repository
@@ -14,6 +15,9 @@ namespace DAL.Repository
         ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId);
         int SubmitExamResponses(ExamSubmissionModel submission);
         ExamResultModel GetExamResult(int sessionId);
+        Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null,
+            int? userloggedIn = null);
+        Task<bool> ChangeStatus(int examId);
     }
 
     public class ExamRepository : IExamRepository
@@ -36,6 +40,42 @@ namespace DAL.Repository
             }
         }
 
+        public async Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null, 
+            int? userloggedIn = null)
+        {
+            using var connection = Connection;
+            var parameters = new DynamicParameters();
+            parameters.Add("@ExamId", examId);
+            parameters.Add("@ExamName", dto.ExamName);
+            parameters.Add("@Description", dto.Description);
+            parameters.Add("@Image", dto.Image);
+            parameters.Add("@DurationMinutes", dto.DurationMinutes);
+            parameters.Add("@TotalQuestions", dto.TotalQuestions);
+            parameters.Add("@Instructions", dto.Instructions);
+            parameters.Add("@ExamType", dto.ExamType);
+            parameters.Add("@CutOffPercentage", dto.CutOffPercentage);
+            parameters.Add("@UserId", userloggedIn); 
+
+            return await connection.ExecuteScalarAsync<int>(
+                "_sp_InsertUpdateExam",
+                parameters,
+                commandType: CommandType.StoredProcedure
+            );
+        }
+
+        public async Task<bool> ChangeStatus(int examId)
+        {
+            using var connection = Connection;
+            var rowsAffected = await connection.ExecuteAsync(
+                "UPDATE Exam SET IsActive = ~IsActive WHERE ExamId = @ExamId",
+                new { ExamId = examId },
+                commandType: CommandType.Text
+            );
+            return rowsAffected > 0;
+        }
+
+
+        #region Exam Session
         public ExamModel GetExamById(int examId)
         {
             using var connection = Connection;
@@ -182,8 +222,7 @@ namespace DAL.Repository
             }
         }
 
-        public int SubmitExamResponses(ExamSubmissionModel submission
-        )
+        public int SubmitExamResponses(ExamSubmissionModel submission)
         {
             using var connection = Connection;
             connection.Open();
@@ -365,5 +404,6 @@ namespace DAL.Repository
                 };
             }
         }
+        #endregion
     }
 }

@@ -1,47 +1,55 @@
 using DAL.Repository;
 using DataModel;
+using Model.DTO;
 
 namespace ExamifyAPI.Services
 {
     public interface IExamService
     {
-        List<ExamModel> GetActiveExams();
-
-        ExamModel GetExamById(int examId);
-        ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId); 
+        Task<IEnumerable<ExamModel>> GetAllExamsAsync();
+        Task<ExamModel> GetExamByIdAsync(int examId);
+        Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null, int? userloggedIn = null);
+        Task<bool> ChangeStatusAsync(int examId);
         int SubmitExamResponses(ExamSubmissionModel submission);
+        ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId);
         ExamResultModel GetExamResult(int sessionId);
     }
 
     public class ExamService : IExamService
     {
         private readonly IExamRepository _examRepository;
-        private readonly IQuestionRepository _questionRepository;
 
-        public ExamService(IExamRepository examRepository, IQuestionRepository questionRepository)
+        public ExamService(IExamRepository examRepository)
         {
             _examRepository = examRepository;
-            _questionRepository = questionRepository;
         }
 
-        public List<ExamModel> GetActiveExams()
+        public async Task<IEnumerable<ExamModel>> GetAllExamsAsync()
         {
-            return _examRepository.GetActiveExams();
+            return await Task.FromResult(_examRepository.GetActiveExams());
         }
 
-        public ExamModel GetExamById(int examId)
+        public async Task<ExamModel> GetExamByIdAsync(int examId)
         {
-            return _examRepository.GetExamById(examId);
+            return await Task.FromResult(_examRepository.GetExamById(examId));
         }
 
-        public ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId)
+        public async Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null, int? userloggedIn = null)
         {
-            return _examRepository.GetExamSessionQuestions(userId, examId);
+            return await _examRepository.InsertOrUpdateExamAsync(dto, examId, userloggedIn);
         }
 
+        public async Task<bool> ChangeStatusAsync(int examId)
+        {
+            return await _examRepository.ChangeStatus(examId);
+        }
         public int SubmitExamResponses(ExamSubmissionModel submission)
         {
             return _examRepository.SubmitExamResponses(submission);
+        }
+        public ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId)
+        {
+            return _examRepository.GetExamSessionQuestions(userId, examId);
         }
 
         public ExamResultModel GetExamResult(int sessionId)

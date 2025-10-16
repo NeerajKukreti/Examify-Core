@@ -1,0 +1,234 @@
+@model Model.DTO.ExamDTO
+@using System.Text.Json
+@{
+    ViewBag.Title = "Create/Edit Exam";
+    Layout = null;
+}
+
+<style>
+    label.error {
+        color: brown !important;
+    }
+
+    .form-section {
+        background: #fff;
+        border: 1px solid #e1e5e9;
+        border-radius: 6px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 20px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #007bff;
+        display: flex;
+        align-items: center;
+    }
+
+    .section-title i {
+        margin-right: 8px;
+        font-size: 18px;
+    }
+
+    .form-group label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 5px;
+    }
+
+    .form-control {
+        border-radius: 4px;
+        border: 1px solid #ced4da;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .required {
+        color: #dc3545;
+    }
+</style>
+
+<form id="examForm" method="post">
+    <div class="container-fluid">
+        <input type="hidden" asp-for="ExamId" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <!-- Basic Information Section -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-file-alt"></i>
+                Basic Information
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="ExamName">Exam Name <span class="required">*</span></label>
+                        <input asp-for="ExamName" class="form-control" placeholder="Enter exam name" />
+                        <span asp-validation-for="ExamName" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="ExamType">Exam Type</label>
+                        <select asp-for="ExamType" class="form-control">
+                            <option value="">Select Type</option>
+                            <option value="Practice">Practice</option>
+                            <option value="Mock">Mock</option>
+                            <option value="Final">Final</option>
+                        </select>
+                        <span asp-validation-for="ExamType" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label asp-for="Description">Description</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter exam description"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exam Configuration Section -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-cog"></i>
+                Exam Configuration
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="DurationMinutes">Duration (Minutes) <span class="required">*</span></label>
+                        <input asp-for="DurationMinutes" type="number" class="form-control" placeholder="Enter duration" />
+                        <span asp-validation-for="DurationMinutes" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="TotalQuestions">Total Questions <span class="required">*</span></label>
+                        <input asp-for="TotalQuestions" type="number" class="form-control" placeholder="Enter total questions" />
+                        <span asp-validation-for="TotalQuestions" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="CutOffPercentage">Cut Off Percentage</label>
+                        <input asp-for="CutOffPercentage" type="number" step="0.01" class="form-control" placeholder="Enter cut off %" />
+                        <span asp-validation-for="CutOffPercentage" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions Section -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-info-circle"></i>
+                Instructions
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label asp-for="Instructions">Exam Instructions</label>
+                        <textarea asp-for="Instructions" class="form-control" rows="5" placeholder="Enter exam instructions"></textarea>
+                        <span asp-validation-for="Instructions" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">
+                Cancel
+            </button>
+            <button type="submit" class="btn btn-primary">
+                @(Model.ExamId > 0 ? "Update Exam" : "Add Exam")
+            </button>
+        </div>
+    </div>
+</form>
+
+<script src="@Url.Content("~/theme/plugins/jquery-validation 1.19.5/jquery.validate.js")"></script>
+
+<script>
+    window.examModelData = @Html.Raw(JsonSerializer.Serialize(Model));
+
+    $(function () {
+        $('#examForm').validate({
+            rules: {
+                ExamName: { required: true, maxlength: 200 },
+                DurationMinutes: { required: true, min: 1, max: 1440 },
+                TotalQuestions: { required: true, min: 1, max: 500 },
+                CutOffPercentage: { min: 0, max: 100 }
+            },
+            messages: {
+                ExamName: { required: "Exam name is required", maxlength: "Exam name cannot exceed 200 characters" },
+                DurationMinutes: { required: "Duration is required", min: "Duration must be at least 1 minute", max: "Duration cannot exceed 1440 minutes" },
+                TotalQuestions: { required: "Total questions is required", min: "Must have at least 1 question", max: "Cannot exceed 500 questions" },
+                CutOffPercentage: { min: "Cut off must be at least 0%", max: "Cut off cannot exceed 100%" }
+            },
+            submitHandler: function(form) {
+                var formData = $(form).serialize();
+                var url = window.examModelData.ExamId > 0 ?
+                    '@Url.Action("Edit", "Exam")' :
+                    '@Url.Action("Create", "Exam")';
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            $('#examModel').modal('hide');
+
+                            if (typeof window.reloadExamTable === 'function') {
+                                window.reloadExamTable();
+                            }
+
+                            if (typeof toastr !== 'undefined') {
+                                toastr.success(response.message || 'Exam saved successfully!');
+                            } else {
+                                alert(response.message || 'Exam saved successfully!');
+                            }
+                        } else {
+                            if (response.errors) {
+                                response.errors.forEach(function(error) {
+                                    if (typeof toastr !== 'undefined') {
+                                        error.Errors.forEach(function(err) {
+                                            toastr.error(err);
+                                        });
+                                    }
+                                });
+                            } else if (response.message) {
+                                if (typeof toastr !== 'undefined') {
+                                    toastr.error(response.message);
+                                } else {
+                                    alert(response.message);
+                                }
+                            }
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        if (typeof toastr !== 'undefined') {
+                            toastr.error('An error occurred while saving the exam.');
+                        } else {
+                            alert('An error occurred while saving the exam.');
+                        }
+                    }
+                });
+            }
+        });
+
+        console.log('✅ Exam form initialized');
+    });
+</script>
