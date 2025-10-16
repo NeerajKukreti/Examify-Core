@@ -14,6 +14,7 @@ namespace Model.DTO
         public string ClassName { get; set; }
 
         public bool? IsActive { get; set; }
+        public bool IsCurrent { get; set; }
 
         // Batches collection for class creation/editing
         public List<BatchDTO>? Batches { get; set; }

@@ -4,6 +4,7 @@
     {
         public int StudentId { get; set; }
         public int InstituteId { get; set; }
+        public int BatchId { get; set; }
         public string StudentName { get; set; }
         public string FatherName { get; set; }
         public DateTime? DateOfBirth { get; set; }
@@ -38,11 +39,10 @@
     {
         public int StudentBatchId { get; set; }
         public int StudentId { get; set; }
+        public int ClassId { get; set; }
         public int BatchId { get; set; }
         public bool? IsActive { get; set; }
+         
         public DateTime? EnrollmentDate { get; set; }
-
-        public StudentModel Student { get; set; }
-        public BatchModel Batch { get; set; }
     }
 }

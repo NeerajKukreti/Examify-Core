@@ -13,6 +13,10 @@ namespace Model.DTO
         [StringLength(50, ErrorMessage = "Batch Name cannot exceed 50 characters")]
         public string BatchName { get; set; }
 
+        public bool IsCurrent { get; set; }    
+
         public bool? IsActive { get; set; }
+
+        public DateTime? EnrollmentDate { get; set;  }
     }
 }

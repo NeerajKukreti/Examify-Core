@@ -26,11 +26,11 @@ namespace ExamifyApi.Controllers
             return Ok(batch);
         }
 
-        [HttpGet("by-class/{classId}")]
+        [HttpGet("ByClass/{classId}")]
         public async Task<IActionResult> GetBatchesByClassId(int classId)
         {
             var batches = await _batchService.GetBatchesByClassIdAsync(classId);
-            return Ok(batches);
+            return Ok(new { Success = true, Data = batches, Message = "Batches retrieved successfully" });
         }
 
         [HttpPost]

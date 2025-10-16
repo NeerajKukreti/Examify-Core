@@ -78,6 +78,7 @@
         <input type="hidden" asp-for="StudentId" />
         <input type="hidden" asp-for="UserId" />
         <input type="hidden" asp-for="InstituteId" />
+        <input type="hidden" id="SelectedClassId" name="ClassId" value="" />
 
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -260,6 +261,49 @@
             </div>
         </div>
 
+        <!-- Class and Batch Information Section -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-graduation-cap"></i>
+                Class and Batch Information
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="ClassId">Class</label>
+                        <select id="ClassId" name="ClassId" class="form-control">
+                            <option value="">Select Class</option>
+                            @if (Model.Classes != null)
+                            {
+                                @foreach (var classItem in Model.Classes)
+                                {
+                                    <option value="@classItem.ClassId" selected="@classItem.IsCurrent">@classItem.ClassName</option>
+                                }
+                            }
+                        </select>
+                        <span class="text-danger" id="ClassId-error"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="BatchId">Batch <span id="batch-required-indicator" class="required" style="display: none;">*</span></label>
+                        <select asp-for="BatchId" class="form-control">
+                            <option value="">Select Batch</option>
+                            @if (Model.Batches != null)
+                            {
+                                @foreach (var batch in Model.Batches)
+                                {
+                                    <option selected="@batch.IsCurrent" value="@batch.BatchId">@batch.BatchName</option>
+                                }
+                            }
+                        </select>
+                        <span asp-validation-for="BatchId" class="text-danger"></span>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Form Actions -->
         <div class="d-flex justify-content-end">
             <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">
@@ -290,6 +334,119 @@
         if ($('#Mobile').val()) {
             $('#UserName').val($('#Mobile').val());
         }
+
+        // Handle class selection change to load batches
+        $('#ClassId').on('change', function() {
+            debugger;
+
+            var classId = $(this).val();
+            var batchSelect = $('#BatchId');
+            var batchRequiredIndicator = $('#batch-required-indicator');
+            
+            // Update hidden field for form submission
+            $('#SelectedClassId').val(classId);
+            
+            // Clear and disable batch dropdown
+            batchSelect.empty().append('<option value="">Select Batch</option>').prop('disabled', true);
+            
+            if (classId) {
+                // Show required indicator for batch when class is selected
+                batchRequiredIndicator.show();
+                
+                // Add required rule for BatchId
+                $('#BatchId').rules('add', {
+                    required: true,
+                    messages: {
+                        required: "Please select a batch when class is selected"
+                    }
+                });
+                
+                // Show loading indicator
+                batchSelect.append('<option value="">Loading batches...</option>');
+                
+                // Load batches for selected class
+                $.ajax({
+                    url: '@Url.Action("LoadBatchesByClass", "Batch")',
+                    type: 'GET',
+                    data: { classId: classId },
+                    success: function(response) {
+                        batchSelect.empty().append('<option value="">Select Batch</option>');
+                        
+                        if (response.data && response.data.length > 0) {
+                            $.each(response.data, function(index, batch) {
+                                if (batch.isActive) { // Only show active batches
+                                    batchSelect.append('<option value="' + batch.batchId + '">' + batch.batchName+ '</option>');
+                                }
+                            });
+                            batchSelect.prop('disabled', false);
+                            
+                            // Re-select batch if in edit mode
+                            if (window.studentModelData?.BatchId) {
+                                batchSelect.val(window.studentModelData.BatchId);
+                            }
+                        } else {
+                            batchSelect.append('<option value="">No batches available</option>');
+                        }
+                    },
+                    error: function() {
+                        batchSelect.empty()
+                            .append('<option value="">Select Batch</option>')
+                            .append('<option value="">Error loading batches</option>');
+                        
+                        if (typeof toastr !== 'undefined') {
+                            toastr.error('Failed to load batches for the selected class.');
+                        }
+                    }
+                });
+            } else {
+                // Hide required indicator when no class is selected
+                batchRequiredIndicator.hide();
+                
+                // Remove required rule for BatchId
+                $('#BatchId').rules('remove', 'required');
+                
+                // Clear any existing validation error for BatchId
+                $('#BatchId').valid();
+            }
+        });
+
+        // Initialize for edit mode - find the class that contains the selected batch
+        if (window.studentModelData?.BatchId && window.studentModelData.BatchId > 0) {
+            // Find which class contains this batch
+            var foundClass = false;
+            
+            $('#ClassId option').each(function() {
+                var classId = $(this).val();
+                if (classId && !foundClass) {
+                    $.ajax({
+                        url: '@Url.Action("LoadBatchesByClass", "Batch")',
+                        type: 'GET',
+                        data: { classId: classId },
+                        async: false, // Make synchronous for initialization
+                        success: function(response) {
+                            if (response.success && response.data) {
+                                var batchExists = response.data.find(function(batch) {
+                                    return batch.value == window.studentModelData.BatchId;
+                                });
+                                
+                                if (batchExists) {
+                                    $('#ClassId').val(classId);
+                                    $('#SelectedClassId').val(classId);
+                                    foundClass = true;
+                                    
+                                    // Show batch required indicator since class is selected
+                                    $('#batch-required-indicator').show();
+                                    
+                                    // Trigger change to load batches
+                                    $('#ClassId').trigger('change');
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
         debugger;
         // Form validation and submission
         $('#studentForm').validate({
@@ -317,6 +474,7 @@
                         }
                     }
                 },
+                // Class and Batch are now conditionally required - handled dynamically
                 Password: { required: function() { return window.studentModelData.StudentId === 0; } }, // Required only for new students
                 Email: { email: true },
                 Pincode: { digits: true, minlength: 6, maxlength: 6 }

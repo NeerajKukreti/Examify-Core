@@ -75,11 +75,9 @@ namespace DAL.Repository
             var parameters = new DynamicParameters();
             parameters.Add("@StudentId", studentId);
             parameters.Add("@BatchId", batchId);
-            parameters.Add("@CreatedBy", createdBy);
-            parameters.Add("@EnrollmentDate", enrollmentDate);
-
+           
             return await connection.ExecuteScalarAsync<int>(
-                "_sp_InsertStudentBatch",
+                "_sp_InsertUpdateStudentBatch",
                 parameters,
                 commandType: CommandType.StoredProcedure
             );
@@ -88,11 +86,34 @@ namespace DAL.Repository
         public async Task<IEnumerable<StudentModel>> GetAllStudentsAsync(int instituteId, int? studentId)
         {
             using var connection = Connection;
-            return await connection.QueryAsync<StudentModel>(
+            
+            // Execute the stored procedure that returns multiple result sets
+            using var multi = await connection.QueryMultipleAsync(
                 "_sp_GetAllStudents",
                 new { InstituteId = instituteId, StudentId = studentId },
                 commandType: CommandType.StoredProcedure
             );
+
+            // Read the first result set (Students with State information)
+            // We'll read it as a single type first, then handle State separately if needed
+            var students = (await multi.ReadAsync<StudentModel>()).ToList();
+
+            // Read the second result set (Student Batches)
+            // The query returns: StudentBatchId, StudentId, BatchId, ClassId
+            var studentBatches = (await multi.ReadAsync<StudentBatch>()).ToList(); 
+
+            // Group student batches by StudentId and assign to corresponding students
+            var batchGroups = studentBatches.GroupBy(sb => sb.StudentId).ToDictionary(g => g.Key, g => g.ToList());
+
+            foreach (var student in students)
+            {
+                // Initialize the StudentBatches collection
+                student.StudentBatches = batchGroups.TryGetValue(student.StudentId, out var studentBatchCollection)
+                    ? studentBatchCollection
+                    : new List<StudentBatch>();
+            }
+
+            return students;
         }
         public async Task<bool> ChangeStatus(int studentId)
         {

@@ -102,6 +102,7 @@ builder.Services.AddScoped<ISubjectService, SubjectService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IStateService, StateService>();
 builder.Services.AddScoped<IClassService, ClassService>();
+builder.Services.AddScoped<IBatchService, BatchService>();
 builder.Services.AddHttpContextAccessor(); // Added line
 
 var app = builder.Build();
