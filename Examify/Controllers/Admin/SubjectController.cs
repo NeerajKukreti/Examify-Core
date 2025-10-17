@@ -1,100 +1,147 @@
-﻿using DataModel;
-using Microsoft.Extensions.Options;
-using OnlineExam.Common;
-using OnlineExam.Helpers;
-using OnlineExam.Services;
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Web;
+using Examify.Attributes;
+using Examify.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+using Model.DTO;
 
-namespace OnlineExam.Controllers
+namespace Examify.Controllers.Admin
 {
+    [AutoLoginAuthorize("admin", "Test@123", "Admin", "Teacher")]
     public class SubjectController : Controller
     {
-        private readonly AppSettings _settings;
-        private readonly IFileService _fileService; private readonly ISubjectService _subjectService;
+        private readonly ISubjectService _subjectService;
 
-        public SubjectController(IFileService fileService,
-            IOptions<AppSettings> settings,
-            ISubjectService SubjectService)
+        public SubjectController(ISubjectService subjectService)
         {
-            _fileService = fileService;
-            _settings = settings.Value;
-            _subjectService = SubjectService;
+            _subjectService = subjectService;
         }
 
-        public async Task<ActionResult> CreateSubject()
+        public IActionResult Index()
         {
-            SubjectModel ob = new SubjectModel();
+            return View("Index");
+        }
 
-            var topics = _settings.SubjectTopics;
+        [HttpGet]
+        public async Task<IActionResult> LoadSubjects()
+        {
+            var instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+            var subjects = await _subjectService.GetAllAsync(instituteId);
+            return Json(new { data = subjects });
+        }
 
-            var topicList = topics.Split(',');
+        public async Task<IActionResult> Create()
+        {
+            var model = new SubjectDTO
+            {
+                SubjectName = "",
+                InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3,
+                Topics = new List<SubjectTopicDTO>()
+            };
 
-            ob.TopicList = topicList.Select(x => new SelectListItem { Value = x, Text = x }).ToList();
-
-            return View(ob);
+            return PartialView("_Create", model);
         }
 
         [HttpPost]
-        public async Task<int> CreateSubject(SubjectModel Subject, List<IFormFile> files)
+        public async Task<IActionResult> Create(SubjectDTO model)
         {
-            Subject.Image = await _fileService.SaveUploadedFile(files[0]);
-            return await _subjectService.CreateSubject(Subject);
-        }
-
-        // GET: Admin
-        public ActionResult Index()
-        {
-            return View("SubjectList");
-        }
-
-        public async Task<IActionResult> LoadSubject()
-        {
-            List<SubjectModel> ob = await _subjectService.GetSubject();
-
-            return Json(new { data = ob });
-        }
-
-        public async Task<ActionResult> EditSubject(string SubjectId)
-        {
-            var serviceData = await _subjectService.GetSubject(SubjectId);
-
-            var Subject = serviceData.FirstOrDefault();
-
-            var topics = _settings.SubjectTopics;
-
-            var topicList = topics.Split(',');
-
-            Subject.TopicList = topicList.Select(x => new SelectListItem { Value = x, Text = x }).ToList();
-
-            Subject.TopicList.ForEach(x =>
+            if (ModelState.IsValid)
             {
-                x.Selected = Subject.Topics.Contains(x.Value);
-            });
+                model.InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+                model.IsActive = true;
 
-            var uploadPath = _settings.UploadPath;
+                var success = await _subjectService.CreateAsync(model);
+                if (success)
+                    return Json(new { success = true, message = "Subject created successfully!" });
+                else
+                    return Json(new { success = false, message = "Failed to create subject. Please try again." });
+            }
 
-            Subject.ImagePath = uploadPath + Subject.Image;
-
-            return View("CreateSubject", Subject);
+            var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
+                .Select(x => new { Field = x.Key, Errors = x.Value.Errors.Select(e => e.ErrorMessage) })
+                .ToList();
+            return Json(new { success = false, errors });
         }
 
-        public async Task<int> ActivateSubject(bool Activate, string SubjectId)
+        public async Task<IActionResult> Edit(int id)
         {
-            return await _subjectService.ActivateSubject(Activate, SubjectId);
+            var instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+            var subject = await _subjectService.GetByIdAsync(id, instituteId);
+
+            if (subject == null) return NotFound();
+
+            var topics = await _subjectService.GetTopicsBySubjectIdAsync(id);
+
+            var model = new SubjectDTO
+            {
+                SubjectId = subject.SubjectId,
+                InstituteId = instituteId,
+                SubjectName = subject.SubjectName,
+                Description = subject.Description,
+                Image = subject.Image,
+                Topics = topics.Select(t => new SubjectTopicDTO
+                {
+                    TopicId = t.TopicId,
+                    SubjectId = t.SubjectId,
+                    TopicName = t.TopicName,
+                    Description = t.Description,
+                    IsActive = t.IsActive
+                }).ToList()
+            };
+
+            return PartialView("_Create", model);
         }
 
-        public async Task<int> DeleteSubject(bool Delete, string SubjectId)
+        [HttpPost]
+        public async Task<IActionResult> Edit(SubjectDTO model)
         {
-            return await _subjectService.DeleteSubject(Delete, SubjectId);
+            if (ModelState.IsValid)
+            {
+                model.InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+
+                var success = await _subjectService.UpdateAsync(model);
+                if (success)
+                    return Json(new { success = true, message = "Subject updated successfully!" });
+                else
+                    return Json(new { success = false, message = "Failed to update subject. Please try again." });
+            }
+
+            var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
+                .Select(x => new { Field = x.Key, Errors = x.Value.Errors.Select(e => e.ErrorMessage) })
+                .ToList();
+            return Json(new { success = false, errors });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ChangeStatus(int id)
+        {
+            try
+            {
+                var success = await _subjectService.ChangeStatusAsync(id);
+
+                if (success)
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        message = "Subject status updated successfully!"
+                    });
+                }
+                else
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Failed to update subject status. Please try again."
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "An error occurred while updating subject status."
+                });
+            }
         }
     }
 }

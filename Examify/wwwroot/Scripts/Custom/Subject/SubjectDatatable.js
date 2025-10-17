@@ -1,152 +1,154 @@
 var SubjectTable = function () {
-    //TODO:: table-datatables-scroller.js use to fix scroller issue 
     var table;
     var Subject = function () {
-
         table = $('#SubjectTable');
-
-        // begin first table
-        table.DataTable({
-            "createdRow": function (row, data, dataIndex) {
-
-                if (!data.IsActive) {
-                    $('td', row).eq(0).addClass('ActiveRow');
-                }
-
-                if (data.IsDeleted) {
-                    $('td', row).eq(0).addClass('DeletedRow');
-                }
-                //
-            },
+        table.dataTable({
+            "order": [],
             "ajax": {
-                "url": LoadSubject,
+                "url": loadSubjectUrl,
                 "type": "GET",
-                "datatype": "json"
-            },//
+                "dataType": "json",
+                "dataSrc": "data"
+            },
             "columns": [
-                //{
-                //    "title": "Id", "data": "SubjectId"
-                //},
                 {
-                    "title": "Subject", "data": "SubjectName",
+                    "title": "Subject Name", "data": "subjectName",
                     fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                        var tabName = "";
-                        //alert(oData.ShortName )
-
-                        tabName = oData.SubjectName.substr(0, 15);
-
-                        var url = EditSubject + "?SubjectId=" + oData.SubjectId;
-                        var editLnk = 'Tabs.addAjaxTab("EditSubject_' + oData.SubjectId + '", "' + tabName + '", true, "' + url + '","GET")';
-                        $(nTd).html("<a href='javascript:" + editLnk + "'>" + oData.SubjectName + "</a>");
+                        var str = '<div class="btn-group" role="group">' +
+                            '<a style="cursor:pointer" class="text-decoration-underline" data-id=' + oData.subjectId +
+                            ' data-bs-target="#subjectModel" data-bs-toggle="modal" id="EditSubject">' +
+                            oData.subjectName +
+                            '</a>' +
+                            '</div>';
+                        $(nTd).html(str);
                     }
                 },
-                { "title": "Description", "data": "Description" }
-                
-            ],
-
-            // Internationalisation. For more info refer to http://datatables.net/manual/i18n
-            "language": {
-                "aria": {
-                    "sortAscending": ": activate to sort column ascending",
-                    "sortDescending": ": activate to sort column descending"
-                },
-                "emptyTable": "No data available in table",
-                "info": "Showing _START_ to _END_ of _TOTAL_ records",
-                "infoEmpty": "No records found",
-                "infoFiltered": "(filtered1 from _MAX_ total records)",
-                "lengthMenu": "Show _MENU_",
-                "search": "Search:",
-                "zeroRecords": "No matching records found",
-                "paginate": {
-                    "previous": "Prev",
-                    "next": "Next",
-                    "last": "Last",
-                    "first": "First"
-                }
-            },
-
-            // Or you can use remote translation file
-            //"language": {
-            //   url: '//cdn.datatables.net/plug-ins/3cfcc339e89/i18n/Portuguese.json'
-            //},
-
-            // Uncomment below line("dom" parameter) to fix the dropdown overflow issue in the datatable cells. The default datatable layout
-            // setup uses scrollable div(table-scrollable) with overflow:auto to enable vertical scroll(see: assets/global/plugins/datatables/plugins/bootstrap/dataTables.bootstrap.js). 
-            // So when dropdowns used the scrollable div should be removed. 
-            //"dom": "<'row'<'col-md-6 col-sm-12'l><'col-md-6 col-sm-12'f>r>t<'row'<'col-md-5 col-sm-12'i><'col-md-7 col-sm-12'p>>",
-
-            "bStateSave": true, // save datatable state(pagination, sort, etc) in cookie.
-
-           
-
-            "lengthMenu": [
-                [5, 15, 20, -1],
-                [5, 15, 20, "All"] // change per page values here
-            ],
-            // set the initial value
-            "pageLength": 5,
-            "pagingType": "bootstrap_full_number",
-            "columnDefs": [
-                //{  // set default column settings
-                //'orderable': false,
-                //'targets': [0]
-                //},
                 {
-                    "targets": 0,
-                    "className": "text-left",
+                    "title": "Description", "data": "description",
+                    "render": function (data, type, row) {
+                        return data || '-';
+                    }
+                },
+                {
+                    "title": "Status", "data": "isActive",
+                    fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        var active = '<i class="fas fa-check-circle text-success"></i>';
+                        var inactive = '<i class="fas fa-times-circle text-danger"></i>';
+                        var str = '<div class="btn-group" role="group">' +
+                            '<a title="Click to ' + (oData.isActive ? 'Deactivate' : 'Activate') + ' it" data-id="' + oData.subjectId + '" id="ActivateSubject">' +
+                            (oData.isActive ? active : inactive) +
+                            '</a>' +
+                            '</div>';
+                        $(nTd).html(str);
+                    }
                 }
-            ],
-            "order": [
-                [1, "asc"]
-            ], // set first column as a default sort by asc
-
-        });
-
-        //table.columns.adjust().draw();
-
-        table.find('.group-checkable').change(function () {
-            var set = jQuery(this).attr("data-set");
-            var checked = jQuery(this).is(":checked");
-            jQuery(set).each(function () {
-                if (checked) {
-                    $(this).prop("checked", true);
-                    $(this).parents('tr').addClass("active");
-                } else {
-                    $(this).prop("checked", false);
-                    $(this).parents('tr').removeClass("active");
-                }
-            });
-            jQuery.uniform.update(set);
-        });
-
-        table.on('change', 'tbody tr .checkboxes', function () {
-            $(this).parents('tr').toggleClass("active");
+            ]
         });
 
         setInterval(function () {
-            table.DataTable().ajax.reload(null, false); // user paging is not reset on reload
+            table.DataTable().ajax.reload(null, false);
         }, 30000);
     }
 
     return {
-
-        //main function to initiate the module
         init: function () {
-            if (!jQuery().dataTable) {
+            if (!$().dataTable) {
                 return;
             }
-
             Subject();
         },
         reloadTable: function () {
-            table.DataTable().ajax.reload(null, false); // user paging is not reset on reload
+            table.DataTable().ajax.reload(null, false);
         }
     };
-
 }();
 
-if (App.isAngularJsApp() === false) {
-    jQuery(document).ready(function () {
-        SubjectTable.init();
+window.reloadSubjectTable = function () {
+    if (SubjectTable && typeof SubjectTable.reloadTable === 'function') {
+        SubjectTable.reloadTable();
+        console.log('✅ Subject table reloaded');
+    }
+};
+
+$(document).ready(function () {
+    SubjectTable.init();
+
+    $(document).on('click', '#btnAddNewSubject', function () {
+        $.ajax({
+            url: createSubjectUrl,
+            type: "GET",
+            success: function (res) {
+                $(".subjectModalBody").empty().html(res);
+                $('#subjectModel').modal('show');
+                console.log('✅ Create subject form loaded');
+            },
+            error: function (err) {
+                if (typeof toastr !== 'undefined') {
+                    toastr.error('Failed to load create subject form');
+                } else {
+                    alert('Failed to load create subject form');
+                }
+            }
+        });
     });
-}
+
+    $(document).on('click', '#EditSubject', function () {
+        var subjectId = $(this).data('id');
+        $.ajax({
+            url: editSubjectUrl + "?id=" + subjectId,
+            type: "GET",
+            beforeSend: function () {
+                $(".subjectModalBody").html('<div class="d-flex justify-content-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+            },
+            success: function (res) {
+                $(".subjectModalBody").empty().html(res);
+                console.log('✅ Edit subject form loaded for ID:', subjectId);
+            },
+            error: function (xhr, status, error) {
+                if (typeof toastr !== 'undefined') {
+                    toastr.error('Failed to load edit subject form: ' + error);
+                } else {
+                    alert('Failed to load edit subject form: ' + error);
+                }
+            }
+        });
+    });
+
+    $(document).on('click', '#ActivateSubject', function () {
+        var $this = $(this);
+        var subjectId = $this.data('id');
+
+        if ($this.find('i').hasClass('text-success')) {
+            let userConfirmation = confirm("Are you sure you want to deactivate this subject?");
+            if (!userConfirmation) return;
+        }
+
+        $.ajax({
+            url: changeStatusUrl + "/" + subjectId,
+            type: "POST",
+            success: function (response) {
+                if (response.success) {
+                    SubjectTable.reloadTable();
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(response.message || 'Status changed successfully!');
+                    } else {
+                        alert(response.message || 'Status changed successfully!');
+                    }
+                } else {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error(response.message || 'Failed to change status');
+                    } else {
+                        alert(response.message || 'Failed to change status');
+                    }
+                }
+            },
+            error: function (err) {
+                if (typeof toastr !== 'undefined') {
+                    toastr.error('An error occurred while changing the status');
+                } else {
+                    alert('An error occurred while changing the status');
+                }
+            }
+        });
+    });
+});

@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <Compile Remove="Controllers\Admin\InstituteController.cs" />
-    <Compile Remove="Controllers\Admin\SubjectController.cs" />
   </ItemGroup>
 
   <ItemGroup>

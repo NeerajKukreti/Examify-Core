@@ -1,0 +1,212 @@
+@model Model.DTO.SubjectDTO
+@using System.Text.Json
+@{
+    ViewBag.Title = "Create/Edit Subject";
+    Layout = null;
+}
+
+<style>
+    label.error { color: brown !important; }
+    .form-section { background: #fff; border: 1px solid #e1e5e9; border-radius: 6px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .section-title { font-size: 16px; font-weight: 600; color: #495057; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 2px solid #007bff; display: flex; align-items: center; }
+    .section-title i { margin-right: 8px; font-size: 18px; }
+    .form-group label { font-weight: 500; color: #495057; margin-bottom: 5px; }
+    .form-control { border-radius: 4px; border: 1px solid #ced4da; }
+    .form-control:focus { border-color: #007bff; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }
+    .required { color: #dc3545; }
+    .topic-item { border: 1px solid #dee2e6; border-radius: 4px; padding: 15px; margin-bottom: 10px; background: #f8f9fa; }
+    .topic-item .btn-remove { float: right; }
+</style>
+
+<form id="subjectForm" method="post">
+    <div class="container-fluid">
+        <input type="hidden" asp-for="SubjectId" />
+        <input type="hidden" asp-for="InstituteId" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-book"></i>
+                Subject Information
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label asp-for="SubjectName">Subject Name <span class="required">*</span></label>
+                        <input asp-for="SubjectName" class="form-control" placeholder="Enter subject name" />
+                        <span asp-validation-for="SubjectName" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label asp-for="Description">Description</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter subject description"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-list"></i>
+                Topics
+                <button type="button" class="btn btn-sm btn-success ms-auto" id="btnAddTopic">
+                    <i class="fas fa-plus"></i> Add Topic
+                </button>
+            </div>
+            <div id="topicsContainer">
+                @if (Model.Topics != null && Model.Topics.Any())
+                {
+                    for (int i = 0; i < Model.Topics.Count; i++)
+                    {
+                        <div class="topic-item" data-index="@i">
+                            <button type="button" class="btn btn-sm btn-danger btn-remove" onclick="removeTopic(this)">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <input type="hidden" name="Topics[@i].TopicId" value="@Model.Topics[i].TopicId" />
+                            <input type="hidden" name="Topics[@i].SubjectId" value="@Model.Topics[i].SubjectId" />
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Topic Name <span class="required">*</span></label>
+                                        <input type="text" name="Topics[@i].TopicName" value="@Model.Topics[i].TopicName" class="form-control" placeholder="Enter topic name" required />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Description</label>
+                                        <input type="text" name="Topics[@i].Description" value="@Model.Topics[i].Description" class="form-control" placeholder="Enter topic description" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">
+                @(Model.SubjectId > 0 ? "Update Subject" : "Add Subject")
+            </button>
+        </div>
+    </div>
+</form>
+
+<script src="@Url.Content("~/theme/plugins/jquery-validation 1.19.5/jquery.validate.js")"></script>
+
+<script>
+    window.subjectModelData = @Html.Raw(JsonSerializer.Serialize(Model));
+    var topicIndex = @(Model.Topics?.Count ?? 0);
+
+    function removeTopic(btn) {
+        $(btn).closest('.topic-item').remove();
+        reindexTopics();
+    }
+
+    function reindexTopics() {
+        $('#topicsContainer .topic-item').each(function(index) {
+            $(this).attr('data-index', index);
+            $(this).find('input[name^="Topics["]').each(function() {
+                var name = $(this).attr('name');
+                var newName = name.replace(/Topics\[\d+\]/, 'Topics[' + index + ']');
+                $(this).attr('name', newName);
+            });
+        });
+        topicIndex = $('#topicsContainer .topic-item').length;
+    }
+
+    $(function () {
+        $('#btnAddTopic').on('click', function() {
+            var currentIndex = $('#topicsContainer .topic-item').length;
+            var html = `
+                <div class="topic-item" data-index="${currentIndex}">
+                    <button type="button" class="btn btn-sm btn-danger btn-remove" onclick="removeTopic(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <input type="hidden" name="Topics[${currentIndex}].TopicId" value="0" />
+                    <input type="hidden" name="Topics[${currentIndex}].SubjectId" value="0" />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Topic Name <span class="required">*</span></label>
+                                <input type="text" name="Topics[${currentIndex}].TopicName" class="form-control" placeholder="Enter topic name" required />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Description</label>
+                                <input type="text" name="Topics[${currentIndex}].Description" class="form-control" placeholder="Enter topic description" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#topicsContainer').append(html);
+        });
+
+        $('#subjectForm').validate({
+            rules: {
+                SubjectName: { required: true, maxlength: 200 }
+            },
+            messages: {
+                SubjectName: { required: "Subject name is required", maxlength: "Subject name cannot exceed 200 characters" }
+            },
+            submitHandler: function(form) {
+                var formData = $(form).serialize();
+                var url = window.subjectModelData.SubjectId > 0 ?
+                    '@Url.Action("Edit", "Subject")' :
+                    '@Url.Action("Create", "Subject")';
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            $('#subjectModel').modal('hide');
+                            if (typeof window.reloadSubjectTable === 'function') {
+                                window.reloadSubjectTable();
+                            }
+                            if (typeof toastr !== 'undefined') {
+                                toastr.success(response.message || 'Subject saved successfully!');
+                            } else {
+                                alert(response.message || 'Subject saved successfully!');
+                            }
+                        } else {
+                            if (response.errors) {
+                                response.errors.forEach(function(error) {
+                                    if (typeof toastr !== 'undefined') {
+                                        error.Errors.forEach(function(err) {
+                                            toastr.error(err);
+                                        });
+                                    }
+                                });
+                            } else if (response.message) {
+                                if (typeof toastr !== 'undefined') {
+                                    toastr.error(response.message);
+                                } else {
+                                    alert(response.message);
+                                }
+                            }
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        if (typeof toastr !== 'undefined') {
+                            toastr.error('An error occurred while saving the subject.');
+                        } else {
+                            alert('An error occurred while saving the subject.');
+                        }
+                    }
+                });
+            }
+        });
+
+        // Reindex topics on page load to ensure sequential indices
+        reindexTopics();
+        
+        console.log('✅ Subject form initialized');
+    });
+</script>

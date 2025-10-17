@@ -1,118 +1,167 @@
-﻿using DataModel;
-using Microsoft.Extensions.Options;
+using DataModel;
 using Examify.Common;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
-using System.Net.Http;
+using Microsoft.Extensions.Options;
+using Model.DTO;
+using Newtonsoft.Json;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Examify.Services
 {
     public interface ISubjectService
     {
-        Task<List<SubjectModel>> GetSubject(string subjectId);
-        Task<List<SubjectModel>> GetSubject();
-        Task<int> CreateSubject(SubjectModel subjectModel);
-        Task<int> DeleteSubject(bool delete, string subjectId);
-        Task<int> ActivateSubject(bool activate, string subjectId);
-        Task<List<SubjectTopic>> GetSubjectTopic(string subjectId);
+        Task<IEnumerable<SubjectModel>> GetAllAsync(int instituteId, int? subjectId = null);
+        Task<SubjectModel> GetByIdAsync(int subjectId, int instituteId);
+        Task<IEnumerable<SubjectTopicModel>> GetTopicsBySubjectIdAsync(int subjectId);
+        Task<bool> CreateAsync(SubjectDTO model);
+        Task<bool> UpdateAsync(SubjectDTO model);
+        Task<bool> ChangeStatusAsync(int subjectId);
     }
 
     public class SubjectService : ISubjectService
     {
-        private readonly AppSettings _settings;
+        private readonly HttpClient _httpClient;
+        private readonly ApiSettings _apiSettings;
 
-        public SubjectService(IOptions<AppSettings> settings)
+        public SubjectService(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings)
         {
-            _settings = settings.Value;
+            _httpClient = httpClientFactory.CreateClient("ExamifyAPI");
+            _apiSettings = apiSettings.Value;
         }
 
-        public async Task<List<SubjectModel>> GetSubject(string SubjectId)
+        public async Task<IEnumerable<SubjectModel>> GetAllAsync(int instituteId, int? subjectId = null)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-
-            parameters.Add("SubjectId", SubjectId);
-
-            var values = new StringBuilder();
-
-            foreach (KeyValuePair<string, string> parameter in parameters)
+            try
             {
-                values.Append(parameter.Key + "=" + parameter.Value + "&");
+                var endpoint = subjectId.HasValue
+                    ? $"Subject/{instituteId}/{subjectId}"
+                    : $"Subject/{instituteId}/0";
+
+                var response = await _httpClient.GetAsync(endpoint);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+
+                    if (apiResponse?.Success == true && apiResponse?.Data != null)
+                    {
+                        return JsonConvert.DeserializeObject<IEnumerable<SubjectModel>>(apiResponse.Data.ToString());
+                    }
+                }
+
+                return new List<SubjectModel>();
             }
-
-            var Subjects = await HTTPClientWrapper<List<DataModel.SubjectModel>>.Get(_settings.Api, "SubjectApi/GetSubject", values);
-
-            return Subjects;
-        }
-
-        public async Task<List<SubjectModel>> GetSubject()
-        {
-            var Subjects = await HTTPClientWrapper<List<DataModel.SubjectModel>>.Get(_settings.Api, url: "SubjectApi/GetSubject");
-
-            return Subjects;
-        }
-
-        public async Task<int> CreateSubject(SubjectModel SubjectModel)
-        {
-            var x = await HTTPClientWrapper<SubjectModel>.PostRequest(_settings.Api, "SubjectApi/CreateSubject", SubjectModel);
-
-            return x.SubjectId;
-        }
-
-        public async Task<int> DeleteSubject(bool Delete, string SubjectId)
-        {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters.Add("Delete", Delete.ToString());
-            parameters.Add("SubjectId", SubjectId);
-
-            var values = new StringBuilder();
-
-            foreach (KeyValuePair<string, string> parameter in parameters)
+            catch (Exception ex)
             {
-                values.Append(parameter.Key + "=" + parameter.Value + "&");
+                return new List<SubjectModel>();
             }
-
-            var x = await HTTPClientWrapper<int>.PostRequest(_settings.Api, "SubjectApi/DeleteSubject", values);
-
-            return x;
         }
 
-        public async Task<int> ActivateSubject(bool Activate, string SubjectId)
+        public async Task<SubjectModel> GetByIdAsync(int subjectId, int instituteId)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters.Add("Activate", Activate.ToString());
-            parameters.Add("SubjectId", SubjectId);
-
-            var values = new StringBuilder();
-
-            foreach (KeyValuePair<string, string> parameter in parameters)
+            try
             {
-                values.Append(parameter.Key + "=" + parameter.Value + "&");
+                var subjects = await GetAllAsync(instituteId, subjectId);
+                return subjects?.FirstOrDefault();
             }
-
-            var x = await HTTPClientWrapper<int>.PostRequest(_settings.Api, "SubjectApi/ActivateSubject", values);
-
-            return x;
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
-        public async Task<List<SubjectTopic>> GetSubjectTopic(string SubjectId)
+        public async Task<IEnumerable<SubjectTopicModel>> GetTopicsBySubjectIdAsync(int subjectId)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-
-            parameters.Add("SubjectId", SubjectId);
-
-            var values = new StringBuilder();
-
-            foreach (KeyValuePair<string, string> parameter in parameters)
+            try
             {
-                values.Append(parameter.Key + "=" + parameter.Value + "&");
+                var response = await _httpClient.GetAsync($"Subject/{subjectId}/topics");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+
+                    if (apiResponse?.Success == true && apiResponse?.Data != null)
+                    {
+                        return JsonConvert.DeserializeObject<IEnumerable<SubjectTopicModel>>(apiResponse.Data.ToString());
+                    }
+                }
+
+                return new List<SubjectTopicModel>();
             }
+            catch (Exception ex)
+            {
+                return new List<SubjectTopicModel>();
+            }
+        }
 
-            var topics = await HTTPClientWrapper<List<SubjectTopic>>.Get(_settings.Api, "SubjectApi/GetSubjectTopic", values);
+        public async Task<bool> CreateAsync(SubjectDTO model)
+        {
+            try
+            {
+                var json = JsonConvert.SerializeObject(model);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            return topics;
+                var response = await _httpClient.PostAsync("Subject", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                    return apiResponse?.Success == true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateAsync(SubjectDTO model)
+        {
+            try
+            {
+                var json = JsonConvert.SerializeObject(model);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PutAsync($"Subject/{model.SubjectId}", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                    return apiResponse?.Success == true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> ChangeStatusAsync(int subjectId)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsync($"Subject/ChangeStatus?id={subjectId}", null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+                    return apiResponse?.Success == true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
     }
 }
