@@ -21,23 +21,15 @@ namespace Examify.Controllers.Admin
         public IActionResult Index()
         {
             return View("Index");
-        }  
+        }
 
         // GET: Admin/Batch/LoadBatchesByClass/{classId}
         [HttpGet]
         public async Task<IActionResult> LoadBatchesByClass(int classId)
         {
-            try
-            {
-                var batches = await _batchService.GetBatchesByClassIdAsync(classId);
-                return Json(new { data = batches });
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"LoadBatchesByClass failed: {ex.Message}");
-                return Json(new { data = new List<BatchDTO>() });
-            }
-        } 
- 
+            var batches = await _batchService.GetBatchesByClassIdAsync(classId);
+            return Json(new { data = batches });
+        }
+
     }
 }

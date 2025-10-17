@@ -30,157 +30,113 @@ namespace Examify.Services
 
         public async Task<IEnumerable<ClassDTO>> GetAllAsync(int instituteId)
         {
-            try
+
+            var endpoint = $"Class/GetAll/{instituteId}";
+            var response = await _httpClient.GetAsync(endpoint);
+
+            if (response.IsSuccessStatusCode)
             {
-                var endpoint = $"Class/GetAll/{instituteId}";
-                var response = await _httpClient.GetAsync(endpoint);
-                
-                if (response.IsSuccessStatusCode)
+                var content = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<ClassDTO>>>(content);
+
+                if (apiResponse?.Success == true && apiResponse?.Data != null)
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<ClassDTO>>>(content);
-                    
-                    if (apiResponse?.Success == true && apiResponse?.Data != null)
-                    {
-                        return apiResponse.Data;
-                    }
+                    return apiResponse.Data;
                 }
-                
-                return new List<ClassDTO>();
             }
-            catch (Exception ex)
-            {
-                // Log exception
-                System.Diagnostics.Debug.WriteLine($"GetAllAsync failed: {ex.Message}");
-                return new List<ClassDTO>();
-            }
+
+            return new List<ClassDTO>();
         }
 
         public async Task<ClassDTO?> GetByIdAsync(int instituteId, int classId)
         {
-            try
+
+            var endpoint = $"Class/GetAll/{instituteId}/{classId}";
+            var response = await _httpClient.GetAsync(endpoint);
+
+            if (response.IsSuccessStatusCode)
             {
-                var endpoint = $"Class/GetAll/{instituteId}/{classId}";
-                var response = await _httpClient.GetAsync(endpoint);
-                
-                if (response.IsSuccessStatusCode)
+                var content = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<ClassDTO>>>(content);
+
+                if (apiResponse?.Success == true && apiResponse?.Data != null)
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<IEnumerable<ClassDTO>>>(content);
-                    
-                    if (apiResponse?.Success == true && apiResponse?.Data != null)
-                    {
-                        // Since the API returns an array, get the first item (should be the requested class)
-                        return apiResponse.Data.FirstOrDefault();
-                    }
+                    // Since the API returns an array, get the first item (should be the requested class)
+                    return apiResponse.Data.FirstOrDefault();
                 }
-                
-                return null;
             }
-            catch (Exception ex)
-            {
-                // Log exception
-                System.Diagnostics.Debug.WriteLine($"GetByIdAsync failed: {ex.Message}");
-                return null;
-            }
+
+            return null;
+
         }
 
         public async Task<bool> CreateAsync(ClassDTO classDto)
         {
-            try
+
+            var json = JsonConvert.SerializeObject(classDto);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync("Class", content);
+
+            if (response.IsSuccessStatusCode)
             {
-                var json = JsonConvert.SerializeObject(classDto);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                
-                var response = await _httpClient.PostAsync("Class", content);
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<object>>(responseContent);
-                    return apiResponse?.Success == true;
-                }
-                
-                return false;
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<ApiResponse<object>>(responseContent);
+                return apiResponse?.Success == true;
             }
-            catch (Exception ex)
-            {
-                // Log exception
-                System.Diagnostics.Debug.WriteLine($"CreateAsync failed: {ex.Message}");
-                return false;
-            }
+
+            return false;
+
         }
 
         public async Task<bool> UpdateAsync(ClassDTO classDto)
         {
-            try
+
+            var json = JsonConvert.SerializeObject(classDto);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PutAsync($"Class/{classDto.ClassId}", content);
+
+            if (response.IsSuccessStatusCode)
             {
-                var json = JsonConvert.SerializeObject(classDto);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                
-                var response = await _httpClient.PutAsync($"Class/{classDto.ClassId}", content);
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<object>>(responseContent);
-                    return apiResponse?.Success == true;
-                }
-                
-                return false;
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<ApiResponse<object>>(responseContent);
+                return apiResponse?.Success == true;
             }
-            catch (Exception ex)
-            {
-                // Log exception
-                System.Diagnostics.Debug.WriteLine($"UpdateAsync failed: {ex.Message}");
-                return false;
-            }
+
+            return false;
+
         }
 
         public async Task<bool> DeleteAsync(int classId)
         {
-            try
+            var response = await _httpClient.DeleteAsync($"Class/{classId}");
+
+            if (response.IsSuccessStatusCode)
             {
-                var response = await _httpClient.DeleteAsync($"Class/{classId}");
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<object>>(responseContent);
-                    return apiResponse?.Success == true;
-                }
-                
-                return false;
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<ApiResponse<object>>(responseContent);
+                return apiResponse?.Success == true;
             }
-            catch (Exception ex)
-            {
-                // Log exception
-                System.Diagnostics.Debug.WriteLine($"DeleteAsync failed: {ex.Message}");
-                return false;
-            }
+
+            return false;
+
         }
 
         public async Task<bool> ChangeStatusAsync(int classId)
         {
-            try
-            {
-                var response = await _httpClient.PutAsync($"Class/ChangeStatus?id={classId}", null);
 
-                if (response.IsSuccessStatusCode)
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<object>>(content);
-                    return apiResponse?.Success == true;
-                }
+            var response = await _httpClient.PutAsync($"Class/ChangeStatus?id={classId}", null);
 
-                return false;
-            }
-            catch (Exception ex)
+            if (response.IsSuccessStatusCode)
             {
-                // Log exception
-                System.Diagnostics.Debug.WriteLine($"ChangeStatusAsync failed: {ex.Message}");
-                return false;
+                var content = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<ApiResponse<object>>(content);
+                return apiResponse?.Success == true;
             }
+
+            return false;
+
         }
     }
 

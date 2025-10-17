@@ -290,7 +290,7 @@ namespace DAL.Repository
                 catch (Exception ex)
                 {
                     transaction.Rollback();
-                    return 0;
+                    throw;
                 }
             }
         }

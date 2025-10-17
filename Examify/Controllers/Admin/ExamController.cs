@@ -48,7 +48,7 @@ namespace Examify.Controllers.Admin
             if (ModelState.IsValid)
             {
                 model.IsActive = true;
-                
+
                 var success = await _examService.CreateAsync(model);
                 if (success)
                     return Json(new { success = true, message = "Exam created successfully!" });
@@ -105,33 +105,22 @@ namespace Examify.Controllers.Admin
         [HttpPost]
         public async Task<IActionResult> ChangeStatus(int id)
         {
-            try
-            {
-                var success = await _examService.ChangeStatusAsync(id);
+            var success = await _examService.ChangeStatusAsync(id);
 
-                if (success)
+            if (success)
+            {
+                return Json(new
                 {
-                    return Json(new
-                    {
-                        success = true,
-                        message = "Exam status updated successfully!"
-                    });
-                }
-                else
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "Failed to update exam status. Please try again."
-                    });
-                }
+                    success = true,
+                    message = "Exam status updated successfully!"
+                });
             }
-            catch (Exception ex)
+            else
             {
                 return Json(new
                 {
                     success = false,
-                    message = "An error occurred while updating exam status."
+                    message = "Failed to update exam status. Please try again."
                 });
             }
         }

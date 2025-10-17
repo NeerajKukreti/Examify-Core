@@ -90,7 +90,7 @@ namespace Examify.Controllers.Admin
                 {
                     return Json(new { success = false, message = "Please select a batch when class is selected." });
                 }
-                
+
                 var success = await _studentService.CreateAsync(model);
                 if (success)
                     return Json(new { success = true, message = "Student created successfully!" });
@@ -204,35 +204,24 @@ namespace Examify.Controllers.Admin
         [HttpPost]
         public async Task<IActionResult> ChangeStatus(int id)
         {
-            try
-            {
-                var success = await _studentService.ChangeStatusAsync(id);
+            var success = await _studentService.ChangeStatusAsync(id);
 
-                if (success)
+            if (success)
+            {
+                return Json(new
                 {
-                    return Json(new
-                    {
-                        success = true,
-                        message = "Student status updated successfully!"
-                    });
-                }
-                else
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "Failed to update student status. Please try again."
-                    });
-                }
+                    success = true,
+                    message = "Student status updated successfully!"
+                });
             }
-            catch (Exception ex)
+            else
             {
                 return Json(new
                 {
                     success = false,
-                    message = "An error occurred while updating student status."
+                    message = "Failed to update student status. Please try again."
                 });
-            }
+            } 
         }
 
         private async Task LoadLookupData(StudentDTO model)
@@ -258,7 +247,7 @@ namespace Examify.Controllers.Admin
                     var batch = await _batchService.GetByIdAsync(model.BatchId.Value);
                     var batches = batch?.ClassId == null ? Enumerable.Empty<BatchDTO>() :
                         await _batchService.GetBatchesByClassIdAsync(batch.ClassId);
-                    
+
                     model.Batches = batches
                     .Select(b =>
                     {

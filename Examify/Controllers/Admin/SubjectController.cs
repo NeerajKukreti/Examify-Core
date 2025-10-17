@@ -113,33 +113,22 @@ namespace Examify.Controllers.Admin
         [HttpPost]
         public async Task<IActionResult> ChangeStatus(int id)
         {
-            try
-            {
-                var success = await _subjectService.ChangeStatusAsync(id);
+            var success = await _subjectService.ChangeStatusAsync(id);
 
-                if (success)
+            if (success)
+            {
+                return Json(new
                 {
-                    return Json(new
-                    {
-                        success = true,
-                        message = "Subject status updated successfully!"
-                    });
-                }
-                else
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "Failed to update subject status. Please try again."
-                    });
-                }
+                    success = true,
+                    message = "Subject status updated successfully!"
+                });
             }
-            catch (Exception ex)
+            else
             {
                 return Json(new
                 {
                     success = false,
-                    message = "An error occurred while updating subject status."
+                    message = "Failed to update subject status. Please try again."
                 });
             }
         }

@@ -28,7 +28,7 @@ namespace Examify.Controllers.Admin
         {
             // Get InstituteId from session
             var instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3; // Default to 3 for now
-            
+
             var classes = await _classService.GetAllAsync(instituteId);
             return Json(new { data = classes });
         }
@@ -46,7 +46,7 @@ namespace Examify.Controllers.Admin
                     new BatchDTO { BatchId = 0, ClassId = 0, BatchName = "", IsActive = true }
                 }
             };
-            
+
             return PartialView("_Create", model);
         }
 
@@ -58,7 +58,7 @@ namespace Examify.Controllers.Admin
             {
                 model.InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
                 model.IsActive = true;
-                
+
                 // Ensure we have at least one batch
                 if (model.Batches == null || !model.Batches.Any())
                 {
@@ -71,7 +71,7 @@ namespace Examify.Controllers.Admin
                 else
                     return Json(new { success = false, message = "Failed to create class. Please try again." });
             }
-            
+
             // Return validation errors
             var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
                 .Select(x => new { Field = x.Key, Errors = x.Value.Errors.Select(e => e.ErrorMessage) })
@@ -82,7 +82,7 @@ namespace Examify.Controllers.Admin
         // GET: Admin/Class/Edit/{id}
         public async Task<IActionResult> Edit(int id)
         {
-            var insId = HttpContext.Session.GetInt32("InstituteId")??3;
+            var insId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
             var classDto = await _classService.GetByIdAsync(insId, id);
 
             if (classDto == null) return NotFound();
@@ -97,20 +97,20 @@ namespace Examify.Controllers.Admin
             if (ModelState.IsValid)
             {
                 model.InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
-                
+
                 // Ensure we have at least one batch
                 if (model.Batches == null || !model.Batches.Any())
                 {
                     return Json(new { success = false, message = "At least one batch is required for a class." });
                 }
-                
+
                 var success = await _classService.UpdateAsync(model);
                 if (success)
                     return Json(new { success = true, message = "Class updated successfully!" });
                 else
                     return Json(new { success = false, message = "Failed to update class. Please try again." });
             }
-            
+
             // Return validation errors
             var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
                 .Select(x => new { Field = x.Key, Errors = x.Value.Errors.Select(e => e.ErrorMessage) })
@@ -127,35 +127,27 @@ namespace Examify.Controllers.Admin
                 return Json(new { success = true, message = "Class deleted successfully!" });
             else
                 return Json(new { success = false, message = "Failed to delete class. Please try again." });
-        }  
+        }
 
         [HttpPost]
         public async Task<IActionResult> ChangeStatus(int id)
         {
-            try
+            var success = await _classService.ChangeStatusAsync(id);
+
+            if (success)
             {
-                var success = await _classService.ChangeStatusAsync(id);
-                
-                if (success)
+                return Json(new
                 {
-                    return Json(new { 
-                        success = true, 
-                        message = "Class status updated successfully!" 
-                    });
-                }
-                else
-                {
-                    return Json(new { 
-                        success = false, 
-                        message = "Failed to update class status. Please try again." 
-                    });
-                }
+                    success = true,
+                    message = "Class status updated successfully!"
+                });
             }
-            catch (Exception ex)
+            else
             {
-                return Json(new { 
-                    success = false, 
-                    message = "An error occurred while updating class status." 
+                return Json(new
+                {
+                    success = false,
+                    message = "Failed to update class status. Please try again."
                 });
             }
         }

@@ -30,131 +30,88 @@ namespace Examify.Services
 
         public async Task<IEnumerable<StudentModel>> GetAllAsync(int instituteId, int? studentId = null)
         {
-            try
+
+            var endpoint = studentId.HasValue
+                ? $"Student/{instituteId}/{studentId}"
+                : $"Student/{instituteId}/0";
+
+            var response = await _httpClient.GetAsync(endpoint);
+
+            if (response.IsSuccessStatusCode)
             {
-                var endpoint = studentId.HasValue 
-                    ? $"Student/{instituteId}/{studentId}" 
-                    : $"Student/{instituteId}/0";
-                    
-                var response = await _httpClient.GetAsync(endpoint);
-                
-                if (response.IsSuccessStatusCode)
+                var content = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+
+                if (apiResponse?.Success == true && apiResponse?.Data != null)
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
-                    
-                    if (apiResponse?.Success == true && apiResponse?.Data != null)
-                    {
-                        return JsonConvert.DeserializeObject<IEnumerable<StudentModel>>(apiResponse.Data.ToString());
-                    }
+                    return JsonConvert.DeserializeObject<IEnumerable<StudentModel>>(apiResponse.Data.ToString());
                 }
-                
-                return new List<StudentModel>();
             }
-            catch (Exception ex)
-            {
-                // Log exception
-                return new List<StudentModel>();
-            }
+
+            return new List<StudentModel>();
         }
 
         public async Task<StudentModel> GetByIdAsync(int studentId, int instituteId)
         {
-            try
-            {
-                var students = await GetAllAsync(instituteId, studentId);
-                return students?.FirstOrDefault();
-            }
-            catch (Exception ex)
-            {
-                // Log exception
-                return null;
-            }
+            var students = await GetAllAsync(instituteId, studentId);
+            return students?.FirstOrDefault();
         }
 
         public async Task<bool> CreateAsync(StudentDTO model)
         {
-            try
+            var json = JsonConvert.SerializeObject(model);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync("Student", content);
+
+            if (response.IsSuccessStatusCode)
             {
-                var json = JsonConvert.SerializeObject(model);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                
-                var response = await _httpClient.PostAsync("Student", content);
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
-                    return apiResponse?.Success == true;
-                }
-                
-                return false;
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                return apiResponse?.Success == true;
             }
-            catch (Exception ex)
-            {
-                // Log exception
-                return false;
-            }
+
+            return false;
+
+
         }
 
         public async Task<bool> UpdateAsync(StudentDTO model)
         {
-            try
+            var json = JsonConvert.SerializeObject(model);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PutAsync($"Student/{model.StudentId}", content);
+
+            if (response.IsSuccessStatusCode)
             {
-                var json = JsonConvert.SerializeObject(model);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                
-                var response = await _httpClient.PutAsync($"Student/{model.StudentId}", content);
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
-                    return apiResponse?.Success == true;
-                }
-                
-                return false;
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                return apiResponse?.Success == true;
             }
-            catch (Exception ex)
-            {
-                // Log exception
-                return false;
-            }
+
+            return false;
         }
 
         public async Task<bool> DeleteAsync(int studentId)
         {
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"Student/{studentId}");
-                return response.IsSuccessStatusCode;
-            }
-            catch (Exception ex)
-            {
-                // Log exception
-                return false;
-            }
+            var response = await _httpClient.DeleteAsync($"Student/{studentId}");
+            return response.IsSuccessStatusCode;
         }
         public async Task<bool> ChangeStatusAsync(int studentId)
         {
-            try
-            {
-                var response = await _httpClient.PutAsync($"Student/ChangeStatus?id={studentId}", null);
 
-                if (response.IsSuccessStatusCode)
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
-                    return apiResponse?.Success == true;
-                }
+            var response = await _httpClient.PutAsync($"Student/ChangeStatus?id={studentId}", null);
 
-                return false;
-            }
-            catch (Exception ex)
+            if (response.IsSuccessStatusCode)
             {
-                // Log exception
-                return false;
+                var content = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+                return apiResponse?.Success == true;
             }
+
+            return false;
+
         }
     }
 }

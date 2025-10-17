@@ -29,121 +29,89 @@ namespace Examify.Services
 
         public async Task<IEnumerable<ExamModel>> GetAllAsync()
         {
-            try
+
+            var response = await _httpClient.GetAsync("Exam/list");
+
+            if (response.IsSuccessStatusCode)
             {
-                var response = await _httpClient.GetAsync("Exam/list");
-                
-                if (response.IsSuccessStatusCode)
+                var content = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+
+                if (apiResponse?.Success == true && apiResponse?.Data != null)
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
-                    
-                    if (apiResponse?.Success == true && apiResponse?.Data != null)
-                    {
-                        return JsonConvert.DeserializeObject<IEnumerable<ExamModel>>(apiResponse.Data.ToString());
-                    }
+                    return JsonConvert.DeserializeObject<IEnumerable<ExamModel>>(apiResponse.Data.ToString());
                 }
-                
-                return new List<ExamModel>();
             }
-            catch (Exception ex)
-            {
-                return new List<ExamModel>();
-            }
+
+            return new List<ExamModel>();
+
         }
 
         public async Task<ExamModel> GetByIdAsync(int examId)
         {
-            try
+            var response = await _httpClient.GetAsync($"Exam/{examId}");
+
+            if (response.IsSuccessStatusCode)
             {
-                var response = await _httpClient.GetAsync($"Exam/{examId}");
-                
-                if (response.IsSuccessStatusCode)
+                var content = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+
+                if (apiResponse?.Success == true && apiResponse?.Data != null)
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
-                    
-                    if (apiResponse?.Success == true && apiResponse?.Data != null)
-                    {
-                        return JsonConvert.DeserializeObject<ExamModel>(apiResponse.Data.ToString());
-                    }
+                    return JsonConvert.DeserializeObject<ExamModel>(apiResponse.Data.ToString());
                 }
                 
-                return null;
             }
-            catch (Exception ex)
-            {
-                return null;
-            }
+            return new ExamModel();
         }
 
         public async Task<bool> CreateAsync(ExamDTO model)
         {
-            try
+            var json = JsonConvert.SerializeObject(model);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync("Exam", content);
+
+            if (response.IsSuccessStatusCode)
             {
-                var json = JsonConvert.SerializeObject(model);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                
-                var response = await _httpClient.PostAsync("Exam", content);
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
-                    return apiResponse?.Success == true;
-                }
-                
-                return false;
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                return apiResponse?.Success == true;
             }
-            catch (Exception ex)
-            {
-                return false;
-            }
+
+            return false; 
         }
 
         public async Task<bool> UpdateAsync(ExamDTO model)
         {
-            try
+            var json = JsonConvert.SerializeObject(model);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PutAsync($"Exam/{model.ExamId}", content);
+
+            if (response.IsSuccessStatusCode)
             {
-                var json = JsonConvert.SerializeObject(model);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                
-                var response = await _httpClient.PutAsync($"Exam/{model.ExamId}", content);
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
-                    return apiResponse?.Success == true;
-                }
-                
-                return false;
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                return apiResponse?.Success == true;
             }
-            catch (Exception ex)
-            {
-                return false;
-            }
+
+            return false;
+
         }
 
         public async Task<bool> ChangeStatusAsync(int examId)
         {
-            try
-            {
-                var response = await _httpClient.PutAsync($"Exam/ChangeStatus?id={examId}", null);
+            var response = await _httpClient.PutAsync($"Exam/ChangeStatus?id={examId}", null);
 
-                if (response.IsSuccessStatusCode)
-                {
-                    var content = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
-                    return apiResponse?.Success == true;
-                }
-
-                return false;
-            }
-            catch (Exception ex)
+            if (response.IsSuccessStatusCode)
             {
-                return false;
+                var content = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+                return apiResponse?.Success == true;
             }
+
+            return false;
         }
     }
 }

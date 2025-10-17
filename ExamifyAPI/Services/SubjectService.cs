@@ -28,8 +28,7 @@ namespace ExamifyAPI.Services
 
         public async Task<int> InsertOrUpdateSubjectAsync(SubjectDTO dto, int? subjectId = null, int? userId = null)
         {
-            try
-            {
+            
                 var newSubjectId = await _subjectRepository.InsertOrUpdateSubjectAsync(dto, subjectId, userId);
 
 
@@ -43,13 +42,7 @@ namespace ExamifyAPI.Services
                 await _subjectRepository.InsertOrUpdateTopicsAsync(dto.Topics, userId ?? 0);
 
                 return newSubjectId;
-            }
-            catch (Exception ex)
-            {
-                // Log the exception (you can use any logging framework)
-                Console.WriteLine($"Error in InsertOrUpdateSubjectAsync: {ex.Message}");
-                throw; // Re-throw the exception after logging it
-            }
+            
         }
 
 

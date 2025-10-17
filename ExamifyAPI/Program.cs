@@ -1,6 +1,7 @@
-﻿using DAL;
+using DAL;
 using DAL.Repository;
 using ExamAPI.Services;
+using ExamifyAPI.Middleware;
 using ExamifyAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -41,7 +42,6 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Examify API", Version = "v1" });
 
-    // 🔑 Add JWT Authorization in Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -71,7 +71,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.PropertyNamingPolicy = null; // Keep original property names
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
     });
 builder.Services.AddCors(options =>
 {
@@ -93,7 +93,7 @@ builder.Services.AddScoped<IClassRepository, ClassRepository>();
 builder.Services.AddScoped<IBatchRepository, BatchRepository>();
 
 // Service registrations
-builder.Services.AddScoped<IUserService, UserService>(); // New UserService
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IExamService, ExamService>();
 builder.Services.AddScoped<IInstituteService, InstituteService>();
@@ -103,9 +103,12 @@ builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IStateService, StateService>();
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IBatchService, BatchService>();
-builder.Services.AddHttpContextAccessor(); // Added line
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
+
+// Add global exception handling middleware
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
