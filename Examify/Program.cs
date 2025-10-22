@@ -46,6 +46,10 @@ builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IBatchService, BatchService>();
 
+// Add caching services
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<ICacheService, CacheService>();
+
 var app = builder.Build();
 
 app.UseSerilogRequestLogging(); // Add this line

@@ -24,6 +24,7 @@ namespace Examify.Controllers.Admin
 
         // GET: Admin/Class/LoadClasses
         [HttpGet]
+        [Cached(5, "classes")]
         public async Task<IActionResult> LoadClasses()
         {
             // Get InstituteId from session
@@ -52,6 +53,7 @@ namespace Examify.Controllers.Admin
 
         // POST: Admin/Class/Create
         [HttpPost]
+        [InvalidateCache("classes")]
         public async Task<IActionResult> Create(ClassDTO model)
         {
             if (ModelState.IsValid)
@@ -92,6 +94,7 @@ namespace Examify.Controllers.Admin
 
         // POST: Admin/Class/Edit
         [HttpPost]
+        [InvalidateCache("classes")]
         public async Task<IActionResult> Edit(ClassDTO model)
         {
             if (ModelState.IsValid)
@@ -120,6 +123,7 @@ namespace Examify.Controllers.Admin
 
         // POST: Admin/Class/Delete/{id}
         [HttpPost]
+        [InvalidateCache("classes")]
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _classService.DeleteAsync(id);
@@ -130,6 +134,7 @@ namespace Examify.Controllers.Admin
         }
 
         [HttpPost]
+        [InvalidateCache("classes")]
         public async Task<IActionResult> ChangeStatus(int id)
         {
             var success = await _classService.ChangeStatusAsync(id);
