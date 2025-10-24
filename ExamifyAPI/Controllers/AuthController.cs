@@ -15,9 +15,17 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] UserDTO dto)
     {
-        var token = await _authService.Authenticate(dto.Username, dto.Password);
-        if (token == null) return Unauthorized();
-        return Ok(new { Token = token });
+        var response = await _authService.Authenticate(dto.Username, dto.Password);
+        if (response == null) return Unauthorized();
+        return Ok(response);
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+    {
+        var response = await _authService.RefreshToken(request.RefreshToken);
+        if (response == null) return Unauthorized();
+        return Ok(response);
     }
 
     [HttpPost("register")]
@@ -30,4 +38,9 @@ public class AuthController : ControllerBase
     [Authorize(Roles = "Admin")]
     [HttpGet("admin-only")]
     public IActionResult AdminOnly() => Ok("Welcome Admin!");
+}
+
+public class RefreshTokenRequest
+{
+    public string RefreshToken { get; set; }
 }

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Examify.Controllers.Admin
 {
-    [AutoLoginAuthorize("admin", "admin123", "Admin", "Teacher")] // Auto-login with credentials and restrict to Admin/Teacher roles
+    [AutoLoginAuthorize("admin", "Test@123", "Admin", "Teacher")] // Auto-login with credentials and restrict to Admin/Teacher roles
     public class QuestionController : Controller
     {
         private readonly IQuestionService _QuestionService;

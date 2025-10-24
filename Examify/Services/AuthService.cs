@@ -19,7 +19,7 @@ namespace Examify.Services
             _apiSettings = apiSettings.Value;
         }
 
-        public async Task<(bool Success, string? Token, string? UserId, string? ErrorMessage)> LoginAsync(UserDTO dto)
+        public async Task<(bool Success, string? Token, string? RefreshToken, string? UserId, string? ErrorMessage)> LoginAsync(UserDTO dto)
         {
             try
             {
@@ -31,25 +31,26 @@ namespace Examify.Services
                 var response = await client.PostAsync("auth/login", content);
                 if (!response.IsSuccessStatusCode)
                 {
-                    return (false, null, null, "Invalid credentials");
+                    return (false, null, null, null, "Invalid credentials");
                 }
 
                 var result = await response.Content.ReadAsStringAsync();
                 var authResult = JsonSerializer.Deserialize<JsonElement>(result);
-                var token = authResult.GetProperty("Token").GetString();
+                var token = authResult.GetProperty("AccessToken").GetString();
+                var refreshToken = authResult.GetProperty("RefreshToken").GetString();
 
                 // Decode JWT to get user data
                 var tokenData = JwtHelper.DecodeToken(token!);
 
-                return (true, token, tokenData.UserId, null);
+                return (true, token, refreshToken, tokenData.UserId, null);
             }
             catch (Exception ex)
             {
-                return (false, null, null, ex.Message);
+                return (false, null, null, null, ex.Message);
             }
         }
 
-        public void SaveSession(string token, string? userId)
+        public void SaveSession(string token, string refreshToken, string? userId)
         {
             try
             {
@@ -58,13 +59,15 @@ namespace Examify.Services
                 
                 if (userTokenData?.IsValid == true)
                 {
-                    // Token parsing already sets session data via SetUserDataInSession
+                    // Store refresh token
+                    _httpContextAccessor.HttpContext!.Session.SetString("RefreshToken", refreshToken);
                     System.Diagnostics.Debug.WriteLine($"Session saved for user: {userTokenData.Username}");
                 }
                 else
                 {
                     // Fallback to basic session setting if token parsing fails
                     _httpContextAccessor.HttpContext!.Session.SetString("JWToken", token);
+                    _httpContextAccessor.HttpContext!.Session.SetString("RefreshToken", refreshToken);
                     if (userId != null)
                     {
                         _httpContextAccessor.HttpContext!.Session.SetString("UserId", userId);
@@ -77,6 +80,7 @@ namespace Examify.Services
                 
                 // Fallback to basic session setting
                 _httpContextAccessor.HttpContext!.Session.SetString("JWToken", token);
+                _httpContextAccessor.HttpContext!.Session.SetString("RefreshToken", refreshToken);
                 if (userId != null)
                 {
                     _httpContextAccessor.HttpContext!.Session.SetString("UserId", userId);
@@ -93,6 +97,7 @@ namespace Examify.Services
 
                 // Clear all user-related session data
                 session.Remove("JWToken");
+                session.Remove("RefreshToken");
                 session.Remove("UserId");
                 session.Remove("UserIdInt");
                 session.Remove("UserName");

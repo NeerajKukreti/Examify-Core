@@ -25,7 +25,7 @@ public class AuthController : Controller
             return View("Index", dto);
         }
 
-        _authService.SaveSession(result.Token!, result.UserId);
+        _authService.SaveSession(result.Token!, result.RefreshToken!, result.UserId);
         return RedirectToAction("Index", "Dashboard");
     }
 
@@ -33,5 +33,13 @@ public class AuthController : Controller
     {
         _authService.ClearSession();
         return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    public IActionResult UpdateTokens(string accessToken, string refreshToken)
+    {
+        HttpContext.Session.SetString("JWToken", accessToken);
+        HttpContext.Session.SetString("RefreshToken", refreshToken);
+        return Ok();
     }
 }

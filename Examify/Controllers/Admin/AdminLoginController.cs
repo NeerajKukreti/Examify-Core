@@ -31,11 +31,8 @@ namespace Examify.Controllers
             AdminLogin= await _adminLoginService.AdminLoginDetails(AdminLogin);
             if (AdminLogin.StatusCode > 0)
             {
-                //FormsAuthentication.SetAuthCookie(AdminLogin.MobileNumber, false);
-                //Session.Add("AdminMobile", AdminLogin.MobileNumber);
-                //Session.Add("AdminName", AdminLogin.AdminName);
-                //Session.Add("Role", "Admin");
-
+                // Store both access and refresh tokens if available
+                // Note: Update AdminLoginService to return tokens
                 return RedirectToAction("index", "dashboard");
             }
             else

@@ -103,7 +103,7 @@ function updateOptionFieldNames() {
 }
 
 function loadSubjects() {
-    debugger;
+    
     var apiUrl = `${API_BASE_URL_SUBJECT}/${instituteId}/0`;
     $.get(apiUrl, function (data) {
         var $ddl = $('#ddlSubject');
@@ -116,7 +116,7 @@ function loadSubjects() {
 }
 
 function loadQuestionTypes() {
-    debugger;
+    
     var apiUrl = API_BASE_URL_QUESTION + '/types';
     $.get(apiUrl, function (data) {
         AllQuestionTypes = data; // Store all types globally
@@ -151,7 +151,7 @@ function loadQuestionTypes() {
 
 // Update loadTopics to accept a callback
 function loadTopics(subjectId, callback) {
-    debugger;
+    
     if (!subjectId) {
         $('#ddlTopic').empty().append('<option value="">Select Topic</option>');
         if (callback) callback();

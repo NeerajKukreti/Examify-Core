@@ -1,4 +1,5 @@
-﻿<!doctype html>
+@using Microsoft.AspNetCore.Http
+<!doctype html>
 <html lang="en">
 <!--begin::Head-->
 <head>
@@ -95,6 +96,92 @@
   
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+    @{
+        var accessTokenValue = Context.Session.GetString("JWToken");
+        var refreshTokenValue = Context.Session.GetString("RefreshToken");
+    }
+    @if (!string.IsNullOrEmpty(accessTokenValue))
+    {
+    <script>
+        (function() {
+            var accessToken = '@accessTokenValue';
+            var refreshToken = '@refreshTokenValue';
+            var isRefreshing = false;
+            var failedQueue = [];
+
+            function processQueue(error, token = null) {
+                failedQueue.forEach(prom => {
+                    if (error) {
+                        prom.reject(error);
+                    } else {
+                        prom.resolve(token);
+                    }
+                });
+                failedQueue = [];
+            }
+
+            function refreshAccessToken() {
+                return $.ajax({
+                    url: 'https://localhost:7271/api/auth/refresh',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ RefreshToken: refreshToken })
+                }).done(function(response) {
+                    accessToken = response.AccessToken;
+                    refreshToken = response.RefreshToken;
+                    $.post('/Auth/UpdateTokens', { 
+                        accessToken: accessToken, 
+                        refreshToken: refreshToken 
+                    });
+                });
+            }
+
+            var originalAjax = $.ajax;
+            $.ajax = function(settings) {
+                if (accessToken && settings.url && settings.url.includes('localhost:7271')) {
+                    settings.beforeSend = function(xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+                    };
+                }
+
+                var dfd = $.Deferred();
+                originalAjax(settings)
+                    .done(function(data, textStatus, jqXHR) {
+                        dfd.resolve(data, textStatus, jqXHR);
+                    })
+                    .fail(function(jqXHR, textStatus, errorThrown) {
+                        if (jqXHR.status === 401 && refreshToken && !isRefreshing) {
+                            isRefreshing = true;
+                            refreshAccessToken()
+                                .done(function() {
+                                    settings.beforeSend = function(xhr) {
+                                        xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+                                    };
+                                    originalAjax(settings)
+                                        .done(function(data, textStatus, jqXHR) {
+                                            dfd.resolve(data, textStatus, jqXHR);
+                                        })
+                                        .fail(function(jqXHR, textStatus, errorThrown) {
+                                            dfd.reject(jqXHR, textStatus, errorThrown);
+                                        });
+                                })
+                                .fail(function() {
+                                    window.location.href = '/Auth/Logout';
+                                    dfd.reject(jqXHR, textStatus, errorThrown);
+                                })
+                                .always(function() {
+                                    isRefreshing = false;
+                                });
+                        } else {
+                            dfd.reject(jqXHR, textStatus, errorThrown);
+                        }
+                    });
+                return dfd.promise();
+            };
+        })();
+    </script>
+    }
 
     @RenderSection("Scripts", required: false)
 
