@@ -460,7 +460,7 @@ async function submitExam(forced = false, preventRedirect = false) {
                     // Stay on current page, disable interface
                     $('body').html('<div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #f8f9fa; font-family: Arial, sans-serif;"><div style="text-align: center; padding: 40px; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><h2 style="color: #dc3545; margin-bottom: 20px;">Exam Terminated</h2><p style="color: #6c757d; margin-bottom: 0;">Your exam has been submitted due to violation of exam rules.</p></div></div>');
                 } else {
-                    const examResultUrl = window.examUrls?.examResultUrl || '/Exam/ExamResult';
+                    const examResultUrl = window.examUrls?.examResultUrl || '/ExamSession/ExamResult';
                     alert('Exam submitted successfully!');
                     window.location.href = `${examResultUrl}?sessionId=${result.SessionId}`;
                 }
@@ -477,7 +477,7 @@ async function submitExam(forced = false, preventRedirect = false) {
 }
 
 function openSecureExamWindow(examId) {
-    const startExamUrl = window.examUrls?.startExamUrl || '/Exam/StartExam';
+    const startExamUrl = window.examUrls?.startExamUrl || '/ExamSession/StartExam';
 
     const newWindow = window.open(
         `${startExamUrl}?examId=${examId}`,

@@ -21,6 +21,7 @@ namespace ExamifyAPI.Controllers
         [HttpGet("{instituteId:int}/{subjectId:int}")]
         public async Task<IActionResult> GetAllSubjects(int instituteId, int? subjectId = 0)
         {
+            var userid = _authService.GetCurrentUserID();
             var subjects = await _subjectService.GetAllSubjectsAsync(instituteId, subjectId);
             if (subjects == null) return NotFound(new { Success = false, Message = "Subject not found" });
             return Ok(new { Success = true, Count = subjects?.Count() ?? 0, Data = subjects });

@@ -105,7 +105,7 @@ function showInfoMessage(message) {
 // Start exam function
 function startExam(examId) {
     if (confirm('Are you ready to start the exam? Once started, the timer will begin.')) {
-        window.location.href = `/Exam/StartExam?examId=${examId}`;
+        window.location.href = `/ExamSession/StartExam?examId=${examId}`;
     }
 }
 

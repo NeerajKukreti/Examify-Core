@@ -2,7 +2,7 @@
 console.log('ExamResult.js loaded successfully');
 
 // API Configuration
-let RESULT_API_BASE = '/api/Exam';
+let RESULT_API_BASE = 'https://localhost:7271/api/Exam';
 
 // Load and display exam result
 async function displayExamResult(sessionId) {
@@ -47,47 +47,35 @@ function renderResultSummary(resultData) {
     
     // Basic exam info
     $('#examName').text(resultData.ExamName || 'Exam Result');
-    $('#studentName').text(resultData.StudentName || 'Student');
-    $('#submissionDate').text(formatDateTime(resultData.SubmittedAt));
     
     // Score information
-    $('#totalScore').text(resultData.TotalScore || 0);
-    $('#maxScore').text(resultData.MaxPossibleScore || 0);
-    $('#percentage').text(`${calculatePercentage(resultData.TotalScore, resultData.MaxPossibleScore)}%`);
+    const obtainedMarks = resultData.ObtainedMarks || 0;
+    const totalMarks = resultData.TotalMarks || 0;
+    const percentage = resultData.Percentage || 0;
+    
+    $('#percentageText').text(`${Math.round(percentage)}%`);
+    $('#marksText').text(`${obtainedMarks} / ${totalMarks} Marks`);
+    
+    // Set score circle color based on percentage
+    const scoreCircle = $('#scoreCircle');
+    scoreCircle.removeClass('score-excellent score-good score-average score-poor');
+    if (percentage >= 75) scoreCircle.addClass('score-excellent');
+    else if (percentage >= 60) scoreCircle.addClass('score-good');
+    else if (percentage >= 40) scoreCircle.addClass('score-average');
+    else scoreCircle.addClass('score-poor');
     
     // Question statistics
     $('#totalQuestions').text(resultData.TotalQuestions || 0);
-    $('#correctAnswers').text(resultData.CorrectAnswers || 0);
-    $('#wrongAnswers').text(resultData.WrongAnswers || 0);
-    $('#unanswered').text(resultData.UnansweredQuestions || 0);
-    
-    // Time information
-    $('#timeTaken').text(formatDuration(resultData.TimeTaken));
-    $('#timeAllowed').text(formatDuration(resultData.TimeAllowed));
-    
-    // Pass/Fail status
-    const passed = resultData.TotalScore >= (resultData.PassingMarks || 0);
-    const statusText = passed ? 'PASSED' : 'FAILED';
-    const statusClass = passed ? 'text-success' : 'text-danger';
-    
-    $('#resultStatus').text(statusText).removeClass('text-success text-danger').addClass(statusClass);
-    $('#passingMarks').text(resultData.PassingMarks || 0);
-    
-    // Show appropriate result card
-    if (passed) {
-        $('#passCard').show();
-        $('#failCard').hide();
-    } else {
-        $('#passCard').hide();
-        $('#failCard').show();
-    }
+    $('#correctCount').text(resultData.CorrectAnswers || 0);
+    $('#wrongCount').text(resultData.WrongAnswers || 0);
+    $('#unattemptedCount').text(resultData.UnattemptedQuestions || 0);
 }
 
 // Render question-wise analysis
 function renderQuestionAnalysis(resultData) {
     console.log('Rendering question analysis:', resultData);
     
-    const analysisContainer = $('#questionAnalysis');
+    const analysisContainer = $('#questionsList');
     analysisContainer.empty();
     
     if (!resultData.QuestionResults || resultData.QuestionResults.length === 0) {
@@ -105,60 +93,66 @@ function renderQuestionAnalysis(resultData) {
 function createQuestionCard(question, questionNumber) {
     const isCorrect = question.IsCorrect;
     const isAttempted = question.IsAttempted;
+    const questionType = question.QuestionType;
     
-    let statusClass = 'border-secondary';
-    let statusIcon = '⚪';
-    let statusText = 'Not Attempted';
+    let statusClass = isCorrect ? 'correct' : (isAttempted ? 'wrong' : 'unattempted');
+    let statusBadge = isCorrect ? 'status-correct' : (isAttempted ? 'status-wrong' : 'status-unattempted');
+    let statusText = isCorrect ? 'Correct' : (isAttempted ? 'Wrong' : 'Unattempted');
     
-    if (isAttempted) {
-        if (isCorrect) {
-            statusClass = 'border-success';
-            statusIcon = '✅';
-            statusText = 'Correct';
-        } else {
-            statusClass = 'border-danger';
-            statusIcon = '❌';
-            statusText = 'Incorrect';
-        }
+    let choicesHtml = '';
+    
+    // Render choices for MCQ/True-False
+    if ((questionType === 'MCQ' || questionType === 'True/False') && question.AllChoices && question.AllChoices.length > 0) {
+        choicesHtml = '<div class="mt-3"><strong>Options:</strong>';
+        question.AllChoices.forEach(choice => {
+            const isSelected = question.SessionChoiceId === choice.SessionChoiceId;
+            const isCorrectChoice = choice.IsCorrect;
+            let choiceClass = '';
+            if (isCorrectChoice) choiceClass = 'choice-correct';
+            else if (isSelected) choiceClass = 'choice-selected-wrong';
+            
+            choicesHtml += `<div class="choice-item ${choiceClass}">
+                <span class="choice-icon">${isCorrectChoice ? '✓' : (isSelected ? '✗' : '○')}</span>
+                ${choice.ChoiceText}
+            </div>`;
+        });
+        choicesHtml += '</div>';
     }
     
+    // Render response text for Descriptive
+    if (questionType === 'Descriptive' && question.ResponseText) {
+        choicesHtml = `<div class="mt-3"><strong>Your Answer:</strong><p class="text-muted">${question.ResponseText}</p></div>`;
+    }
+    
+    // Render pairs for Matching
+    if (questionType === 'Matching' && question.ResponsePairs && question.ResponsePairs.length > 0) {
+        choicesHtml = '<div class="mt-3"><strong>Your Matches:</strong>';
+        const uniquePairs = question.ResponsePairs.filter((pair, index, self) => 
+            index === self.findIndex(p => p.LeftText === pair.LeftText && p.RightText === pair.RightText)
+        );
+        uniquePairs.forEach(pair => {
+            choicesHtml += `<div class="choice-item"><strong>${pair.LeftText}</strong> → ${pair.RightText}</div>`;
+        });
+        choicesHtml += '</div>';
+    }
+    
+    const marksAwarded = question.MarksAwarded || 0;
+    const marksClass = marksAwarded > 0 ? 'marks-positive' : (marksAwarded < 0 ? 'marks-negative' : 'marks-zero');
+    
     return $(`
-        <div class="card mb-3 ${statusClass}">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">Question ${questionNumber}</h6>
-                <span class="badge ${isCorrect ? 'bg-success' : (isAttempted ? 'bg-danger' : 'bg-secondary')}">
-                    ${statusIcon} ${statusText}
-                </span>
-            </div>
-            <div class="card-body">
-                <p class="card-text">${question.QuestionText || 'Question text not available'}</p>
-                
-                ${isAttempted ? `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <strong>Your Answer:</strong>
-                            <p class="text-${isCorrect ? 'success' : 'danger'}">${question.SelectedAnswer || 'N/A'}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Correct Answer:</strong>
-                            <p class="text-success">${question.CorrectAnswer || 'N/A'}</p>
-                        </div>
-                    </div>
-                ` : `
-                    <div>
-                        <strong>Correct Answer:</strong>
-                        <p class="text-success">${question.CorrectAnswer || 'N/A'}</p>
-                    </div>
-                `}
-                
-                <div class="mt-2">
-                    <small class="text-muted">
-                        Topic: ${question.TopicName || 'General'} | 
-                        Marks: ${question.Marks || 1} | 
-                        Time Spent: ${formatDuration(question.TimeSpent) || '0s'}
-                    </small>
+        <div class="question-card ${statusClass}">
+            <div class="question-header">
+                <div>
+                    <strong>Question ${questionNumber}</strong>
+                    <span class="topic-badge">${questionType}</span>
+                </div>
+                <div>
+                    <span class="status-badge ${statusBadge}">${statusText}</span>
+                    <div class="marks-display ${marksClass}">Marks: ${marksAwarded > 0 ? '+' : ''}${marksAwarded}</div>
                 </div>
             </div>
+            <div class="question-text">${question.QuestionText || 'Question text not available'}</div>
+            ${choicesHtml}
         </div>
     `);
 }
@@ -250,10 +244,34 @@ function downloadResultPDF() {
     alert('PDF download feature will be implemented');
 }
 
+// Filter questions by status
+function filterQuestions(filter) {
+    $('.filter-buttons .btn').removeClass('active');
+    $(event.target).closest('.btn').addClass('active');
+    
+    if (filter === 'all') {
+        $('.question-card').show();
+    } else {
+        $('.question-card').hide();
+        $(`.question-card.${filter}`).show();
+    }
+}
+
+// Initialize on page load
+$(document).ready(function() {
+    if (window.sessionId) {
+        displayExamResult(window.sessionId);
+    } else {
+        showErrorMessage('Session ID not found');
+    }
+});
+
 // Share result
 function shareResult() {
-    if (navigator.share) {
-        navigator.share({
+    alert('Share feature will be implemented');
+
+    if (sessionId) {
+    navigator.share({
             title: 'Exam Result',
             text: `I scored ${$('#totalScore').text()} out of ${$('#maxScore').text()} in the exam!`,
             url: window.location.href
@@ -286,6 +304,6 @@ $(document).ready(function() {
     
     // Back to exams button
     $('#backToExamsBtn').on('click', function() {
-        window.location.href = '/Exam/Selection';
+        window.location.href = '/ExamSession/Selection';
     });
 });

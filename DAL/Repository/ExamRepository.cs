@@ -298,111 +298,92 @@ namespace DAL.Repository
         public ExamResultModel GetExamResult(int sessionId)
         {
             using var connection = Connection;
+            using var multi = connection.QueryMultiple(
+                "_sp_GetExamResults",
+                new { UserExamSessionId = sessionId },
+                commandType: CommandType.StoredProcedure);
+
+            var session = multi.Read<dynamic>().FirstOrDefault();
+            if (session == null) return null;
+
+            var exam = multi.Read<dynamic>().FirstOrDefault();
+            var examQuestions = multi.Read<dynamic>().ToList();
+            var sessionQuestions = multi.Read<dynamic>().ToList();
+            var sessionChoices = multi.Read<dynamic>().ToList();
+            var sessionOrders = multi.Read<dynamic>().ToList();
+            var sessionPairs = multi.Read<dynamic>().ToList();
+            var responses = multi.Read<dynamic>().ToList();
+
+            var correctAnswers = 0;
+            var wrongAnswers = 0;
+            var unattempted = 0;
+
+            var questionResults = sessionQuestions.Select(q =>
             {
-                // Get exam session details using existing table structure
-                var sessionQuery = @"
-                    SELECT ues.UserExamSessionId as SessionId, ues.ExamId, 
-                           e.ExamName, ues.UserId, ues.SubmitTime as SubmittedAt,
-                           e.MarksPerQuestion, e.NegativeMarks, ues.TotalScore
-                    FROM UserExamSession ues
-                    INNER JOIN Exam e ON ues.ExamId = e.ExamId
-                    WHERE ues.UserExamSessionId = @SessionId";
+                var response = responses.FirstOrDefault(r => r.SessionQuestionId == q.SessionQuestionId);
+                var isAttempted = response?.IsCorrect != null;
+                var isCorrect = response?.IsCorrect == true;
 
-                var session = connection.QueryFirstOrDefault(sessionQuery, new { SessionId = sessionId });
-                if (session == null) return null;
+                if (!isAttempted) unattempted++;
+                else if (isCorrect) correctAnswers++;
+                else wrongAnswers++;
 
-                // Get user responses and calculate results
-                var responseQuery = @"
-                    SELECT 
-                    ur.QuestionId,
-                    ur.SelectedChoiceId,
-                    q.QuestionEnglish AS QuestionText,
-                    st.TopicName,
-                    qc_selected.ChoiceTextEnglish AS SelectedChoiceText,
-                    qc_correct.ChoiceId AS CorrectChoiceId,
-                    qc_correct.ChoiceTextEnglish AS CorrectChoiceText,
-                    CASE 
-                        WHEN ur.SelectedChoiceId = qc_correct.ChoiceId THEN 1 ELSE 0 
-                    END AS IsCorrect,
-                    CASE 
-                        WHEN ur.SelectedChoiceId IS NOT NULL THEN 1 ELSE 0 
-                    END AS IsAttempted
-                FROM ExamResponse ur
-                INNER JOIN Question q 
-                    ON ur.QuestionId = q.QuestionId
-                INNER JOIN SubjectTopic st 
-                    ON q.TopicId = st.TopicId
-                LEFT JOIN QuestionChoice qc_selected 
-                    ON ur.SelectedChoiceId = qc_selected.ChoiceId
-                   AND q.QuestionId = qc_selected.QuestionId 
-                INNER JOIN QuestionChoice qc_correct 
-                    ON q.QuestionId = qc_correct.QuestionId 
-                   AND qc_correct.IsCorrect = 1
-                WHERE ur.UserExamSessionId = @sessionId
-                ORDER BY q.QuestionId;";
-
-                var questionResults = connection.Query(responseQuery, new { SessionId = sessionId }).ToList();
-
-                // Get pairing responses
-                var pairQuery = @"
-                    SELECT ResponsePairId, ResponseId, LeftText, RightText
-                    FROM ExamResponsePair
-                    WHERE ResponseId IN (SELECT ResponseId FROM ExamResponse WHERE UserExamSessionId = @SessionId)";
-                var responsePairs = connection.Query<ExamResponsePairModel>(pairQuery, new { SessionId = sessionId }).ToList();
-
-                var orderQuery = @"
-                    SELECT ResponseOrderId, ResponseId, UserOrder
-                    FROM ExamResponseOrder
-                    WHERE ResponseId IN (SELECT ResponseId FROM ExamResponse WHERE UserExamSessionId = @SessionId)";
-                var responseOrders = connection.Query<ExamResponseOrderModel>(orderQuery, new { SessionId = sessionId }).ToList();
-
-                // Calculate results
-                var correctAnswers = questionResults.Count(q => q.IsCorrect == 1);
-                var wrongAnswers = questionResults.Count(q => q.IsAttempted == 1 && q.IsCorrect == 0);
-                var unattempted = questionResults.Count(q => q.IsAttempted == 0);
-
-                var marksPerQuestion = (decimal)session.MarksPerQuestion;
-                var negativeMarks = (decimal)session.NegativeMarks;
-
-                var obtainedMarks = (correctAnswers * marksPerQuestion) - (wrongAnswers * negativeMarks);
-                var totalMarks = questionResults.Count * marksPerQuestion;
-                var percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
-
-                return new ExamResultModel
-                {
-                    SessionId = sessionId,
-                    ExamId = session.ExamId,
-                    ExamName = session.ExamName,
-                    UserId = session.UserId,
-                    TotalMarks = totalMarks,
-                    ObtainedMarks = obtainedMarks,
-                    Percentage = percentage,
-                    TotalQuestions = questionResults.Count,
-                    CorrectAnswers = correctAnswers,
-                    WrongAnswers = wrongAnswers,
-                    UnattemptedQuestions = unattempted,
-                    TotalTimeSpent = 0, // Will be calculated from individual responses if needed
-                    SubmittedAt = session.SubmittedAt ?? DateTime.Now,
-                    QuestionResults = questionResults.Select(q => new QuestionResultModel
+                var choices = sessionChoices
+                    .Where(c => c.SessionQuestionId == q.SessionQuestionId)
+                    .Select(c => new
                     {
-                        QuestionId = q.QuestionId,
-                        QuestionText = q.QuestionText,
-                        TopicName = q.TopicName,
-                        SelectedChoiceId = q.SelectedChoiceId,
-                        SelectedChoiceText = q.SelectedChoiceText ?? "Not Attempted",
-                        CorrectChoiceId = q.CorrectChoiceId,
-                        CorrectChoiceText = q.CorrectChoiceText,
-                        IsCorrect = q.IsCorrect == 1,
-                        IsAttempted = q.IsAttempted == 1,
-                        MarksAwarded = q.IsCorrect == 1 ? marksPerQuestion : (q.IsAttempted == 1 ? -negativeMarks : 0),
-                        TimeSpent = 0,
-                        ResponsePairs = responsePairs.Where(rp => rp.ResponseId == q.QuestionId).ToList(),
-                        ResponseOrders = responseOrders.Where(ro => ro.ResponseId == q.QuestionId).ToList()
-                    }).ToList(),
-                    ResponsePairs = responsePairs,
-                    ResponseOrders = responseOrders
+                        SessionChoiceId = c.SessionChoiceId,
+                        ChoiceText = c.ChoiceTextEnglish,
+                        IsCorrect = c.IsCorrect == true
+                    }).ToList();
+
+                var pairs = sessionPairs
+                    .Where(p => p.SessionQuestionId == q.SessionQuestionId)
+                    .Select(p => new ExamResponsePairModel
+                    {
+                        SessionPairId = p.SessionPairId ?? 0,
+                        SessionQuestionId = p.SessionQuestionId ?? 0,
+                        LeftText = p.LeftText,
+                        RightText = p.RightText
+                    }).ToList();
+
+                return new QuestionResultModel
+                {
+                    QuestionId = q.SessionQuestionId,
+                    QuestionText = q.QuestionTextEnglish,
+                    QuestionType = q.TypeName,
+                    Marks = q.Marks ?? 0,
+                    NegativeMarks = q.NegativeMarks ?? 0,
+                    IsMultiSelect = q.IsMultiSelect == true,
+                    ResponseText = response?.ResponseText,
+                    SessionChoiceId = response?.SessionChoiceId,
+                    IsCorrect = isCorrect,
+                    IsAttempted = isAttempted,
+                    MarksAwarded = isCorrect ? (q.Marks ?? 0) : (isAttempted ? -(q.NegativeMarks ?? 0) : 0),
+                    AllChoices = choices,
+                    ResponsePairs = pairs,
+                    CorrectChoices = choices.Where(c => c.IsCorrect).ToList()
                 };
-            }
+            }).ToList();
+
+            var totalMarks = questionResults.Sum(q => q.Marks);
+            var obtainedMarks = questionResults.Sum(q => q.MarksAwarded);
+            var percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
+
+            return new ExamResultModel
+            {
+                SessionId = sessionId,
+                ExamName = exam?.ExamName ?? "Exam",
+                TotalMarks = totalMarks,
+                ObtainedMarks = obtainedMarks,
+                Percentage = percentage,
+                TotalQuestions = questionResults.Count,
+                CorrectAnswers = correctAnswers,
+                WrongAnswers = wrongAnswers,
+                UnattemptedQuestions = unattempted,
+                SubmittedAt = session.SubmitTime ?? DateTime.Now,
+                QuestionResults = questionResults
+            };
         }
         #endregion
     }

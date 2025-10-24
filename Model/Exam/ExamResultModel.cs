@@ -25,19 +25,25 @@ namespace DataModel
     }
 
     public class QuestionResultModel
-    {
-        public int QuestionId { get; set; }
+    { 
+        public long QuestionId { get; set; }
+        public string QuestionType { get; set; } = string.Empty;
         public string QuestionText { get; set; } = string.Empty;
         public string TopicName { get; set; } = string.Empty;
-        public int? SelectedChoiceId { get; set; }
+        public long? SessionChoiceId { get; set; } 
         public string SelectedChoiceText { get; set; } = string.Empty;
         public int CorrectChoiceId { get; set; }
         public string CorrectChoiceText { get; set; } = string.Empty;
         public bool IsCorrect { get; set; }
         public bool IsAttempted { get; set; }
+        public decimal Marks { get; set; }
         public decimal MarksAwarded { get; set; }
         public int TimeSpent { get; set; }
-        public List<QuestionChoiceModel> AllChoices { get; set; } = new List<QuestionChoiceModel>();
+        public decimal NegativeMarks { get; set; }
+        public bool IsMultiSelect { get; set; }
+        public string ResponseText { get; set; } = string.Empty;
+        public dynamic AllChoices { get; set; }
+        public dynamic CorrectChoices { get; set; }
         public List<ExamResponsePairModel> ResponsePairs { get; set; } = new List<ExamResponsePairModel>();
         public List<ExamResponseOrderModel> ResponseOrders { get; set; } = new List<ExamResponseOrderModel>();
     }

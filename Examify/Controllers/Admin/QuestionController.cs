@@ -1,10 +1,12 @@
 using DataModel;
+using Examify.Attributes;
+using Examify.Common.constants;
 using Examify.Services;
 using Microsoft.AspNetCore.Mvc;
-using Examify.Common.constants;
 
 namespace Examify.Controllers.Admin
 {
+    [AutoLoginAuthorize("admin", "admin123", "Admin", "Teacher")] // Auto-login with credentials and restrict to Admin/Teacher roles
     public class QuestionController : Controller
     {
         private readonly IQuestionService _QuestionService;
@@ -39,6 +41,7 @@ namespace Examify.Controllers.Admin
         // GET: Admin/Question/Create
         public IActionResult Create()
         {
+            ViewBag.instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
             return PartialView("_Create", new QuestionModel());
         }
 
@@ -62,6 +65,8 @@ namespace Examify.Controllers.Admin
         // GET: Admin/Question/Edit/{id}
         public async Task<IActionResult> Edit(int id)
         {
+            ViewBag.instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+
             var question = await _QuestionService.GetByIdAsync(id);
 
             if (question == null) return NotFound();

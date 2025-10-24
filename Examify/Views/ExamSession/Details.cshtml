@@ -277,7 +277,7 @@
                         <button data-examid="@Model.ExamId" type="button" class="btn start-btn startExam">
                             <i class="fas fa-play me-2"></i>Start Exam
                         </button>
-                        <a href="/Exam/Selection" class="btn back-btn">
+                        <a href="/ExamSession/Selection" class="btn back-btn">
                             <i class="fas fa-arrow-left me-2"></i>Back to Exams
                         </a>
                     </div>
@@ -289,8 +289,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-    <script src="@Url.Content("~/Scripts/Custom/Exam/Exam.js")"></script>
-    <script src="@Url.Content("~/Scripts/Custom/Exam/Details.js")"></script>
+    <script src="@Url.Content("~/Scripts/Custom/ExamSession/Exam.js")"></script>
+    <script src="@Url.Content("~/Scripts/Custom/ExamSession/Details.js")"></script>
     <script>
         // Set global variables for exam
         window.currentUserId = @(ViewBag.UserId ?? 1);

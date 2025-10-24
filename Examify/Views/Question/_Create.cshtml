@@ -847,6 +847,7 @@
 <script src="@Url.Content("~/theme/plugins/jquery-validation 1.19.5/jquery.validate.js")"></script>
 
 <script>
+    var instituteId = "@ViewBag.instituteId";
     // Inject model data for edit mode and initialize the form
     window.modelData = @Html.Raw(JsonSerializer.Serialize(Model));
     

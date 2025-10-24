@@ -36,7 +36,7 @@ $(document).ready(function () {
 
     // Load topics when subject changes
     $(document).off('change.questionOptions', '#ddlSubject').on('change.questionOptions', '#ddlSubject', function () {
-         
+        
         var subjectId = $(this).val();
         loadTopics(subjectId);
     });
@@ -103,11 +103,12 @@ function updateOptionFieldNames() {
 }
 
 function loadSubjects() {
-    var apiUrl = API_BASE_URL_SUBJECT + '/list?instituteId=3';
+    debugger;
+    var apiUrl = `${API_BASE_URL_SUBJECT}/${instituteId}/0`;
     $.get(apiUrl, function (data) {
         var $ddl = $('#ddlSubject');
         $ddl.empty().append('<option value="">Select Subject</option>');
-        $.each(data, function (i, subject) {
+        $.each(data.Data, function (i, subject) {
             $ddl.append('<option value="' + subject.SubjectId + '">' + subject.SubjectName + '</option>');
         });
         $(document).trigger('subjectsLoaded'); // <-- Add this
@@ -115,6 +116,7 @@ function loadSubjects() {
 }
 
 function loadQuestionTypes() {
+    debugger;
     var apiUrl = API_BASE_URL_QUESTION + '/types';
     $.get(apiUrl, function (data) {
         AllQuestionTypes = data; // Store all types globally
@@ -149,16 +151,17 @@ function loadQuestionTypes() {
 
 // Update loadTopics to accept a callback
 function loadTopics(subjectId, callback) {
+    debugger;
     if (!subjectId) {
         $('#ddlTopic').empty().append('<option value="">Select Topic</option>');
         if (callback) callback();
         return;
     }
-    var apiUrl = API_BASE_URL_SUBJECT + '/topics?instituteId=3&subjectId=' + subjectId;
+    var apiUrl = API_BASE_URL_SUBJECT +'/'+subjectId + '/topics' ;
     $.get(apiUrl, function (data) {
         var $ddl = $('#ddlTopic');
         $ddl.empty().append('<option value="">Select Topic</option>');
-        $.each(data, function (i, topic) {
+        $.each(data.Data, function (i, topic) {
             $ddl.append('<option value="' + topic.TopicId + '">' + topic.Description + '</option>');
         });
         if (callback) callback();

@@ -141,7 +141,8 @@
         },
         
         // Handle True/False checkbox changes
-        handleTrueFalseChange: function(e) {
+        handleTrueFalseChange: function (e) {
+            debugger;
             const $checkbox = $(e.target);
             if ($checkbox.is(':checked')) {
                 // Uncheck other True/False options
@@ -302,12 +303,14 @@
         
         // Populate True/False question data
         populateTrueFalseData: function (modelData) {
-             
             if (!modelData.Options || modelData.Options.length === 0) return;
-            
+
+            // First, uncheck all options
+            $('.tf-option').prop('checked', false);
+
             let trueOption = null;
             let falseOption = null;
-            
+
             // Find True and False options
             modelData.Options.forEach(opt => {
                 const optText = (opt.Text || '').toLowerCase();
@@ -317,25 +320,24 @@
                     falseOption = opt;
                 }
             });
-            
-            // Set True option
+
+            // Set ChoiceIds
             if (trueOption) {
-                if (trueOption.IsCorrect) {
-                    $('.tf-option[data-option-value="true"]').prop('checked', true);
-                }
                 $('.true-false-option').eq(0).find('.option-choiceid-field').val(trueOption.ChoiceId || '');
             }
-            
-            // Set False option
             if (falseOption) {
-                if (falseOption.IsCorrect) {
-                    $('.tf-option[data-option-value="false"]').prop('checked', true);
-                }
                 $('.true-false-option').eq(1).find('.option-choiceid-field').val(falseOption.ChoiceId || '');
             }
-            
+
+            // Check only the correct option
+            if (trueOption && trueOption.IsCorrect) {
+                $('.tf-option[data-option-value="true"]').prop('checked', true);
+            } else if (falseOption && falseOption.IsCorrect) {
+                $('.tf-option[data-option-value="false"]').prop('checked', true);
+            }
+
             // Update hidden values
-            $('.true-false-option').each(function(i) {
+            $('.true-false-option').each(function () {
                 const isChecked = $(this).find('.tf-option').is(':checked');
                 $(this).find('.option-correct-hidden').val(isChecked ? 'true' : 'false');
             });
