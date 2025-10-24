@@ -277,6 +277,7 @@
         populateBasicFields: function(modelData) {
             $('#ddlSubject').val(modelData.SubjectId || '');
             $('#ddlTopic').val(modelData.TopicId || '');
+            $('#ddlDifficultyLevel').val(modelData.DifficultyLevel || '');
             $('#IsMultiSelect').prop('checked', !!modelData.IsMultiSelect);
             $('textarea[asp-for="Explanation"]').val(modelData.Explanation || '');
         },

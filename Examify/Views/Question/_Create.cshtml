@@ -245,7 +245,7 @@
     .option-remove-btn {
         align-self: flex-start;
     }
-    
+
     /* True/False options section */
     .true-false-section {
         display: none; /* Initially hidden */
@@ -267,10 +267,10 @@
         transition: all 0.2s;
     }
 
-    .true-false-option:hover {
-        border-color: #007bff;
-        box-shadow: 0 2px 8px rgba(0,123,255,0.1);
-    }
+        .true-false-option:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+        }
 
     .true-false-label {
         font-weight: 600;
@@ -280,9 +280,9 @@
         align-items: center;
     }
 
-    .true-false-label input {
-        margin-right: 10px;
-    }
+        .true-false-label input {
+            margin-right: 10px;
+        }
 
     /* Descriptive questions section */
     .descriptive-section {
@@ -305,16 +305,16 @@
         transition: all 0.2s;
     }
 
-    .descriptive-option-group:hover {
-        border-color: #007bff;
-        box-shadow: 0 2px 8px rgba(0,123,255,0.1);
-    }
+        .descriptive-option-group:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+        }
 
     .descriptive-input {
         width: 100%;
         min-height: 80px;
     }
-    
+
     /* Pairing questions section */
     .pairing-section {
         display: none; /* Initially hidden */
@@ -325,7 +325,7 @@
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         margin-bottom: 20px;
     }
-    
+
     .pair-group {
         background: #f8f9fa;
         border: 1px solid #e9ecef;
@@ -335,12 +335,12 @@
         position: relative;
         transition: all 0.2s;
     }
-    
-    .pair-group:hover {
-        border-color: #007bff;
-        box-shadow: 0 2px 8px rgba(0,123,255,0.1);
-    }
-    
+
+        .pair-group:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+        }
+
     .pair-label {
         position: absolute;
         top: -8px;
@@ -351,7 +351,7 @@
         font-weight: 500;
         color: #6c757d;
     }
-    
+
     .pair-input {
         width: 100%;
         min-height: 60px;
@@ -367,7 +367,7 @@
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         margin-bottom: 20px;
     }
-    
+
     .order-group {
         background: #f8f9fa;
         border: 1px solid #e9ecef;
@@ -377,12 +377,12 @@
         position: relative;
         transition: all 0.2s;
     }
-    
-    .order-group:hover {
-        border-color: #007bff;
-        box-shadow: 0 2px 8px rgba(0,123,255,0.1);
-    }
-    
+
+        .order-group:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+        }
+
     .order-label {
         position: absolute;
         top: -8px;
@@ -393,12 +393,12 @@
         font-weight: 500;
         color: #6c757d;
     }
-    
+
     .order-input {
         width: 100%;
         min-height: 60px;
     }
-    
+
     .order-number {
         display: flex;
         align-items: center;
@@ -519,7 +519,7 @@
                     </div>
 
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6 mt-2">
                     <div class="form-group ">
                         <label asp-for="TopicId">Topic <span class="text-danger">*</span></label>
                         <select asp-for="TopicId" class="form-control select" id="ddlTopic" name="TopicId">
@@ -528,6 +528,18 @@
                         <span asp-validation-for="TopicId" class="text-danger"></span>
                     </div>
                 </div>
+                <div class="col-md-6 mt-2">
+                    <div class="form-group ">
+                        <label asp-for="DifficultyLevel">Difficulty Level <span class="text-danger">*</span></label>
+                        <select asp-for="DifficultyLevel" class="form-control select" id="ddlDifficultyLevel" name="DifficultyLevel">
+                            <option value="Easy" selected="@(Model.QuestionId == 0 || Model.DifficultyLevel == "Easy" ? "selected" : null)">Easy</option>
+                            <option value="Medium" selected="@(Model.DifficultyLevel == "Medium" ? "selected" : null)">Medium</option>
+                            <option value="Hard" selected="@(Model.DifficultyLevel == "Hard" ? "selected" : null)">Hard</option>
+                        </select>
+                        <span asp-validation-for="DifficultyLevel" class="text-danger"></span>
+                    </div>
+                </div>
+
                 <div class="col-md-6">
                     <div class="form-group multi-select-container">
                         <div class="checkbox">
@@ -715,7 +727,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Descriptive Options Section -->
         <div class="descriptive-section" id="descriptive-section" style="display: none;">
             <div class="section-title">
@@ -748,7 +760,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Pairing Options Section -->
         <div class="pairing-section" id="pairing-section" style="display: none;">
             <div class="section-title">
@@ -791,7 +803,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Ordering Options Section -->
         <div class="ordering-section" id="ordering-section" style="display: none;">
             <div class="section-title">
@@ -850,7 +862,7 @@
     var instituteId = "@ViewBag.instituteId";
     // Inject model data for edit mode and initialize the form
     window.modelData = @Html.Raw(JsonSerializer.Serialize(Model));
-    
+
     // Ensure required arrays exist
     if (window.modelData) {
         window.modelData.Options = window.modelData.Options || [];
@@ -873,7 +885,7 @@
             // Fallback for legacy behavior if modules fail to load
             legacyFormInitialization();
         }
-        
+
         // IMPORTANT: Trigger custom event to inform parent page that initialization is complete
         // This allows QuestionDatatable.js to run cleanup for new questions
         setTimeout(function() {
@@ -884,7 +896,7 @@
                     modelData: window.modelData
                 }
             });
-            
+
             // Dispatch the event on the document
             document.dispatchEvent(event);
             console.log('📢 questionFormReady event dispatched', {
@@ -897,16 +909,17 @@
     // Legacy fallback function (simplified version of old initialization)
     function legacyFormInitialization() {
         console.log('Using legacy form initialization');
-        
+
         // Basic form setup
         if (window.modelData) {
             $('#ddlSubject').val(window.modelData.SubjectId || '');
             $('#ddlQuestionType').val(window.modelData.QuestionTypeId || '');
             $('#ddlTopic').val(window.modelData.TopicId || '');
+            $('#ddlDifficultyLevel').val(window.modelData.DifficultyLevel || '');
             $('#IsMultiSelect').prop('checked', !!window.modelData.IsMultiSelect);
             $('textarea[asp-for="Explanation"]').val(window.modelData.Explanation || '');
         }
-        
+
         // Basic event handlers
         $(document).on('change', '#ddlSubject', function() {
             var subjectId = $(this).val();

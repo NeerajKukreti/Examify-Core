@@ -146,6 +146,7 @@ namespace DAL.Repository
                 p.Add("@AdditionalTextEnglish", string.IsNullOrWhiteSpace(model.AdditionalTextEnglish) ? null : model.AdditionalTextEnglish, DbType.String);
                 p.Add("@AdditionalTextHindi", string.IsNullOrWhiteSpace(model.AdditionalTextHindi) ? null : model.AdditionalTextHindi, DbType.String);
                 p.Add("@Explanation", string.IsNullOrWhiteSpace(model.Explanation) ? null : model.Explanation, DbType.String);
+                p.Add("@DifficultyLevel", model.DifficultyLevel, DbType.String);
                 p.Add("@QuestionTypeId", model.QuestionTypeId, DbType.Int32);
                 // Stored procedure expects NVARCHAR(100) CreatedBy, model has int? so convert
                 p.Add("@UserId", model.CreatedBy, DbType.Int32);

@@ -16,6 +16,7 @@ namespace DataModel
         public string AdditionalTextEnglish { get; set; } = string.Empty;
         public string AdditionalTextHindi { get; set; } = string.Empty;
         public string? Explanation { get; set; } = string.Empty;
+        public string DifficultyLevel { get; set; } = string.Empty;
         public int QuestionTypeId { get; set; }
         public bool IsDeleted { get; set; }
         public int? CreatedBy { get; set; }

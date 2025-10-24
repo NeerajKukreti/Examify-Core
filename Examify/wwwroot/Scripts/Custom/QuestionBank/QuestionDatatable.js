@@ -134,6 +134,7 @@ $(document).ready(function () {
         $('#ddlSubject').val('');
         $('#ddlQuestionType').val('');
         $('#ddlTopic').val('');
+        $('#ddlDifficultyLevel').val('Easy');
         $('#IsMultiSelect').prop('checked', false).prop('disabled', false);
         $('textarea[asp-for="Explanation"]').val('');
 
