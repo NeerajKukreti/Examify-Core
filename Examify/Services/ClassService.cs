@@ -1,4 +1,5 @@
 using DataModel;
+using DataModel.Common;
 using Examify.Common;
 using Microsoft.Extensions.Options;
 using Model.DTO;
@@ -135,15 +136,9 @@ namespace Examify.Services
                 return apiResponse?.Success == true;
             }
 
-            return false;
-
+            return false; 
         }
     }
 
-    public class ApiResponse<T>
-    {
-        public bool Success { get; set; }
-        public string Message { get; set; } = string.Empty;
-        public T? Data { get; set; }
-    }
+    
 }
