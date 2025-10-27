@@ -105,7 +105,7 @@ namespace DAL.Repository
                     new { ExamId = examId, UserId = userId },
                     commandType: CommandType.StoredProcedure
                 );
-                //var sessionId = 169;
+
 
                 // Get exam details
                 var exam = connection.QueryFirstOrDefault<ExamModel>(

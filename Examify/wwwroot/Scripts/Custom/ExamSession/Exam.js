@@ -24,6 +24,7 @@ let timerInterval = null;
 const S = { UNVISITED: 'unvisited', NOT_ANSWERED: 'not-answered', ANSWERED: 'answered', MARKED: 'marked', MARKED_ANSWERED: 'marked-answered' };
 
 async function loadExamData() {
+    
     try {
         console.log('Loading exam data for examId:', examId);
         const apiUrl = `${API_BASE_URL}/${examId}/sessionquestions?userId=${window.currentUserId || 1}`;
@@ -319,7 +320,7 @@ function showQuestion(globalIndex = 0) {
 }
 
 function saveCurrentResponse() {
-    debugger;
+    
     const question = allQuestions[currentQuestionIndex];
     const response = examResponses[question.SessionQuestionId];
     const uiType = getQuestionUiType(question);
@@ -719,15 +720,17 @@ function updateDebugPanel() {
 
     const answeredCount = Object.values(examResponses).filter(r => r.SessionChoiceId !== null).length;
     $('#responsesSaved').text(answeredCount);
+    
+    // Update marks display based on current question
+    if (allQuestions.length > 0 && currentQuestionIndex >= 0 && currentQuestionIndex < allQuestions.length) {
+        const currentQuestion = allQuestions[currentQuestionIndex];
+        const marksPerQuestion = currentQuestion?.Marks;
+        const negativeMarks = currentQuestion?.NegativeMarks;
 
-    // Update marks display using actual exam values
-    const marksPerQuestion = examData.MarksPerQuestion || 1;
-    const negativeMarks = examData.NegativeMarks || 0.25;
-    const currentMarks = answeredCount * marksPerQuestion;
-
-    $('#currentMarks').text(`+${marksPerQuestion}`);
-    $('#negativeMarks').text(`-${negativeMarks}`);
-
+        $('#currentMarks').text(`+${marksPerQuestion}`);
+        $('#negativeMarks').text(`-${negativeMarks}`);
+    }
+   
     // Update question timer
     const questionTimeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
     const minutes = Math.floor(questionTimeSpent / 60);

@@ -195,10 +195,10 @@
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <span class="fw-semibold">Time: <strong id="timer">02:00:00</strong></span>
-                    <button class="btn btn-outline-primary btn-sm" id="fullscreenBtn">
+                    <button class="btn btn-outline-primary btn-sm" id="fullscreenBtn" style="display:none">
                         <span id="fullscreenIcon">⛶</span> Full Screen
                     </button>
-                    <button class="btn btn-outline-secondary btn-sm">Pause</button>
+                    <button class="btn btn-outline-secondary btn-sm" style="display: none">Pause</button>
                     <button class="btn btn-danger btn-sm" onclick="submitExam()">Submit Exam</button>
                 </div>
             </div>
@@ -339,6 +339,15 @@
                 alert('Failed to load exam system. Please refresh the page.');
             }
         });
+
+        // Auto-trigger fullscreen on page load
+        setTimeout(function() {
+            const fullscreenBtn = document.getElementById('enterFullscreenBtn');
+            if (fullscreenBtn) {
+                debugger;
+                fullscreenBtn.click();
+            }
+        }, 500);
 
         // Wait for DOM to be ready
         document.addEventListener('DOMContentLoaded', function() {

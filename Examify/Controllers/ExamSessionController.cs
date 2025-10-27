@@ -39,7 +39,8 @@ public class ExamSessionController : Controller
         if (response.IsSuccessStatusCode)
         {
             var json = await response.Content.ReadAsStringAsync();
-            var exam = JsonSerializer.Deserialize<ExamModel>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var apiResponse = JsonSerializer.Deserialize<JsonElement>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var exam = JsonSerializer.Deserialize<ExamModel>(apiResponse.GetProperty("Data").GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });   
             ViewBag.ExamId = id;
             ViewBag.UserId = JwtHelper.GetUserIdFromSession(_httpContextAccessor);
             ViewBag.ApiBaseUrl = ENDPOINTS.BaseUrl + "Exam";

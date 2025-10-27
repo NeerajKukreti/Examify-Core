@@ -1,3 +1,13 @@
+function launchExam(examId) {
+    const features = `popup,width=${screen.availWidth},height=${screen.availHeight},left=0,top=0`;
+    const w = window.open('/ExamSession/Details?id=' + examId, '_blank', features);
+    if (w) {
+        w.focus();
+    } else {
+        alert('Popup blocked. Please allow popups for this site.');
+    }
+}
+
 $(document).ready(function () {
     $('#examTable').DataTable({
         ajax: {
@@ -10,13 +20,13 @@ $(document).ready(function () {
         columns: [
             { data: 'ExamName' },
             { data: 'Description' },
-            { data: 'DurationMinutes' },
+            { data: 'DurationMinutes' },    
             { data: 'TotalQuestions' },
             { data: 'ExamType' },
             {
-                data: 'examId',
+                data: 'ExamId',
                 render: function (data) {
-                    return `<a target="_blank" href="/ExamSession/StartExam?examId=${data}" class="btn btn-sm btn-primary">Launch Exam</a>`;
+                    return `<button onclick="launchExam(${data})" class="btn btn-sm btn-primary">Launch Exam</button>`;
                 }
             }
         ],

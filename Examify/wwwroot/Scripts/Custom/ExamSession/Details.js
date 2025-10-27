@@ -102,11 +102,29 @@ function showInfoMessage(message) {
     setTimeout(() => $('#infoMessage').hide(), 5000);
 }
 
-// Start exam function
+// Start exam function - Load inline and trigger fullscreen
 function startExam(examId) {
-    if (confirm('Are you ready to start the exam? Once started, the timer will begin.')) {
-        window.location.href = `/ExamSession/StartExam?examId=${examId}`;
-    }
+    // Hide details section
+    $('.detailsSection').hide();
+    
+    // Load exam content
+    $('#examSection').load(`/ExamSession/StartExam?examId=${examId}`, function() {
+        $('#examSection').show();
+        
+        // Trigger fullscreen after content loads
+        setTimeout(function() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            } else if (elem.mozRequestFullScreen) {
+                elem.mozRequestFullScreen();
+            }
+        }, 500);
+    });
 }
 
 // Load exam statistics
@@ -141,7 +159,7 @@ $(document).ready(function() {
     $(document).on('click', '.startExam', function() {
         const examId = window.examId;
         if (examId) {
-            openSecureExamWindow(examId);
+            startExam(examId);
         }
     });
     
