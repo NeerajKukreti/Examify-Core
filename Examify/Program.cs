@@ -1,6 +1,7 @@
 using Examify.Services;
 using Examify.Common;
 using Examify.Helpers;
+using Examify.Handlers;
 using Serilog;
  
 
@@ -24,16 +25,31 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
         ? CookieSecurePolicy.None
-        : CookieSecurePolicy.Always; // Use SecurePolicy instead of Secure
+        : CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Strict;
     options.Cookie.IsEssential = true;
 });
 
-// HttpClient for Exam Portal API
+builder.Services.AddAuthentication("SessionScheme")
+    .AddCookie("SessionScheme", options =>
+    {
+        options.LoginPath = "/Auth/Index";
+        options.AccessDeniedPath = "/Auth/Index";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+        options.SlidingExpiration = true;
+    });
+
+builder.Services.AddAuthorization();
+
+// Register the token handler
+builder.Services.AddTransient<AuthTokenHandler>();
+
+// HttpClient for Exam Portal API with token handler
 builder.Services.AddHttpClient("ExamifyAPI", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7271/api/");
-});
+})
+.AddHttpMessageHandler<AuthTokenHandler>();
 
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 builder.Services.AddScoped<IFileService, FileService>();
@@ -56,18 +72,17 @@ builder.Services.AddSingleton<ICacheService, CacheService>();
 
 var app = builder.Build();
 
-app.UseSerilogRequestLogging(); // Add this line
+app.UseSerilogRequestLogging();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 else
 {
-    app.UseDeveloperExceptionPage(); // Add this for development
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseHttpsRedirection();
@@ -75,6 +90,7 @@ app.UseStaticFiles();
 app.UseSession();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

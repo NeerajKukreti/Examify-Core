@@ -1,6 +1,8 @@
 using DataModel;
 using Examify.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 
 public class AuthController : Controller
 {
@@ -26,12 +28,25 @@ public class AuthController : Controller
         }
 
         _authService.SaveSession(result.Token!, result.RefreshToken!, result.UserId);
+        
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, result.UserId!),
+            new Claim(ClaimTypes.Role, HttpContext.Session.GetString("UserRole") ?? "Admin")
+        };
+        
+        var identity = new ClaimsIdentity(claims, "SessionScheme");
+        var principal = new ClaimsPrincipal(identity);
+        
+        await HttpContext.SignInAsync("SessionScheme", principal);
+        
         return RedirectToAction("Index", "Dashboard");
     }
 
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
         _authService.ClearSession();
+        await HttpContext.SignOutAsync("SessionScheme");
         return RedirectToAction("Index");
     }
 

@@ -18,6 +18,11 @@ namespace DAL.Repository
         Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null,
             int? userloggedIn = null);
         Task<bool> ChangeStatus(int examId);
+        Task<IEnumerable<AvailableQuestionDTO>> GetAvailableQuestionsAsync(int examId, int instituteId);
+        Task<IEnumerable<ExamQuestionDTO>> GetExamQuestionsAsync(int examId);
+        Task<bool> SaveExamQuestionsAsync(ExamQuestionConfigDTO config);
+        Task<bool> RemoveExamQuestionAsync(int examId, int questionId);
+        Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(long userId);
     }
 
     public class ExamRepository : IExamRepository
@@ -386,5 +391,107 @@ namespace DAL.Repository
             };
         }
         #endregion
+
+        #region Exam Question Configuration
+        public async Task<IEnumerable<AvailableQuestionDTO>> GetAvailableQuestionsAsync(int examId, int instituteId)
+        {
+            using var connection = Connection;
+            var sql = @"
+                SELECT q.QuestionId, q.QuestionEnglish, q.QuestionHindi, 
+                       t.TopicName, s.SubjectName, qt.TypeName as QuestionTypeName,q.difficultyLevel, q.IsMultiSelect
+                FROM Question q
+                LEFT JOIN SubjectTopic t ON q.TopicId = t.TopicId
+                LEFT JOIN Subject s ON t.SubjectId = s.SubjectId and s.InstituteId = @InstituteId 
+                LEFT JOIN QuestionType qt ON q.QuestionTypeId = qt.QuestionTypeId
+                WHERE q.IsDeleted = 0
+                  AND q.QuestionId NOT IN (SELECT QuestionId FROM ExamQuestion WHERE ExamId = @ExamId)
+                ORDER BY s.SubjectName, t.TopicName";
+
+            return await connection.QueryAsync<AvailableQuestionDTO>(sql, new { ExamId = examId, InstituteId = instituteId });
+        }
+
+        public async Task<IEnumerable<ExamQuestionDTO>> GetExamQuestionsAsync(int examId)
+        {
+            using var connection = Connection;
+            var sql = @"
+                SELECT eq.ExamId, eq.QuestionId, eq.Marks, eq.NegativeMarks, eq.SortOrder,
+                       q.QuestionEnglish, t.TopicName, qt.TypeName as QuestionTypeName
+                FROM ExamQuestion eq
+                INNER JOIN Question q ON eq.QuestionId = q.QuestionId
+                INNER JOIN SubjectTopic t ON q.TopicId = t.TopicId
+                INNER JOIN QuestionType qt ON q.QuestionTypeId = qt.QuestionTypeId
+                WHERE eq.ExamId = @ExamId
+                ORDER BY eq.SortOrder";
+
+            return await connection.QueryAsync<ExamQuestionDTO>(sql, new { ExamId = examId });
+        }
+
+        public async Task<bool> SaveExamQuestionsAsync(ExamQuestionConfigDTO config)
+        {
+            using var connection = Connection;
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                // Delete existing questions
+                await connection.ExecuteAsync(
+                    "DELETE FROM ExamQuestion WHERE ExamId = @ExamId",
+                    new { config.ExamId },
+                    transaction);
+
+                // Insert new questions
+                foreach (var question in config.Questions)
+                {
+                    await connection.ExecuteAsync(
+                        @"INSERT INTO ExamQuestion (ExamId, QuestionId, Marks, NegativeMarks, SortOrder)
+                          VALUES (@ExamId, @QuestionId, @Marks, @NegativeMarks, @SortOrder)",
+                        question,
+                        transaction);
+                }
+
+                // Update TotalQuestions in Exam table
+                await connection.ExecuteAsync(
+                    "UPDATE Exam SET TotalQuestions = @Count WHERE ExamId = @ExamId",
+                    new { Count = config.Questions.Count, config.ExamId },
+                    transaction);
+
+                transaction.Commit();
+                return true;
+            }
+            catch
+            {
+                transaction.Rollback();
+                return false;
+            }
+        }
+
+        public async Task<bool> RemoveExamQuestionAsync(int examId, int questionId)
+        {
+            using var connection = Connection;
+            var rowsAffected = await connection.ExecuteAsync(
+                "DELETE FROM ExamQuestion WHERE ExamId = @ExamId AND QuestionId = @QuestionId",
+                new { ExamId = examId, QuestionId = questionId });
+
+            if (rowsAffected > 0)
+            {
+                // Update TotalQuestions count
+                await connection.ExecuteAsync(
+                    @"UPDATE Exam SET TotalQuestions = (SELECT COUNT(*) FROM ExamQuestion WHERE ExamId = @ExamId)
+                      WHERE ExamId = @ExamId",
+                    new { ExamId = examId });
+            }
+
+            return rowsAffected > 0;
+        }
+        #endregion
+
+        public async Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(long userId)
+        {
+            using var connection = Connection;
+            return await connection.QueryAsync<UserExamDTO>(
+                "_sp_GetUserExams",
+                new { UserId = userId },
+                commandType: CommandType.StoredProcedure);
+        }
     }
 }

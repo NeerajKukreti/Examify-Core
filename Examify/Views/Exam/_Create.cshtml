@@ -112,7 +112,7 @@
                         <span asp-validation-for="DurationMinutes" class="text-danger"></span>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4" style="display:none">
                     <div class="form-group">
                         <label asp-for="TotalQuestions">Total Questions <span class="required">*</span></label>
                         <input asp-for="TotalQuestions" type="number" class="form-control" placeholder="Enter total questions" />
@@ -168,13 +168,13 @@
             rules: {
                 ExamName: { required: true, maxlength: 200 },
                 DurationMinutes: { required: true, min: 1, max: 1440 },
-                TotalQuestions: { required: true, min: 1, max: 500 },
+                //TotalQuestions: { required: true, min: 1, max: 500 },
                 CutOffPercentage: { min: 0, max: 100 }
             },
             messages: {
                 ExamName: { required: "Exam name is required", maxlength: "Exam name cannot exceed 200 characters" },
                 DurationMinutes: { required: "Duration is required", min: "Duration must be at least 1 minute", max: "Duration cannot exceed 1440 minutes" },
-                TotalQuestions: { required: "Total questions is required", min: "Must have at least 1 question", max: "Cannot exceed 500 questions" },
+                //TotalQuestions: { required: "Total questions is required", min: "Must have at least 1 question", max: "Cannot exceed 500 questions" },
                 CutOffPercentage: { min: "Cut off must be at least 0%", max: "Cut off cannot exceed 100%" }
             },
             submitHandler: function(form) {

@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Examify.Common;
 using System.Text.Json;
 using DataModel;
 using Examify.Common.constants;
 
+[Authorize(Roles = "Student")]
 public class ExamSessionController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
@@ -18,9 +20,15 @@ public class ExamSessionController : Controller
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public IActionResult Selection()
+    public IActionResult Index()
     {
-        return View("ExamList");
+        return View();
+    }
+
+    public IActionResult UserExam()
+    {
+        ViewBag.UserId = JwtHelper.GetUserIdFromSession(_httpContextAccessor);
+        return View();
     }
 
     public async Task<IActionResult> Details(int id)

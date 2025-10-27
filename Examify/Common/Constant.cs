@@ -7,13 +7,13 @@ namespace Examify.Common.constants
         public const string ClientName = "ExamifyAPI";
 
         // Exam endpoints
-        public const string StartExamUrl = "/Exam/StartExam";
-        public const string ExamResultUrl = "/Exam/ExamResult";
+        public const string StartExamUrl = "/ExamSession/StartExam";
+        public const string ExamResultUrl = "/ExamSession/ExamResult";
         public const string Login = "auth/login";
-        public const string ExamList = "exam/list";
-        public const string ExamById = "exam/GetExamById";
-        public const string ExamQuestions = "Exam/{0}/sessionquestions";
-        public const string ExamSubmit = "Exam/{0}/submit";
+        public const string ExamList = "ExamSession/list";
+        public const string ExamById = "ExamSession/GetExamById";
+        public const string ExamQuestions = "ExamSession/{0}/sessionquestions";
+        public const string ExamSubmit = "ExamSession/{0}/submit";
 
         // Question endpoints
         public const string QuestionList = "question/list";

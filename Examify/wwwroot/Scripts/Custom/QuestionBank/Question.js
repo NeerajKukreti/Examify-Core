@@ -465,7 +465,8 @@ $(function () {
 
     // Helper to show errors
     function showError(selector, message) {
-        $(selector).addClass('error').after('<span class="error-message" style="color:brown;">' + message + '</span>');
+        debugger;
+        $(selector).parent().after().addClass('error').after('<span class="error-message" style=";color:brown;">' + message + '</span>');
     }
 
     // Handle True/False checkbox behavior - now using QuestionTypeManager logic

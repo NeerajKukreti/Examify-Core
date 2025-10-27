@@ -22,8 +22,8 @@ namespace Model.DTO
         [Range(1, 1440, ErrorMessage = "Duration must be between 1 and 1440 minutes")]
         public int DurationMinutes { get; set; } = 60;
 
-        [Required(ErrorMessage = "Total Questions is required")]
-        [Range(1, 500, ErrorMessage = "Total Questions must be between 1 and 500")]
+        //[Required(ErrorMessage = "Total Questions is required")]
+        //[Range(1, 500, ErrorMessage = "Total Questions must be between 1 and 500")]
         public int TotalQuestions { get; set; }
 
         [StringLength(4000, ErrorMessage = "Instructions cannot exceed 4000 characters")]

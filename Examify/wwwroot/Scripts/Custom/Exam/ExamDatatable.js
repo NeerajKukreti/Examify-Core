@@ -56,6 +56,15 @@ var ExamTable = function () {
                             '</div>';
                         $(nTd).html(str);
                     }
+                },
+                {
+                    "title": "Actions", "data": "examId",
+                    fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        var str = '<a href="/Exam/ConfigureQuestions/' + oData.examId + '" class="btn btn-sm btn-primary" title="Configure Questions">' +
+                            '<i class="fas fa-cog"></i> Configure' +
+                            '</a>';
+                        $(nTd).html(str);
+                    }
                 }
             ]
         });

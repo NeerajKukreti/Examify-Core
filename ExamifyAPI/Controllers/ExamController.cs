@@ -115,6 +115,73 @@ namespace ExamifyAPI.Controllers
 
  
 
+        #region Exam Question Configuration
+        [HttpGet("{examId}/available-questions")]
+        public async Task<IActionResult> GetAvailableQuestions(int examId, [FromQuery] int instituteId)
+        {
+            try
+            {
+                var questions = await _examService.GetAvailableQuestionsAsync(examId, instituteId);
+                return Ok(new { Success = true, Data = questions });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
+            }
+        }
+
+        [HttpGet("{examId}/questions")]
+        public async Task<IActionResult> GetExamQuestions(int examId)
+        {
+            try
+            {
+                var questions = await _examService.GetExamQuestionsAsync(examId);
+                return Ok(new { Success = true, Data = questions });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
+            }
+        }
+
+        [HttpPost("{examId}/questions")]
+        public async Task<IActionResult> SaveExamQuestions(int examId, [FromBody] ExamQuestionConfigDTO config)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new { Success = false, Errors = ModelState });
+
+            try
+            {
+                var success = await _examService.SaveExamQuestionsAsync(config);
+                if (success)
+                    return Ok(new { Success = true, Message = "Questions configured successfully" });
+                else
+                    return BadRequest(new { Success = false, Message = "Failed to configure questions" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
+            }
+        }
+
+        [HttpDelete("{examId}/questions/{questionId}")]
+        public async Task<IActionResult> RemoveExamQuestion(int examId, int questionId)
+        {
+            try
+            {
+                var success = await _examService.RemoveExamQuestionAsync(examId, questionId);
+                if (success)
+                    return Ok(new { Success = true, Message = "Question removed successfully" });
+                else
+                    return NotFound(new { Success = false, Message = "Question not found in exam" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
+            }
+        }
+        #endregion
+
         #region Exam Session
         [HttpGet("{examId}/sessionquestions")]
         public IActionResult GetExamSessionQuestions(int userId, int examId)
@@ -207,5 +274,19 @@ namespace ExamifyAPI.Controllers
             }
         }
         #endregion
+
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetUserExams(long userId)
+        {
+            try
+            {
+                var exams = await _examService.GetUserExamsAsync(userId);
+                return Ok(new { Success = true, Data = exams });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
+            }
+        }
     }
 }

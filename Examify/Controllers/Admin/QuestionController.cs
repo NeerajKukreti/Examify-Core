@@ -2,11 +2,13 @@ using DataModel;
 using Examify.Attributes;
 using Examify.Common.constants;
 using Examify.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Examify.Controllers.Admin
 {
-    [AutoLoginAuthorize("admin", "Test@123", "Admin", "Teacher")] // Auto-login with credentials and restrict to Admin/Teacher roles
+    //[AutoLoginAuthorize("admin", "Test@123", "Admin", "Teacher")] // Auto-login with credentials and restrict to Admin/Teacher roles
+    [Authorize(Roles = "Admin")]
     public class QuestionController : Controller
     {
         private readonly IQuestionService _QuestionService;

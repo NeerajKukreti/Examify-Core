@@ -14,6 +14,10 @@ namespace Examify.Services
         Task<bool> CreateAsync(ExamDTO model);
         Task<bool> UpdateAsync(ExamDTO model);
         Task<bool> ChangeStatusAsync(int examId);
+        Task<IEnumerable<AvailableQuestionDTO>> GetAvailableQuestionsAsync(int examId, int instituteId);
+        Task<IEnumerable<ExamQuestionDTO>> GetExamQuestionsAsync(int examId);
+        Task<bool> SaveExamQuestionsAsync(ExamQuestionConfigDTO config);
+        Task<bool> RemoveExamQuestionAsync(int examId, int questionId);
     }
 
     public class ExamService : IExamService
@@ -103,6 +107,73 @@ namespace Examify.Services
         public async Task<bool> ChangeStatusAsync(int examId)
         {
             var response = await _httpClient.PutAsync($"Exam/ChangeStatus?id={examId}", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+                return apiResponse?.Success == true;
+            }
+
+            return false;
+        }
+
+        public async Task<IEnumerable<AvailableQuestionDTO>> GetAvailableQuestionsAsync(int examId, int instituteId)
+        {
+            var response = await _httpClient.GetAsync($"Exam/{examId}/available-questions?instituteId={instituteId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+
+                if (apiResponse?.Success == true && apiResponse?.Data != null)
+                {
+                    return JsonConvert.DeserializeObject<IEnumerable<AvailableQuestionDTO>>(apiResponse.Data.ToString());
+                }
+            }
+
+            return new List<AvailableQuestionDTO>();
+        }
+
+        public async Task<IEnumerable<ExamQuestionDTO>> GetExamQuestionsAsync(int examId)
+        {
+            var response = await _httpClient.GetAsync($"Exam/{examId}/questions");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+
+                if (apiResponse?.Success == true && apiResponse?.Data != null)
+                {
+                    return JsonConvert.DeserializeObject<IEnumerable<ExamQuestionDTO>>(apiResponse.Data.ToString());
+                }
+            }
+
+            return new List<ExamQuestionDTO>();
+        }
+
+        public async Task<bool> SaveExamQuestionsAsync(ExamQuestionConfigDTO config)
+        {
+            var json = JsonConvert.SerializeObject(config);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync($"Exam/{config.ExamId}/questions", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                return apiResponse?.Success == true;
+            }
+
+            return false;
+        }
+
+        public async Task<bool> RemoveExamQuestionAsync(int examId, int questionId)
+        {
+            var response = await _httpClient.DeleteAsync($"Exam/{examId}/questions/{questionId}");
 
             if (response.IsSuccessStatusCode)
             {

@@ -1,0 +1,180 @@
+@{
+    ViewBag.Title = "Configure Questions";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="@Url.Content("~/theme/plugins/datatables-2.3.4/css/datatables.bootstrap.css")" rel="stylesheet" />
+<link href="@Url.Content("~/theme/plugins/datatables-2.3.4/css/datatables.bootstrap5.min.css")" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
+<style>
+    .question-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 8px;
+        background: #fafafa;
+    }
+    .question-card:hover {
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .selected-questions-panel {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    .question-card .form-label {
+        font-size: 10px;
+        font-weight: 600;
+        margin-bottom: 2px;
+        color: #666;
+    }
+    .question-card .form-control {
+        height: 30px;
+        font-size: 13px;
+        padding: 4px 8px;
+    }
+    .question-text {
+        font-size: 13px;
+        line-height: 1.3;
+        margin-bottom: 3px;
+    }
+    .question-meta {
+        font-size: 11px;
+        color: #888;
+    }
+    .btn-remove-question {
+        padding: 3px 7px;
+        font-size: 11px;
+    }
+    .filter-section {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 15px;
+    }
+    .filter-section .form-select {
+        height: 35px;
+        font-size: 13px;
+    }
+    .filter-section label {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+</style>
+
+<div class="app-content-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h3 class="mb-0">Configure Questions: @ViewBag.ExamName</h3>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-end">
+                    <li class="breadcrumb-item"><a href="/Dashboard">Home</a></li>
+                    <li class="breadcrumb-item"><a href="/Exam">Exams</a></li>
+                    <li class="breadcrumb-item active">Configure Questions</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="app-content">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Available Questions -->
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Available Questions</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Filters -->
+                        <div class="filter-section">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label>Subject</label>
+                                    <select class="form-select" id="filterSubject">
+                                        <option value="">All Subjects</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Topic</label>
+                                    <select class="form-select" id="filterTopic">
+                                        <option value="">All Topics</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Question Type</label>
+                                    <select class="form-select" id="filterType">
+                                        <option value="">All Types</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Difficulty</label>
+                                    <select class="form-select" id="filterDifficulty">
+                                        <option value="">All Levels</option>
+                                        <option value="Easy">Easy</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="Hard">Hard</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <table class="table table-striped table-bordered table-sm" id="AvailableQuestionsTable">
+                            <thead>
+                                <tr>
+                                    <th width="40">Select</th>
+                                    <th width="500">Question</th>
+                                    <th width="300">Subject</th>
+                                    <th width="200">Topic</th>
+                                    <th width="80">Type</th>
+                                    <th width="70">Level</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected Questions -->
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Selected Questions (<span id="selectedCount">0</span>)</h5>
+                        <button type="button" class="btn btn-success" id="btnSaveConfiguration">
+                            <i class="fas fa-save"></i> Save Configuration
+                        </button>
+                    </div>
+                    <div class="card-body selected-questions-panel" id="selectedQuestionsPanel">
+                        <p class="text-muted text-center">No questions selected yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="@Url.Content("~/theme/plugins/datatables-2.3.4/js/datatables.js")"></script>
+    <script src="@Url.Content("~/theme/plugins/datatables-2.3.4/js/datatables.bootstrap5.min.js")"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="@Url.Content("~/scripts/custom/exam/examquestionconfig.js")"></script>
+    <script>
+        // Hide sidebar on page load
+        $(document).ready(function() {
+            $('body').addClass('sidebar-collapse');
+        });
+    </script>
+}
+
+<script>
+    var examId = @ViewBag.ExamId;
+    var getAvailableQuestionsUrl = '@Url.Action("GetAvailableQuestions", "Exam")';
+    var getExamQuestionsUrl = '@Url.Action("GetExamQuestions", "Exam")';
+    var saveExamQuestionsUrl = '@Url.Action("SaveExamQuestions", "Exam")';
+    var removeExamQuestionUrl = '@Url.Action("RemoveExamQuestion", "Exam")';
+</script>

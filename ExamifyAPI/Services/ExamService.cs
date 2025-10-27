@@ -13,6 +13,11 @@ namespace ExamifyAPI.Services
         int SubmitExamResponses(ExamSubmissionModel submission);
         ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId);
         ExamResultModel GetExamResult(int sessionId);
+        Task<IEnumerable<AvailableQuestionDTO>> GetAvailableQuestionsAsync(int examId, int instituteId);
+        Task<IEnumerable<ExamQuestionDTO>> GetExamQuestionsAsync(int examId);
+        Task<bool> SaveExamQuestionsAsync(ExamQuestionConfigDTO config);
+        Task<bool> RemoveExamQuestionAsync(int examId, int questionId);
+        Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(long userId);
     }
 
     public class ExamService : IExamService
@@ -55,6 +60,31 @@ namespace ExamifyAPI.Services
         public ExamResultModel GetExamResult(int sessionId)
         {
             return _examRepository.GetExamResult(sessionId);
+        }
+
+        public async Task<IEnumerable<AvailableQuestionDTO>> GetAvailableQuestionsAsync(int examId, int instituteId)
+        {
+            return await _examRepository.GetAvailableQuestionsAsync(examId, instituteId);
+        }
+
+        public async Task<IEnumerable<ExamQuestionDTO>> GetExamQuestionsAsync(int examId)
+        {
+            return await _examRepository.GetExamQuestionsAsync(examId);
+        }
+
+        public async Task<bool> SaveExamQuestionsAsync(ExamQuestionConfigDTO config)
+        {
+            return await _examRepository.SaveExamQuestionsAsync(config);
+        }
+
+        public async Task<bool> RemoveExamQuestionAsync(int examId, int questionId)
+        {
+            return await _examRepository.RemoveExamQuestionAsync(examId, questionId);
+        }
+
+        public async Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(long userId)
+        {
+            return await _examRepository.GetUserExamsAsync(userId);
         }
     }
 }

@@ -1,11 +1,13 @@
 using Examify.Attributes;
 using Examify.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Model.DTO;
 
 namespace Examify.Controllers.Admin
 {
-    [AutoLoginAuthorize("admin", "admin123", "Admin", "Teacher")] // Auto-login with credentials and restrict to Admin/Teacher roles
+    //[AutoLoginAuthorize("admin", "admin123", "Admin", "Teacher")] // Auto-login with credentials and restrict to Admin/Teacher roles
+    [Authorize(Roles = "Admin")]
     public class BatchController : Controller
     {
         private readonly IBatchService _batchService;

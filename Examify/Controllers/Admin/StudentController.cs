@@ -1,13 +1,12 @@
 using DataModel;
-using Examify.Attributes;
 using Examify.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.FileSystemGlobbing;
 using Model.DTO;
 
 namespace Examify.Controllers.Admin
 {
-    [AutoLoginAuthorize("admin", "Test@123", "Admin", "Teacher")] // Auto-login with credentials and restrict to Admin/Teacher roles
+    [Authorize(Roles = "Admin")]
     public class StudentController : Controller
     {
         private readonly IStudentService _studentService;

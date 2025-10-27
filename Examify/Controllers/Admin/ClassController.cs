@@ -1,12 +1,12 @@
 using Examify.Attributes;
 using Examify.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Model.DTO;
-using Serilog;
 
 namespace Examify.Controllers.Admin
 {
-    [AutoLoginAuthorize("admin", "Test@123", "Admin", "Teacher")] // Auto-login with credentials and restrict to Admin/Teacher roles
+    [Authorize(Roles = "Admin")]
     public class ClassController : Controller
     {
         private readonly IClassService _classService;

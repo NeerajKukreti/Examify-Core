@@ -1,11 +1,11 @@
-using Examify.Attributes;
 using Examify.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Model.DTO;
 
 namespace Examify.Controllers.Admin
 {
-    [AutoLoginAuthorize("admin", "Test@123", "Admin", "Teacher")]
+    [Authorize(Roles = "Admin")]
     public class SubjectController : Controller
     {
         private readonly ISubjectService _subjectService;

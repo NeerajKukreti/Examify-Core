@@ -1,15 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authorization;
 using DataModel;
-using Examify.Common;
-using Examify.Helpers;
 using Examify.Services;
-using Examify.Attributes;
 using Model.DTO;
 
 namespace Examify.Controllers.Admin
 {
-    [AutoLoginAuthorize("admin", "Test@123", "Admin", "Teacher")]
+    [Authorize(Roles = "Admin")]
     public class ExamController : Controller
     {
         private readonly IExamService _examService;
@@ -123,6 +120,59 @@ namespace Examify.Controllers.Admin
                     message = "Failed to update exam status. Please try again."
                 });
             }
+        }
+
+        public async Task<IActionResult> ConfigureQuestions(int id)
+        {
+            var exam = await _examService.GetByIdAsync(id);
+            if (exam == null) return NotFound();
+
+            ViewBag.ExamId = id;
+            ViewBag.ExamName = exam.ExamName;
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAvailableQuestions(int examId)
+        {
+            var instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+            var questions = await _examService.GetAvailableQuestionsAsync(examId, instituteId);
+            return Json(new { data = questions });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetExamQuestions(int examId)
+        {
+            var questions = await _examService.GetExamQuestionsAsync(examId);
+            return Json(new { data = questions });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveExamQuestions([FromBody] ExamQuestionConfigDTO config)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
+                    .Select(x => new { Field = x.Key, Errors = x.Value.Errors.Select(e => e.ErrorMessage) })
+                    .ToList();
+                return Json(new { success = false, errors });
+            }
+
+            var success = await _examService.SaveExamQuestionsAsync(config);
+            if (success)
+                return Json(new { success = true, message = "Questions configured successfully!" });
+            else
+                return Json(new { success = false, message = "Failed to configure questions." });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemoveExamQuestion(int examId, int questionId)
+        {
+            var success = await _examService.RemoveExamQuestionAsync(examId, questionId);
+            if (success)
+                return Json(new { success = true, message = "Question removed successfully!" });
+            else
+                return Json(new { success = false, message = "Failed to remove question." });
         }
     }
 }
