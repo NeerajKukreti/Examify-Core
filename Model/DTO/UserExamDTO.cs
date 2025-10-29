@@ -12,5 +12,6 @@ namespace Model.DTO
         public string? Status { get; set; }
         public DateTime? ExamTakenOn { get; set; }
         public decimal? Percentage { get; set; }
+        public decimal? CutOffPercentage { get; set; }
     }
 }

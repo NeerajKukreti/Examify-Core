@@ -51,6 +51,14 @@ builder.Services.AddHttpClient("ExamifyAPI", client =>
 })
 .AddHttpMessageHandler<AuthTokenHandler>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    });
+});
+
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IExamService, ExamService>();
@@ -86,6 +94,7 @@ else
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowAll");
 app.UseStaticFiles();
 app.UseSession();
 app.UseRouting();
