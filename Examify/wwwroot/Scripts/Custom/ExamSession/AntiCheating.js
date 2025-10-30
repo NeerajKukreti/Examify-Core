@@ -239,8 +239,8 @@ function handleTabSwitchViolation() {
     if (antiCheatState.tabSwitches >= 2) {
         showCriticalViolation('Tab switching detected. Exam will be submitted automatically.');
         setTimeout(() => {
-            if (typeof submitExam === 'function') {
-                submitExam(true, true);
+            if (typeof forceSubmitExam === 'function') {
+                forceSubmitExam();
             }
         }, 3000);
     } else {
@@ -289,8 +289,8 @@ function startViolationMonitoring() {
         
         if (totalViolations >= 10) {
             showCriticalViolation('Too many violations detected. Exam will be terminated.');
-            if (typeof submitExam === 'function') {
-                submitExam(true, true);
+            if (typeof forceSubmitExam === 'function') {
+                forceSubmitExam();
             }
         }
     }, 5000);

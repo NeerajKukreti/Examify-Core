@@ -1,14 +1,10 @@
- 
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment HostEnv
-
 <body data-environment="@HostEnv.EnvironmentName">
     <!-- Your content -->
 </body>
-
 @{
     Layout = null;
 }
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -105,12 +101,12 @@
         }
 
         .q-marked {
-            background: var(--tb-purple);
+            background: #6f42c1 !important;
             color: #fff;
         }
 
         .q-marked-answered {
-            background: var(--tb-blueDeep);
+            background: #007bff !important;
             color: #fff;
         }
 
@@ -181,6 +177,37 @@
         .not-answered {
             background-color: #dc3545;
         }
+
+        .bg-purple {
+            background-color: #6f42c1 !important;
+        }
+
+        /* Summary Modal Styles */
+        .summary-question {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .summary-question:hover {
+            background: #f8f9fa;
+        }
+        .nav-tabs .nav-link {
+            cursor: pointer;
+        }
+        .summary-status {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -194,6 +221,7 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span id="offlineIndicator" class="badge bg-danger" style="display:none;">⚠️ Offline</span>
                     <span class="fw-semibold">Time: <strong id="timer">02:00:00</strong></span>
                     <button class="btn btn-outline-primary btn-sm" id="fullscreenBtn" style="display:none">
                         <span id="fullscreenIcon">⛶</span> Full Screen
@@ -246,11 +274,11 @@
                     <strong>Your Answer:</strong>
                     <textarea id="subjectiveAnswer" class="form-control" rows="4"></textarea>
                 </div>
-                <div class="d-flex flex-wrap gap-2">
-                    <button class="btn btn-sm btn-secondary" id="btnPrevious">Previous</button>
-                    <button class="btn btn-sm btn-info text-white" id="btnReview">Mark for Review & Next</button>
-                    <button class="btn btn-sm btn-warning text-white" id="btnClear">Clear Response</button>
-                    <button class="btn btn-sm btn-success" id="btnNext">Save & Next</button>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <button class="btn btn-sm btn-secondary" id="btnPrevious">Previous <kbd>P</kbd></button>
+                    <button class="btn btn-sm btn-info text-white" id="btnReview">Mark for Review <kbd>M</kbd></button>
+                    <button class="btn btn-sm btn-warning text-white" id="btnClear">Clear <kbd>C</kbd></button>
+                    <button class="btn btn-sm btn-success" id="btnNext">Save & Next <kbd>N</kbd></button>
                 </div>
             </section>
 
@@ -267,12 +295,22 @@
                     </div>
 
                     <h6 class="text-primary" id="sectionTitle">Section: Loading...</h6>
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted">Progress</small>
+                            <small class="fw-bold" id="progressText">0/0 (0%)</small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" id="progressBar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
                     <div class="bg-white border rounded p-2 flex-grow-1 overflow-auto">
                         <div class="row row-cols-6 g-1" id="qGrid"></div>
                     </div>
 
                     <div class="d-grid gap-2">
-                        <button class="btn btn-sm btn-success fw-bold" onclick="submitExam()">Submit Test</button>
+                        <button class="btn btn-sm btn-primary fw-bold" onclick="showSummary()">📋 Review Summary</button>
+                        <button class="btn btn-sm btn-success fw-bold" onclick="submitExam()">✓ Submit Test</button>
                     </div>
                 </div>
             </aside>
@@ -281,6 +319,56 @@
 
     <!-- Mobile Toggle -->
     <button id="mobileToggle" class="btn btn-primary d-md-none">&#9776;</button>
+
+    <!-- Summary Modal -->
+    <div class="modal fade" id="summaryModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Exam Summary</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <ul class="nav nav-pills" id="summaryStatusTabs">
+                            <li class="nav-item"><a class="nav-link active" href="#" onclick="filterSummary('all'); return false;">All</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#" onclick="filterSummary('answered'); return false;">Answered <span class="badge bg-success" id="summaryAnswered">0</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="#" onclick="filterSummary('notAnswered'); return false;">Not Answered <span class="badge bg-danger" id="summaryNotAnswered">0</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="#" onclick="filterSummary('marked'); return false;">Marked <span class="badge" style="background:#6f42c1;" id="summaryMarked">0</span></a></li>
+                            <li class="nav-item"><a class="nav-link" href="#" onclick="filterSummary('notVisited'); return false;">Not Visited <span class="badge bg-primary" id="summaryNotVisited">0</span></a></li>
+                        </ul>
+                    </div>
+                    <ul class="nav nav-tabs mb-2" id="summarySectionTabs"></ul>
+                    <div id="summaryQuestionList"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Exam</button>
+                    <button type="button" class="btn btn-success" onclick="confirmSubmit()">Submit Exam</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Submit Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">⚠️ Confirm Submission</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2"><strong>Are you sure you want to submit the exam?</strong></p>
+                    <p class="text-danger mb-2" id="unansweredWarning"></p>
+                    <p class="text-muted small mb-0">Once submitted, you cannot make any changes.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="finalSubmit()">Yes, Submit Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Debug Panel -->
     <div id="debugPanel" style="position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.9); color: white; padding: 15px; border-radius: 8px; font-size: 11px; z-index: 9999; min-width: 250px; display: none;">
@@ -347,6 +435,13 @@
                 fullscreenBtn.click();
             }
         }, 500);
+
+        // Prevent back navigation during exam
+        window.history.pushState(null, null, window.location.href);
+        window.onpopstate = function() {
+            window.history.pushState(null, null, window.location.href);
+            alert('⚠️ Navigation is disabled during the exam. Please use Submit button to exit.');
+        };
 
         // Wait for DOM to be ready
         document.addEventListener('DOMContentLoaded', function() {

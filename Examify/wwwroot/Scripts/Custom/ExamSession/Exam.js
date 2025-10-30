@@ -13,6 +13,8 @@ let questionStartTime = Date.now();
 let examStartTime = Date.now();
 let examId = 0;
 let timeRemaining = 7200;
+let autoSaveInterval = null;
+let lastSavedTime = null;
 
 // Anti-cheating variables
 let tabSwitchCount = 0;
@@ -20,6 +22,7 @@ let isTabActive = true;
 let fullscreenEnforced = false;
 let timerStarted = false;
 let timerInterval = null;
+let isOnline = navigator.onLine;
 
 const S = { UNVISITED: 'unvisited', NOT_ANSWERED: 'not-answered', ANSWERED: 'answered', MARKED: 'marked', MARKED_ANSWERED: 'marked-answered' };
 
@@ -68,10 +71,12 @@ async function loadExamData() {
             }
         });
 
+        // Initialize responses first
         allQuestions.forEach((q) => {
             examResponses[q.SessionQuestionId] = {
                 SessionQuestionId: q.SessionQuestionId,
                 SessionChoiceId: null,
+                SessionChoiceIds: [],
                 TimeSpent: 0,
                 IsMarkedForReview: false,
                 status: S.UNVISITED
@@ -79,11 +84,20 @@ async function loadExamData() {
         });
 
         timeRemaining = examData.DurationMinutes * 60;
+        
+        // Try to restore from localStorage and merge
+        const restored = loadFromLocalStorage();
+        
         updateSectionTabs();
         renderQuestionGrid();
-        showQuestion(0);
+        showQuestion(restored ? currentQuestionIndex : 0);
         startTimer();
+        startAutoSave();
         updateDebugPanel();
+        
+        if (restored) {
+            alert('✅ Your previous progress has been restored!');
+        }
 
     } catch (error) {
         console.error('Failed to load exam data:', error);
@@ -112,6 +126,10 @@ function renderQuestionGrid() {
     // Show all questions from all sections
     allQuestions.forEach((question, index) => {
         const response = examResponses[question.SessionQuestionId];
+        if (!response) {
+            console.error('No response found for question:', question.SessionQuestionId);
+            return;
+        }
         const col = $('<div class="col"></div>');
         const btn = $(`<button type="button" class="qbtn q-${response.status}" data-global="${index}">${index + 1}</button>`);
 
@@ -131,19 +149,29 @@ function updateStatusCounts() {
 
     Object.values(examResponses).forEach(response => {
         if (response.status === S.ANSWERED) counts.answered++;
-        else if (response.status === S.MARKED_ANSWERED) {
-            counts.answered++;
-            counts.marked++;
-        }
-        else if (response.status === S.MARKED) counts.marked++;
+        else if (response.status === S.MARKED_ANSWERED) counts.answered++;
+        else if (response.status === S.MARKED) counts.notAnswered++;
         else if (response.status === S.UNVISITED) counts.notVisited++;
         else if (response.status === S.NOT_ANSWERED) counts.notAnswered++;
+        
+        if (response.status === S.MARKED || response.status === S.MARKED_ANSWERED) {
+            counts.marked++;
+        }
     });
 
     $('#answeredCount').text(counts.answered);
     $('#markedCount').text(counts.marked);
     $('#notVisitedCount').text(counts.notVisited);
     $('#notAnsweredCount').text(counts.notAnswered);
+    
+    updateProgressIndicator(counts.answered);
+}
+
+function updateProgressIndicator(answered) {
+    const total = allQuestions.length;
+    const percentage = total > 0 ? Math.round((answered / total) * 100) : 0;
+    $('#progressText').text(`${answered}/${total} (${percentage}%)`);
+    $('#progressBar').css('width', percentage + '%');
 }
 
 function getQuestionUiType(q) {
@@ -320,9 +348,18 @@ function showQuestion(globalIndex = 0) {
 }
 
 function saveCurrentResponse() {
+    if (!allQuestions[currentQuestionIndex]) {
+        console.warn('No current question to save');
+        return;
+    }
     
     const question = allQuestions[currentQuestionIndex];
     const response = examResponses[question.SessionQuestionId];
+    
+    if (!response) {
+        console.error('No response object for question:', question.SessionQuestionId);
+        return;
+    }
     const uiType = getQuestionUiType(question);
     let answered = false;
     if (uiType === 'objective') {
@@ -376,11 +413,12 @@ function saveCurrentResponse() {
     } else {
         response.status = answered ? S.ANSWERED : S.NOT_ANSWERED;
     }
+    saveToLocalStorage();
     updateDebugPanel();
 }
 
 function startTimer() {
-    if (timerStarted) return; // Prevent multiple timers
+    if (timerStarted) return;
 
     timerStarted = true;
     timerInterval = setInterval(function () {
@@ -390,27 +428,230 @@ function startTimer() {
             const minutes = Math.floor((timeRemaining % 3600) / 60);
             const seconds = timeRemaining % 60;
 
-            $('#timer').text(
+            const timerEl = $('#timer');
+            timerEl.text(
                 (hours < 10 ? '0' : '') + hours + ':' +
                 (minutes < 10 ? '0' : '') + minutes + ':' +
                 (seconds < 10 ? '0' : '') + seconds
             );
 
-            // Update question time and marks
+            // Time warnings
+            if (timeRemaining === 600) {
+                alert('⏰ 10 minutes remaining!');
+            } else if (timeRemaining === 300) {
+                alert('⏰ 5 minutes remaining!');
+            } else if (timeRemaining === 120) {
+                timerEl.addClass('text-danger fw-bold');
+                alert('⚠️ Only 2 minutes left!');
+            }
+
             updateDebugPanel();
         } else {
-            submitExam();
+            alert('Time is up! Exam will be submitted automatically.');
+            finalSubmit();
         }
     }, 1000);
 }
 
-async function submitExam(forced = false, preventRedirect = false) {
-    if (!forced && !confirm('Are you sure you want to submit the exam?')) return;
+function startAutoSave() {
+    autoSaveInterval = setInterval(function() {
+        saveCurrentResponse();
+        saveToLocalStorage();
+        lastSavedTime = new Date();
+        console.log('Auto-saved at:', lastSavedTime.toLocaleTimeString());
+    }, 30000); // Auto-save every 30 seconds
+}
+
+function saveToLocalStorage() {
+    try {
+        const saveData = {
+            examId: examId,
+            userId: window.currentUserId,
+            responses: examResponses,
+            currentQuestionIndex: currentQuestionIndex,
+            timeRemaining: timeRemaining,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(`exam_${examId}_${window.currentUserId}`, JSON.stringify(saveData));
+        console.log('Saved to localStorage');
+    } catch (e) {
+        console.error('LocalStorage save failed:', e);
+    }
+}
+
+function loadFromLocalStorage() {
+    try {
+        const saved = localStorage.getItem(`exam_${examId}_${window.currentUserId}`);
+        if (saved) {
+            const saveData = JSON.parse(saved);
+            
+            // Merge saved responses with initialized responses
+            if (saveData.responses) {
+                Object.keys(saveData.responses).forEach(key => {
+                    if (examResponses[key]) {
+                        examResponses[key] = { ...examResponses[key], ...saveData.responses[key] };
+                    }
+                });
+            }
+            
+            currentQuestionIndex = saveData.currentQuestionIndex || 0;
+            timeRemaining = saveData.timeRemaining || timeRemaining;
+            console.log('Restored from localStorage:', new Date(saveData.timestamp).toLocaleString());
+            return true;
+        }
+    } catch (e) {
+        console.error('LocalStorage load failed:', e);
+    }
+    return false;
+}
+
+function clearLocalStorage() {
+    try {
+        localStorage.removeItem(`exam_${examId}_${window.currentUserId}`);
+        console.log('Cleared localStorage');
+    } catch (e) {
+        console.error('LocalStorage clear failed:', e);
+    }
+}
+
+let summaryFilter = 'all';
+let summarySectionFilter = null;
+
+// Show summary modal
+function showSummary() {
+    saveCurrentResponse();
+    summaryFilter = 'all';
+    summarySectionFilter = null;
+    
+    const counts = { answered: 0, marked: 0, notVisited: 0, notAnswered: 0 };
+    Object.values(examResponses).forEach(r => {
+        if (r.status === S.ANSWERED) counts.answered++;
+        else if (r.status === S.MARKED_ANSWERED) counts.answered++;
+        else if (r.status === S.MARKED) counts.notAnswered++;
+        else if (r.status === S.UNVISITED) counts.notVisited++;
+        else if (r.status === S.NOT_ANSWERED) counts.notAnswered++;
+        
+        if (r.status === S.MARKED || r.status === S.MARKED_ANSWERED) {
+            counts.marked++;
+        }
+    });
+
+    $('#summaryAnswered').text(counts.answered);
+    $('#summaryNotAnswered').text(counts.notAnswered);
+    $('#summaryMarked').text(counts.marked);
+    $('#summaryNotVisited').text(counts.notVisited);
+
+    renderSummarySectionTabs();
+    renderSummaryQuestions();
+
+    new bootstrap.Modal(document.getElementById('summaryModal')).show();
+}
+
+function renderSummarySectionTabs() {
+    const $tabs = $('#summarySectionTabs').empty();
+    $tabs.append(`<li class="nav-item"><a class="nav-link ${summarySectionFilter === null ? 'active' : ''}" href="#" onclick="filterSummarySection(null); return false;">All Sections</a></li>`);
+    examData.sections.forEach((section, idx) => {
+        $tabs.append(`<li class="nav-item"><a class="nav-link ${summarySectionFilter === idx ? 'active' : ''}" href="#" onclick="filterSummarySection(${idx}); return false;">${section.SectionName}</a></li>`);
+    });
+}
+
+function filterSummarySection(sectionIdx) {
+    summarySectionFilter = sectionIdx;
+    renderSummarySectionTabs();
+    renderSummaryQuestions();
+}
+
+function filterSummary(filter) {
+    summaryFilter = filter;
+    $('#summaryStatusTabs .nav-link').removeClass('active');
+    $('#summaryStatusTabs .nav-link').each(function() {
+        const href = $(this).attr('onclick');
+        if (href && href.includes(`'${filter}'`)) {
+            $(this).addClass('active');
+        }
+    });
+    renderSummaryQuestions();
+}
+
+function renderSummaryQuestions() {
+    const $list = $('#summaryQuestionList').empty();
+    
+    allQuestions.forEach((q, idx) => {
+        const r = examResponses[q.SessionQuestionId];
+        
+        // Section filter
+        if (summarySectionFilter !== null && q.sectionIndex !== summarySectionFilter) return;
+        
+        // Status filter
+        if (summaryFilter === 'answered' && r.status !== S.ANSWERED && r.status !== S.MARKED_ANSWERED) return;
+        if (summaryFilter === 'notAnswered' && r.status !== S.NOT_ANSWERED && r.status !== S.MARKED) return;
+        if (summaryFilter === 'marked' && r.status !== S.MARKED && r.status !== S.MARKED_ANSWERED) return;
+        if (summaryFilter === 'notVisited' && r.status !== S.UNVISITED) return;
+        
+        let statusClass = '', statusText = '', statusLabel = '';
+        
+        if (r.status === S.MARKED_ANSWERED) {
+            statusClass = 'bg-success'; statusText = '✓M'; statusLabel = ' (Marked)';
+        } else if (r.status === S.ANSWERED) {
+            statusClass = 'bg-success'; statusText = '✓';
+        } else if (r.status === S.MARKED) {
+            statusClass = 'bg-purple'; statusText = 'M'; statusLabel = ' (Marked)';
+        } else if (r.status === S.NOT_ANSWERED) {
+            statusClass = 'bg-danger'; statusText = '✗';
+        } else {
+            statusClass = 'bg-secondary'; statusText = '-';
+        }
+
+        const questionText = (q.QuestionTextEnglish || q.QuestionText || '').replace(/<[^>]*>/g, '').substring(0, 80);
+        
+        $list.append(`
+            <div class="summary-question" onclick="jumpToQuestion(${idx})">
+                <span class="summary-status ${statusClass}">${statusText}</span>
+                <strong>Q${idx + 1}.</strong> ${questionText}...${statusLabel}
+                <span class="float-end text-muted small">+${q.Marks} / -${q.NegativeMarks}</span>
+            </div>
+        `);
+    });
+}
+
+function jumpToQuestion(index) {
+    bootstrap.Modal.getInstance(document.getElementById('summaryModal')).hide();
+    showQuestion(index);
+}
+
+function confirmSubmit() {
+    bootstrap.Modal.getInstance(document.getElementById('summaryModal')).hide();
+    
+    const unanswered = Object.values(examResponses).filter(r => 
+        r.status === S.NOT_ANSWERED || r.status === S.UNVISITED
+    ).length;
+    
+    if (unanswered > 0) {
+        $('#unansweredWarning').text(`⚠️ You have ${unanswered} unanswered question(s).`);
+    } else {
+        $('#unansweredWarning').text('');
+    }
+    
+    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+}
+
+function submitExam() {
+    showSummary();
+}
+
+async function finalSubmit() {
+    bootstrap.Modal.getInstance(document.getElementById('confirmModal'))?.hide();
+    
     if (typeof disableAntiCheating === 'function') {
         disableAntiCheating();
     }
-    const timeSpent = Date.now() - questionStartTime;
-    examResponses[allQuestions[currentQuestionIndex].SessionQuestionId].TimeSpent += timeSpent;
+    
+    clearInterval(timerInterval);
+    clearInterval(autoSaveInterval);
+    if (allQuestions[currentQuestionIndex]) {
+        const timeSpent = Date.now() - questionStartTime;
+        examResponses[allQuestions[currentQuestionIndex].SessionQuestionId].TimeSpent += timeSpent;
+    }
     const submission = {
         ExamId: examId,
         UserId: parseInt(window.currentUserId) || 1,
@@ -457,14 +698,10 @@ async function submitExam(forced = false, preventRedirect = false) {
         if (response.ok) {
             const result = await response.json();
             if (result.Success && result.SessionId) {
-                if (preventRedirect) {
-                    // Stay on current page, disable interface
-                    $('body').html('<div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #f8f9fa; font-family: Arial, sans-serif;"><div style="text-align: center; padding: 40px; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><h2 style="color: #dc3545; margin-bottom: 20px;">Exam Terminated</h2><p style="color: #6c757d; margin-bottom: 0;">Your exam has been submitted due to violation of exam rules.</p></div></div>');
-                } else {
-                    const examResultUrl = window.examUrls?.examResultUrl || '/ExamSession/ExamResult';
-                    alert('Exam submitted successfully!');
-                    window.location.href = `${examResultUrl}?sessionId=${result.SessionId}`;
-                }
+                clearLocalStorage();
+                const examResultUrl = window.examUrls?.examResultUrl || '/ExamSession/ExamResult';
+                alert('✅ Exam submitted successfully!');
+                window.location.href = `${examResultUrl}?sessionId=${result.SessionId}`;
             } else {
                 alert('Failed to submit exam: ' + result.Message);
             }
@@ -473,7 +710,58 @@ async function submitExam(forced = false, preventRedirect = false) {
         }
     } catch (error) {
         console.error('Submission error:', error);
-        alert('Failed to submit exam. Please try again.');
+        alert('❌ Failed to submit exam. Please check your connection and try again.');
+    }
+}
+
+// Handle forced submission (anti-cheat)
+async function forceSubmitExam() {
+    if (typeof disableAntiCheating === 'function') {
+        disableAntiCheating();
+    }
+    clearInterval(timerInterval);
+    clearInterval(autoSaveInterval);
+    
+    if (allQuestions[currentQuestionIndex]) {
+        const timeSpent = Date.now() - questionStartTime;
+        examResponses[allQuestions[currentQuestionIndex].SessionQuestionId].TimeSpent += timeSpent;
+    }
+    
+    const submission = {
+        ExamId: examId,
+        UserId: parseInt(window.currentUserId) || 1,
+        SubmittedAt: new Date().toISOString(),
+        TotalTimeSpent: Math.floor((Date.now() - examStartTime) / 1000),
+        Responses: Object.values(examResponses).map(r => ({
+            SessionQuestionId: r.SessionQuestionId,
+            SessionChoiceIds: r.SessionChoiceIds || [],
+            TimeSpent: r.TimeSpent,
+            ResponseText: r.ResponseText || '',
+            OrderedItems: (r.OrderedItems || []).map((correctOrder, idx) => ({
+                ResponseOrderId: 0,
+                ResponseId: 0,
+                UserOrder: correctOrder
+            })),
+            PairedItems: (r.PairedItems || []).map(pair => ({
+                ResponsePairId: 0,
+                ResponseId: 0,
+                LeftText: pair.LeftText,
+                RightText: pair.RightText
+            }))
+        })),
+        SessionId: examData.SessionId
+    };
+
+    try {
+        await fetch(`${API_BASE_URL}/${examId}/submit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(submission)
+        });
+        clearLocalStorage();
+        $('body').html('<div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #f8f9fa; font-family: Arial, sans-serif;"><div style="text-align: center; padding: 40px; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><h2 style="color: #dc3545; margin-bottom: 20px;">🚨 Exam Terminated</h2><p style="color: #6c757d; margin-bottom: 0;">Your exam has been submitted due to violation of exam rules.</p></div></div>');
+    } catch (error) {
+        console.error('Force submission error:', error);
     }
 }
 
@@ -540,6 +828,8 @@ function initializeExam(id) {
     examId = id;
     examStartTime = Date.now();
     console.log('initializeExam function called with ID:', id);
+    
+    initializeOfflineDetection();
 
     // Update API_BASE_URL from configuration
     if (window.examUrls?.apiBaseUrl) {
@@ -614,6 +904,48 @@ function initializeExam(id) {
             showQuestion(currentQuestionIndex - 1);
         }
     });
+
+    // Keyboard shortcuts
+    $(document).on('keydown', function(e) {
+        // Ignore if typing in input/textarea
+        if ($(e.target).is('input, textarea, select')) return;
+        
+        const key = e.key.toLowerCase();
+        
+        if (key === 'n') {
+            e.preventDefault();
+            $('#btnNext').click();
+        } else if (key === 'p') {
+            e.preventDefault();
+            $('#btnPrevious').click();
+        } else if (key === 'm') {
+            e.preventDefault();
+            $('#btnReview').click();
+        } else if (key === 'c') {
+            e.preventDefault();
+            $('#btnClear').click();
+        }
+    });
+}
+
+function initializeOfflineDetection() {
+    window.addEventListener('online', function() {
+        isOnline = true;
+        $('#offlineIndicator').hide();
+        console.log('Connection restored');
+        alert('✅ Internet connection restored!');
+    });
+    
+    window.addEventListener('offline', function() {
+        isOnline = false;
+        $('#offlineIndicator').show();
+        console.log('Connection lost');
+        alert('⚠️ Internet connection lost! Your answers are saved locally and will be submitted when connection is restored.');
+    });
+    
+    if (!navigator.onLine) {
+        $('#offlineIndicator').show();
+    }
 }
 
 function setupFullscreen() {
