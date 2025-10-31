@@ -17,7 +17,7 @@ namespace ExamifyAPI.Services
         Task<IEnumerable<ExamQuestionDTO>> GetExamQuestionsAsync(int examId);
         Task<bool> SaveExamQuestionsAsync(ExamQuestionConfigDTO config);
         Task<bool> RemoveExamQuestionAsync(int examId, int questionId);
-        Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(long userId);
+        Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(List<long> userIds);
     }
 
     public class ExamService : IExamService
@@ -82,9 +82,9 @@ namespace ExamifyAPI.Services
             return await _examRepository.RemoveExamQuestionAsync(examId, questionId);
         }
 
-        public async Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(long userId)
+        public async Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(List<long> userIds)
         {
-            return await _examRepository.GetUserExamsAsync(userId);
+            return await _examRepository.GetUserExamsAsync(userIds);
         }
     }
 }

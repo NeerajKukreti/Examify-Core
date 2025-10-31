@@ -126,14 +126,36 @@ function createQuestionCard(question, questionNumber) {
     
     // Render pairs for Matching
     if (questionType === 'Matching' && question.ResponsePairs && question.ResponsePairs.length > 0) {
-        choicesHtml = '<div class="mt-3"><strong>Your Matches:</strong>';
+        choicesHtml = '<div class="mt-3"><strong>Your Matches:</strong><div class="matching-pairs">';
         const uniquePairs = question.ResponsePairs.filter((pair, index, self) => 
             index === self.findIndex(p => p.LeftText === pair.LeftText && p.RightText === pair.RightText)
         );
         uniquePairs.forEach(pair => {
-            choicesHtml += `<div class="choice-item"><strong>${pair.LeftText}</strong> → ${pair.RightText}</div>`;
+            choicesHtml += `
+                <div class="matching-pair-item">
+                    <div class="match-left">${pair.LeftText}</div>
+                    <div class="match-arrow">→</div>
+                    <div class="match-right">${pair.RightText}</div>
+                </div>`;
         });
-        choicesHtml += '</div>';
+        choicesHtml += '</div></div>';
+    }
+    
+    // Render ordered items for Ordering
+    if (questionType === 'Ordering' && question.ResponseOrders && question.ResponseOrders.length > 0) {
+        choicesHtml = '<div class="mt-3"><strong>Your Order:</strong><div class="ordering-items">';
+        const sortedOrders = question.ResponseOrders.sort((a, b) => a.UserOrder - b.UserOrder);
+        sortedOrders.forEach((order) => {
+            const isCorrectOrder = order.UserOrder === order.CorrectOrder;
+            const orderClass = isCorrectOrder ? 'order-correct' : 'order-wrong';
+            choicesHtml += `
+                <div class="ordering-item ${orderClass}">
+                    <div class="order-number">${order.UserOrder}</div>
+                    <div class="order-text">${order.ItemText}</div>
+                    <div class="order-correct-badge">Correct: ${order.CorrectOrder}</div>
+                </div>`;
+        });
+        choicesHtml += '</div></div>';
     }
     
     const marksAwarded = question.MarksAwarded || 0;

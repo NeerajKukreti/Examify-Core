@@ -173,29 +173,40 @@
 
     async function loadDashboard() {
         try {
-            const [students, examList, questions] = await Promise.all([
+            const [students, questions] = await Promise.all([
                 $.get(`${apiBaseUrl}/Student/${instituteId}/0`),
-                $.get(`${apiBaseUrl}/Exam/list`),
                 $.get(`${apiBaseUrl}/Question/list`)
             ]);
-
             const studentList = students.Data || [];
-            const allExams = examList.Data || [];
 
             $('#totalStudents').text(students.Count || 0);
-            $('#totalExams').text(allExams.length);
             $('#totalQuestions').text(questions.length);
 
-            const studentExams = await Promise.all(
-                studentList.map(s => $.get(`${apiBaseUrl}/Exam/user/${s.StudentId}`).catch(() => ({Data: []})))
-            );
+            if (studentList.length === 0) {
+                $('#totalExams, #totalSubmissions').text(0);
+                return;
+            }
 
-            const allAttempts = studentExams.flatMap((r, i) => 
-                (r.Data || []).map(e => ({...e, StudentName: studentList[i]?.StudentName}))
-            );
+            const userIds = studentList.map(s => s.StudentId);
+            const examResponse = await $.ajax({
+                url: `${apiBaseUrl}/Exam/users/exams`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(userIds)
+            });
+
+            const allExams = new Set();
+            const studentNameMap = {};
+            studentList.forEach(s => studentNameMap[s.UserId] = s.StudentName);
+
+            const allAttempts = (examResponse.Data || []).map(e => {
+                if (e.ExamId) allExams.add(e.ExamId);
+                return {...e, StudentName: studentNameMap[e.UserId] || 'Unknown'};
+            });
             const submissions = allAttempts.filter(e => e.Status === 'Submit');
             const abandoned = allAttempts.filter(e => e.Status === 'Started');
 
+            $('#totalExams').text(allExams.size);
             $('#totalSubmissions').text(submissions.length);
             const passed = submissions.filter(s => s.Percentage >= s.CutOffPercentage).length;
             const passRate = submissions.length ? ((passed / submissions.length) * 100).toFixed(1) : 0;
@@ -205,9 +216,8 @@
             const avgScore = submissions.length ? (submissions.reduce((sum, s) => sum + (s.Percentage || 0), 0) / submissions.length).toFixed(1) : 0;
             $('#avgScore').text(avgScore + '%');
 
-            const activeCount = allExams.filter(e => e.IsActive).length;
-            $('#activeExams').text(activeCount);
-            $('#inactiveExams').text(`${allExams.length - activeCount} inactive`);
+            $('#activeExams').text(allExams.size);
+            $('#inactiveExams').text('0 inactive');
 
             const completionRate = allAttempts.length ? ((submissions.length / allAttempts.length) * 100).toFixed(1) : 0;
             $('#completionRate').text(completionRate + '%');

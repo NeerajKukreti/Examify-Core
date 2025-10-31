@@ -4,6 +4,7 @@ using DataModel.Exam;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Model.DTO;
+using System.ComponentModel;
 using System.Data;
 
 namespace DAL.Repository
@@ -22,7 +23,7 @@ namespace DAL.Repository
         Task<IEnumerable<ExamQuestionDTO>> GetExamQuestionsAsync(int examId);
         Task<bool> SaveExamQuestionsAsync(ExamQuestionConfigDTO config);
         Task<bool> RemoveExamQuestionAsync(int examId, int questionId);
-        Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(long userId);
+        Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(List<long> userIds);
     }
 
     public class ExamRepository : IExamRepository
@@ -37,15 +38,15 @@ namespace DAL.Repository
             using var connection = Connection;
             {
                 var exams = connection.Query<ExamModel>(
-                    "_sp_GetAllExams", 
+                    "_sp_GetAllExams",
                     commandType: CommandType.StoredProcedure
                 ).ToList();
-                
+
                 return exams;
             }
         }
 
-        public async Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null, 
+        public async Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null,
             int? userloggedIn = null)
         {
             using var connection = Connection;
@@ -59,7 +60,7 @@ namespace DAL.Repository
             parameters.Add("@Instructions", dto.Instructions);
             parameters.Add("@ExamType", dto.ExamType);
             parameters.Add("@CutOffPercentage", dto.CutOffPercentage);
-            parameters.Add("@UserId", userloggedIn); 
+            parameters.Add("@UserId", userloggedIn);
 
             return await connection.ExecuteScalarAsync<int>(
                 "_sp_InsertUpdateExam",
@@ -90,7 +91,7 @@ namespace DAL.Repository
                     new { ExamId = examId },
                     commandType: CommandType.StoredProcedure
                 );
-                
+
                 return exam;
             }
         }
@@ -125,7 +126,8 @@ namespace DAL.Repository
                 var sessionQuestions = questionRows
                     .Where(r => r.SessionQuestionId != null)
                     .GroupBy(r => Convert.ToInt64(r.SessionQuestionId))
-                    .Select(g => {
+                    .Select(g =>
+                    {
                         var first = g.First();
                         var question = new ExamSessionQuestionModel
                         {
@@ -352,6 +354,8 @@ namespace DAL.Repository
                         RightText = p.RightText
                     }).ToList();
 
+
+
                 return new QuestionResultModel
                 {
                     QuestionId = q.SessionQuestionId,
@@ -367,6 +371,27 @@ namespace DAL.Repository
                     MarksAwarded = isCorrect ? (q.Marks ?? 0) : (isAttempted ? -(q.NegativeMarks ?? 0) : 0),
                     AllChoices = choices,
                     ResponsePairs = pairs,
+                    ResponseOrders = sessionOrders
+                        .Where(o => o.SessionQuestionId == q.SessionQuestionId)
+                        .Select((o, idx) => {
+                            var userOrder = 0;
+                            if (!string.IsNullOrEmpty(response?.ResponseText))
+                            {
+                                var orderParts = response.ResponseText.Split(',');
+                                if (idx < orderParts.Length)
+                                {
+                                    int.TryParse(orderParts[idx], out userOrder);
+                                }
+                            }
+                            return new ExamResponseOrderModel
+                            {
+                                ResponseOrderId = o.SessionOrderId ?? 0,
+                                SessionQuestionId = o.SessionQuestionId ?? 0,
+                                ItemText = o.ItemText,
+                                UserOrder = userOrder,
+                                CorrectOrder = o.CorrectOrder ?? 0
+                            };
+                        }).ToList(),
                     CorrectChoices = choices.Where(c => c.IsCorrect).ToList()
                 };
             }).ToList();
@@ -485,12 +510,17 @@ namespace DAL.Repository
         }
         #endregion
 
-        public async Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(long userId)
+        public async Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(List<long> userIds)
         {
             using var connection = Connection;
+            var userIdTable = new DataTable();
+            userIdTable.Columns.Add("id", typeof(int));
+            foreach (var id in userIds)
+                userIdTable.Rows.Add(id);
+
             return await connection.QueryAsync<UserExamDTO>(
                 "_sp_GetUserExams",
-                new { UserId = userId },
+                new { @Userids = userIdTable.AsTableValuedParameter("IntList") },
                 commandType: CommandType.StoredProcedure);
         }
     }

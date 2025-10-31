@@ -280,7 +280,21 @@ namespace ExamifyAPI.Controllers
         {
             try
             {
-                var exams = await _examService.GetUserExamsAsync(userId);
+                var exams = await _examService.GetUserExamsAsync(new List<long> { userId });
+                return Ok(new { Success = true, Data = exams });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
+            }
+        }
+
+        [HttpPost("users/exams")]
+        public async Task<IActionResult> GetUsersExams([FromBody] List<long> userIds)
+        {
+            try
+            {
+                var exams = await _examService.GetUserExamsAsync(userIds);
                 return Ok(new { Success = true, Data = exams });
             }
             catch (Exception ex)
