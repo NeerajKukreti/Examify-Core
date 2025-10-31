@@ -143,7 +143,6 @@ namespace Examify.Services
                     Username = tokenData.Username,
                     Email = tokenData.Email,
                     Role = roleClaim,
-                    InstituteId = int.TryParse(instituteClaim, out var instituteId) ? instituteId : null,
                     ExpiryDate = expiryDate,
                     IsValid = !string.IsNullOrEmpty(tokenData.UserId) && expiryDate > DateTime.UtcNow,
                     Token = token,
@@ -207,12 +206,6 @@ namespace Examify.Services
                 if (!string.IsNullOrEmpty(userTokenData.Role))
                 {
                     session.SetString("UserRole", userTokenData.Role);
-                }
-
-                // Set institute ID
-                if (userTokenData.InstituteId.HasValue)
-                {
-                    session.SetInt32("InstituteId", userTokenData.InstituteId.Value);
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Session data set for user: {userTokenData.Username} (ID: {userTokenData.UserId}, Role: {userTokenData.Role})");
@@ -287,16 +280,15 @@ namespace Examify.Services
         public string? UserId { get; set; }
         public string? Username { get; set; }
         public string? Email { get; set; }
-        public string? Role { get; set; }
-        public int? InstituteId { get; set; }
+        public string? Role { get; set; } 
+
         public DateTime? ExpiryDate { get; set; }
         public bool IsValid { get; set; }
         public bool IsExpired { get; set; }
         public string? Token { get; set; }
         
         // Additional helper properties
-        public bool IsAdmin => string.Equals(Role, "Admin", StringComparison.OrdinalIgnoreCase);
-        public bool IsTeacher => string.Equals(Role, "Teacher", StringComparison.OrdinalIgnoreCase);
+        public bool IsAdmin => string.Equals(Role, "Admin", StringComparison.OrdinalIgnoreCase); 
         public bool IsStudent => string.Equals(Role, "Student", StringComparison.OrdinalIgnoreCase);
         public bool IsInstitute => string.Equals(Role, "Institute", StringComparison.OrdinalIgnoreCase);
         

@@ -44,9 +44,6 @@ function blockKeyboardShortcuts() {
     const blockedCombinations = [
         { ctrl: true, key: 85, name: 'Ctrl+U' },
         { ctrl: true, key: 83, name: 'Ctrl+S' },
-        { ctrl: true, key: 65, name: 'Ctrl+A' },
-        { ctrl: true, key: 67, name: 'Ctrl+C' },
-        { ctrl: true, key: 86, name: 'Ctrl+V' },
         { ctrl: true, key: 82, name: 'Ctrl+R' },
         { ctrl: true, key: 80, name: 'Ctrl+P' },
         { ctrl: true, shift: true, key: 73, name: 'Ctrl+Shift+I' },
@@ -57,6 +54,7 @@ function blockKeyboardShortcuts() {
     
     document.addEventListener('keydown', function(e) {
         const keyCode = e.keyCode || e.which;
+        const isInputField = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
         
         // Check blocked keys
         const blockedKey = blockedKeys.find(k => k.key === keyCode);
@@ -67,7 +65,7 @@ function blockKeyboardShortcuts() {
             return false;
         }
         
-        // Check blocked combinations
+        // Check blocked combinations (allow Ctrl+A, Ctrl+C, Ctrl+V in input fields)
         const blockedCombo = blockedCombinations.find(combo => 
             (!combo.ctrl || e.ctrlKey) &&
             (!combo.shift || e.shiftKey) &&
@@ -98,6 +96,10 @@ function blockTextSelection() {
     document.onselectstart = function(e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
             return true; // Allow selection in form fields
+        }
+        // Allow selection in question text for reading
+        if (e.target.closest('#questionText, .option-item')) {
+            return true;
         }
         logViolation('MOUSE', 'Text selection attempted');
         return false;

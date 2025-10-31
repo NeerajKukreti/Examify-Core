@@ -7,7 +7,7 @@ using Model.DTO;
 namespace Examify.Controllers.Admin
 {
     //[AutoLoginAuthorize("admin", "admin123", "Admin", "Teacher")] // Auto-login with credentials and restrict to Admin/Teacher roles
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Institute")]
     public class BatchController : Controller
     {
         private readonly IBatchService _batchService;

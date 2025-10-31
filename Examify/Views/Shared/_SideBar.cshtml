@@ -35,7 +35,7 @@
                         <p>Dashboard</p>
                     </a>
                 </li>
-                @if (userRole == "Admin")
+                @if (userRole == "Admin" || userRole == "Institute")
                 {
                     <li class="nav-item">
                         <a href="@Url.Action("Index", "Class")" class="nav-link">

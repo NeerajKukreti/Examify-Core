@@ -13,8 +13,6 @@ let questionStartTime = Date.now();
 let examStartTime = Date.now();
 let examId = 0;
 let timeRemaining = 7200;
-let autoSaveInterval = null;
-let lastSavedTime = null;
 
 // Anti-cheating variables
 let tabSwitchCount = 0;
@@ -85,19 +83,11 @@ async function loadExamData() {
 
         timeRemaining = examData.DurationMinutes * 60;
         
-        // Try to restore from localStorage and merge
-        const restored = loadFromLocalStorage();
-        
         updateSectionTabs();
         renderQuestionGrid();
-        showQuestion(restored ? currentQuestionIndex : 0);
+        showQuestion(0);
         startTimer();
-        startAutoSave();
         updateDebugPanel();
-        
-        if (restored) {
-            alert('✅ Your previous progress has been restored!');
-        }
 
     } catch (error) {
         console.error('Failed to load exam data:', error);
@@ -413,7 +403,6 @@ function saveCurrentResponse() {
     } else {
         response.status = answered ? S.ANSWERED : S.NOT_ANSWERED;
     }
-    saveToLocalStorage();
     updateDebugPanel();
 }
 
@@ -437,82 +426,23 @@ function startTimer() {
 
             // Time warnings
             if (timeRemaining === 600) {
-                alert('⏰ 10 minutes remaining!');
+                showToast('⏰ 10 minutes remaining!', 'warning');
             } else if (timeRemaining === 300) {
-                alert('⏰ 5 minutes remaining!');
+                showToast('⏰ 5 minutes remaining!', 'warning');
             } else if (timeRemaining === 120) {
                 timerEl.addClass('text-danger fw-bold');
-                alert('⚠️ Only 2 minutes left!');
+                showToast('⚠️ Only 2 minutes left!', 'danger');
             }
 
             updateDebugPanel();
         } else {
-            alert('Time is up! Exam will be submitted automatically.');
-            finalSubmit();
+            showToast('⏰ Time is up! Submitting exam...', 'danger');
+            setTimeout(finalSubmit, 2000);
         }
     }, 1000);
 }
 
-function startAutoSave() {
-    autoSaveInterval = setInterval(function() {
-        saveCurrentResponse();
-        saveToLocalStorage();
-        lastSavedTime = new Date();
-        console.log('Auto-saved at:', lastSavedTime.toLocaleTimeString());
-    }, 30000); // Auto-save every 30 seconds
-}
 
-function saveToLocalStorage() {
-    try {
-        const saveData = {
-            examId: examId,
-            userId: window.currentUserId,
-            responses: examResponses,
-            currentQuestionIndex: currentQuestionIndex,
-            timeRemaining: timeRemaining,
-            timestamp: Date.now()
-        };
-        localStorage.setItem(`exam_${examId}_${window.currentUserId}`, JSON.stringify(saveData));
-        console.log('Saved to localStorage');
-    } catch (e) {
-        console.error('LocalStorage save failed:', e);
-    }
-}
-
-function loadFromLocalStorage() {
-    try {
-        const saved = localStorage.getItem(`exam_${examId}_${window.currentUserId}`);
-        if (saved) {
-            const saveData = JSON.parse(saved);
-            
-            // Merge saved responses with initialized responses
-            if (saveData.responses) {
-                Object.keys(saveData.responses).forEach(key => {
-                    if (examResponses[key]) {
-                        examResponses[key] = { ...examResponses[key], ...saveData.responses[key] };
-                    }
-                });
-            }
-            
-            currentQuestionIndex = saveData.currentQuestionIndex || 0;
-            timeRemaining = saveData.timeRemaining || timeRemaining;
-            console.log('Restored from localStorage:', new Date(saveData.timestamp).toLocaleString());
-            return true;
-        }
-    } catch (e) {
-        console.error('LocalStorage load failed:', e);
-    }
-    return false;
-}
-
-function clearLocalStorage() {
-    try {
-        localStorage.removeItem(`exam_${examId}_${window.currentUserId}`);
-        console.log('Cleared localStorage');
-    } catch (e) {
-        console.error('LocalStorage clear failed:', e);
-    }
-}
 
 let summaryFilter = 'all';
 let summarySectionFilter = null;
@@ -642,12 +572,14 @@ function submitExam() {
 async function finalSubmit() {
     bootstrap.Modal.getInstance(document.getElementById('confirmModal'))?.hide();
     
+    // Disable submit buttons
+    $('button:contains("Submit")').prop('disabled', true).html('<span class="spinner"></span>Submitting...');
+    
     if (typeof disableAntiCheating === 'function') {
         disableAntiCheating();
     }
     
     clearInterval(timerInterval);
-    clearInterval(autoSaveInterval);
     if (allQuestions[currentQuestionIndex]) {
         const timeSpent = Date.now() - questionStartTime;
         examResponses[allQuestions[currentQuestionIndex].SessionQuestionId].TimeSpent += timeSpent;
@@ -698,19 +630,90 @@ async function finalSubmit() {
         if (response.ok) {
             const result = await response.json();
             if (result.Success && result.SessionId) {
-                clearLocalStorage();
                 const examResultUrl = window.examUrls?.examResultUrl || '/ExamSession/ExamResult';
-                alert('✅ Exam submitted successfully!');
-                window.location.href = `${examResultUrl}?sessionId=${result.SessionId}`;
+                showToast('✅ Exam submitted successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = `${examResultUrl}?sessionId=${result.SessionId}`;
+                }, 1000);
             } else {
-                alert('Failed to submit exam: ' + result.Message);
+                showRetryDialog('Failed to submit exam: ' + result.Message, submission);
             }
         } else {
-            alert('Failed to submit exam. Please try again.');
+            showRetryDialog('Server error. Please try again.', submission);
         }
     } catch (error) {
         console.error('Submission error:', error);
-        alert('❌ Failed to submit exam. Please check your connection and try again.');
+        if (!navigator.onLine) {
+            showRetryDialog('No internet connection. Please reconnect and retry.', submission);
+        } else {
+            showRetryDialog('Failed to submit exam. Please try again.', submission);
+        }
+    }
+}
+
+function showRetryDialog(message, submission) {
+    $('button:contains("Submitting")').prop('disabled', false).html('✓ Submit Test');
+    
+    const retryModal = $(`
+        <div class="modal fade" id="retryModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">❌ Submission Failed</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>${message}</p>
+                        <p class="text-muted small">Your answers are safe. Click Retry to submit again.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="retrySubmission()">Retry Submission</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `);
+    
+    $('body').append(retryModal);
+    window.pendingSubmission = submission;
+    new bootstrap.Modal(document.getElementById('retryModal')).show();
+}
+
+async function retrySubmission() {
+    bootstrap.Modal.getInstance(document.getElementById('retryModal'))?.hide();
+    $('#retryModal').remove();
+    
+    if (!navigator.onLine) {
+        showToast('⚠️ Still offline. Please check your connection.', 'danger');
+        return;
+    }
+    
+    $('button:contains("Submit")').prop('disabled', true).html('<span class="spinner"></span>Retrying...');
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/${examId}/submit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(window.pendingSubmission)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            if (result.Success && result.SessionId) {
+                const examResultUrl = window.examUrls?.examResultUrl || '/ExamSession/ExamResult';
+                showToast('✅ Exam submitted successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = `${examResultUrl}?sessionId=${result.SessionId}`;
+                }, 1000);
+            } else {
+                showRetryDialog('Failed to submit exam: ' + result.Message, window.pendingSubmission);
+            }
+        } else {
+            showRetryDialog('Server error. Please try again.', window.pendingSubmission);
+        }
+    } catch (error) {
+        console.error('Retry error:', error);
+        showRetryDialog('Failed to submit exam. Please try again.', window.pendingSubmission);
     }
 }
 
@@ -720,7 +723,6 @@ async function forceSubmitExam() {
         disableAntiCheating();
     }
     clearInterval(timerInterval);
-    clearInterval(autoSaveInterval);
     
     if (allQuestions[currentQuestionIndex]) {
         const timeSpent = Date.now() - questionStartTime;
@@ -758,7 +760,6 @@ async function forceSubmitExam() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(submission)
         });
-        clearLocalStorage();
         $('body').html('<div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #f8f9fa; font-family: Arial, sans-serif;"><div style="text-align: center; padding: 40px; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"><h2 style="color: #dc3545; margin-bottom: 20px;">🚨 Exam Terminated</h2><p style="color: #6c757d; margin-bottom: 0;">Your exam has been submitted due to violation of exam rules.</p></div></div>');
     } catch (error) {
         console.error('Force submission error:', error);
@@ -830,6 +831,7 @@ function initializeExam(id) {
     console.log('initializeExam function called with ID:', id);
     
     initializeOfflineDetection();
+    setupMobileToggle();
 
     // Update API_BASE_URL from configuration
     if (window.examUrls?.apiBaseUrl) {
@@ -933,19 +935,51 @@ function initializeOfflineDetection() {
         isOnline = true;
         $('#offlineIndicator').hide();
         console.log('Connection restored');
-        alert('✅ Internet connection restored!');
+        showToast('✅ Internet connection restored!', 'success');
     });
     
     window.addEventListener('offline', function() {
         isOnline = false;
         $('#offlineIndicator').show();
         console.log('Connection lost');
-        alert('⚠️ Internet connection lost! Your answers are saved locally and will be submitted when connection is restored.');
+        showToast('⚠️ Internet connection lost! Please reconnect to submit.', 'danger', 5000);
     });
     
     if (!navigator.onLine) {
         $('#offlineIndicator').show();
     }
+}
+
+function showToast(message, type = 'info', duration = 3000) {
+    const bgColors = {
+        success: '#28a745',
+        danger: '#dc3545',
+        warning: '#ffc107',
+        info: '#17a2b8'
+    };
+    
+    const toast = $(`
+        <div style="
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: ${bgColors[type]};
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-size: 14px;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        ">${message}</div>
+    `);
+    
+    $('body').append(toast);
+    
+    setTimeout(() => {
+        toast.fadeOut(300, function() { $(this).remove(); });
+    }, duration);
 }
 
 function setupFullscreen() {

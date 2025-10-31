@@ -1,0 +1,301 @@
+<!--begin::App Content Header-->
+<div class="app-content-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6"><h3 class="mb-0">Institute Dashboard</h3></div>
+             
+        </div>
+    </div>
+</div>
+<!--end::App Content Header-->
+<!--begin::App Content-->
+<div class="app-content">
+    <div class="container-fluid">
+        <!--begin::Row-->
+        <div class="row">
+            <div class="col-lg-3 col-6">
+                <div class="small-box text-bg-primary">
+                    <div class="inner">
+                        <h3 id="totalStudents">0</h3>
+                        <p>Total Students</p>
+                    </div>
+                    <i class="small-box-icon fas fa-users"></i>
+                    <a href="/Student/List" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
+                        View Students <i class="bi bi-link-45deg"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box text-bg-danger">
+                    <div class="inner">
+                        <h3 id="totalExams">0</h3>
+                        <p>Total Exams</p>
+                    </div>
+                    <i class="small-box-icon fas fa-file-alt"></i>
+                    <a href="/Exam/List" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
+                        View Exams <i class="bi bi-link-45deg"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box text-bg-success">
+                    <div class="inner">
+                        <h3 id="totalSubmissions">0</h3>
+                        <p>Total Submissions</p>
+                    </div>
+                    <i class="small-box-icon fas fa-check-square"></i>
+                    <a href="#" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
+                        Exam Attempts <i class="bi bi-link-45deg"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box text-bg-warning">
+                    <div class="inner">
+                        <h3 id="totalQuestions">0</h3>
+                        <p>Question Bank</p>
+                    </div>
+                    <i class="small-box-icon fas fa-question-circle"></i>
+                    <a href="/Question/List" class="small-box-footer link-dark link-underline-opacity-0 link-underline-opacity-50-hover">
+                        View Questions <i class="bi bi-link-45deg"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!--end::Row-->
+        <!--begin::Row-->
+        <div class="row">
+            <div class="col-lg-3 col-6">
+                <div class="card mb-4">
+                    <div class="card-body text-center d-flex flex-column justify-content-center" style="min-height:120px">
+                        <h5 class="card-title">Pass Rate</h5>
+                        <h2 class="text-success" id="passRate">0%</h2>
+                        <small class="text-muted" id="passCount">0 passed / 0 total</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="card mb-4">
+                    <div class="card-body text-center d-flex flex-column justify-content-center" style="min-height:120px">
+                        <h5 class="card-title">Average Score</h5>
+                        <h2 class="text-primary" id="avgScore">0%</h2>
+                        <small class="text-muted">Across all submissions</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="card mb-4">
+                    <div class="card-body text-center d-flex flex-column justify-content-center" style="min-height:120px">
+                        <h5 class="card-title">Active Exams</h5>
+                        <h2 class="text-info" id="activeExams">0</h2>
+                        <small class="text-muted" id="inactiveExams">0 inactive</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="card mb-4">
+                    <div class="card-body text-center d-flex flex-column justify-content-center" style="min-height:120px">
+                        <h5 class="card-title">Completion Rate</h5>
+                        <h2 class="text-danger" id="completionRate">0%</h2>
+                        <small class="text-muted" id="abandonedCount">0 abandoned</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--end::Row-->
+        <!--begin::Row-->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header"><h3 class="card-title">Performance Distribution</h3></div>
+                    <div class="card-body"><canvas id="performanceChart" style="height:250px"></canvas></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header"><h3 class="card-title">Pass/Fail Ratio</h3></div>
+                    <div class="card-body"><canvas id="passFailChart" style="height:250px"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <!--end::Row-->
+        <!--begin::Row-->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header"><h3 class="card-title">Top Performers</h3></div>
+                    <div class="card-body">
+                        <table class="table table-hover" id="topPerformersTable">
+                            <thead><tr><th>Rank</th><th>Student</th><th>Avg Score</th><th>Exams</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header"><h3 class="card-title">Popular Exams</h3></div>
+                    <div class="card-body"><canvas id="popularExamsChart" style="height:250px"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <!--end::Row-->
+        <!--begin::Row-->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Recent Activity</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-sm btn-primary" id="refreshActivity"><i class="fas fa-sync"></i> Refresh</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped" id="recentActivityTable">
+                            <thead><tr><th>Student</th><th>Exam</th><th>Type</th><th>Score</th><th>Result</th><th>Date</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--end::Row-->
+    </div>
+</div>
+<!--end::App Content-->
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function() {
+    const apiBaseUrl = '@Html.Raw(ViewBag.ApiBaseUrl ?? "https://localhost:7271/api")';
+    const instituteId = @(ViewBag.InstituteId ?? 1);
+
+    async function loadDashboard() {
+        try {
+            const [students, examList, questions] = await Promise.all([
+                $.get(`${apiBaseUrl}/Student/${instituteId}/0`),
+                $.get(`${apiBaseUrl}/Exam/list`),
+                $.get(`${apiBaseUrl}/Question/list`)
+            ]);
+
+            const studentList = students.Data || [];
+            const allExams = examList.Data || [];
+
+            $('#totalStudents').text(students.Count || 0);
+            $('#totalExams').text(allExams.length);
+            $('#totalQuestions').text(questions.length);
+
+            const studentExams = await Promise.all(
+                studentList.map(s => $.get(`${apiBaseUrl}/Exam/user/${s.StudentId}`).catch(() => ({Data: []})))
+            );
+
+            const allAttempts = studentExams.flatMap((r, i) => 
+                (r.Data || []).map(e => ({...e, StudentName: studentList[i]?.StudentName}))
+            );
+            const submissions = allAttempts.filter(e => e.Status === 'Submit');
+            const abandoned = allAttempts.filter(e => e.Status === 'Started');
+
+            $('#totalSubmissions').text(submissions.length);
+            const passed = submissions.filter(s => s.Percentage >= s.CutOffPercentage).length;
+            const passRate = submissions.length ? ((passed / submissions.length) * 100).toFixed(1) : 0;
+            $('#passRate').text(passRate + '%');
+            $('#passCount').text(`${passed} passed / ${submissions.length} total`);
+
+            const avgScore = submissions.length ? (submissions.reduce((sum, s) => sum + (s.Percentage || 0), 0) / submissions.length).toFixed(1) : 0;
+            $('#avgScore').text(avgScore + '%');
+
+            const activeCount = allExams.filter(e => e.IsActive).length;
+            $('#activeExams').text(activeCount);
+            $('#inactiveExams').text(`${allExams.length - activeCount} inactive`);
+
+            const completionRate = allAttempts.length ? ((submissions.length / allAttempts.length) * 100).toFixed(1) : 0;
+            $('#completionRate').text(completionRate + '%');
+            $('#abandonedCount').text(`${abandoned.length} abandoned`);
+
+            const ranges = {'0-20': 0, '21-40': 0, '41-60': 0, '61-80': 0, '81-100': 0};
+            submissions.forEach(s => {
+                const score = s.Percentage || 0;
+                if (score <= 20) ranges['0-20']++;
+                else if (score <= 40) ranges['21-40']++;
+                else if (score <= 60) ranges['41-60']++;
+                else if (score <= 80) ranges['61-80']++;
+                else ranges['81-100']++;
+            });
+            new Chart(document.getElementById('performanceChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(ranges),
+                    datasets: [{
+                        label: 'Students',
+                        data: Object.values(ranges),
+                        backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#198754']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            new Chart(document.getElementById('passFailChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pass', 'Fail'],
+                    datasets: [{
+                        data: [passed, submissions.length - passed],
+                        backgroundColor: ['#28a745', '#dc3545']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            const studentStats = {};
+            submissions.forEach(s => {
+                if (!studentStats[s.UserId]) studentStats[s.UserId] = {name: s.StudentName, total: 0, count: 0};
+                studentStats[s.UserId].total += s.Percentage || 0;
+                studentStats[s.UserId].count++;
+            });
+            const topPerformers = Object.entries(studentStats)
+                .map(([id, data]) => ({...data, avg: (data.total / data.count).toFixed(1)}))
+                .sort((a, b) => b.avg - a.avg).slice(0, 5);
+            const tbody = $('#topPerformersTable tbody').empty();
+            topPerformers.forEach((p, i) => {
+                tbody.append(`<tr><td>${i+1}</td><td>${p.name || 'Unknown'}</td><td><span class="badge bg-success">${p.avg}%</span></td><td>${p.count}</td></tr>`);
+            });
+
+            const examStats = {};
+            submissions.forEach(s => {
+                examStats[s.ExamName] = (examStats[s.ExamName] || 0) + 1;
+            });
+            const topExams = Object.entries(examStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            new Chart(document.getElementById('popularExamsChart'), {
+                type: 'bar',
+                data: {
+                    labels: topExams.map(e => e[0].substring(0, 25)),
+                    datasets: [{
+                        label: 'Submissions',
+                        data: topExams.map(e => e[1]),
+                        backgroundColor: '#0d6efd'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
+            });
+
+            const tbody2 = $('#recentActivityTable tbody').empty();
+            const recent = allAttempts.sort((a, b) => new Date(b.SubmitTime || b.StartTime) - new Date(a.SubmitTime || a.StartTime)).slice(0, 15);
+            recent.forEach(a => {
+                const result = a.Status === 'Submit' 
+                    ? (a.Percentage >= a.CutOffPercentage ? '<span class="badge bg-success">Pass</span>' : '<span class="badge bg-danger">Fail</span>')
+                    : '<span class="badge bg-warning">Abandoned</span>';
+                const score = a.Status === 'Submit' ? `${a.Percentage}%` : '-';
+                const date = new Date(a.SubmitTime || a.StartTime).toLocaleString();
+                tbody2.append(`<tr><td>${a.StudentName || 'Unknown'}</td><td>${a.ExamName}</td><td>${a.ExamType || 'N/A'}</td><td>${score}</td><td>${result}</td><td>${date}</td></tr>`);
+            });
+        } catch (error) {
+            console.error('Dashboard error:', error);
+        }
+    }
+
+    $('#refreshActivity').click(loadDashboard);
+    $(document).ready(loadDashboard);
+})();
+</script>
+}

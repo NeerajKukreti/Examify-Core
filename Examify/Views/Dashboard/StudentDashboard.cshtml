@@ -1,0 +1,573 @@
+﻿<!--begin::App Content Header-->
+<div class="app-content-header">
+    <!--begin::Container-->
+    <div class="container-fluid">
+        <!--begin::Row-->
+        <div class="row">
+            <div class="col-sm-6">
+                <h3 class="mb-0">Dashboard</h3>
+            </div>
+             
+        </div>
+        <!--end::Row-->
+    </div>
+    <!--end::Container-->
+</div>
+<!--end::App Content Header-->
+<!--begin::App Content-->
+<div class="app-content">
+    <!--begin::Container-->
+    <div class="container-fluid">
+        <!--begin::Row-->
+        <div class="row">
+            <div class="col-lg-3 col-6">
+                <div class="small-box text-bg-primary">
+                    <div class="inner">
+                        <h3 id="totalExams">0</h3>
+                        <p>Total Exams</p>
+                    </div>
+                    <svg class="small-box-icon" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M11.25 4.533A9.707 9.707 0 006 3a9.735 9.735 0 00-3.25.555.75.75 0 00-.5.707v14.25a.75.75 0 001 .707A8.237 8.237 0 016 18.75c1.995 0 3.823.707 5.25 1.886V4.533zM12.75 20.636A8.214 8.214 0 0118 18.75c.966 0 1.89.166 2.75.47a.75.75 0 001-.708V4.262a.75.75 0 00-.5-.707A9.735 9.735 0 0018 3a9.707 9.707 0 00-5.25 1.533v16.103z"></path>
+                    </svg>
+                    <a href="/Exam/List" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
+                        View Exams <i class="bi bi-link-45deg"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box text-bg-success">
+                    <div class="inner">
+                        <h3 id="completedExams">0</h3>
+                        <p>Completed</p>
+                    </div>
+                    <svg class="small-box-icon" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path clip-rule="evenodd" fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"></path>
+                    </svg>
+                    <a href="#" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
+                        View Results <i class="bi bi-link-45deg"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box text-bg-warning">
+                    <div class="inner">
+                        <h3 id="pendingExams">0</h3>
+                        <p>Abundant</p>
+                    </div>
+                    <svg class="small-box-icon" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path clip-rule="evenodd" fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z"></path>
+                    </svg>
+                    <a href="#" class="small-box-footer link-dark link-underline-opacity-0 link-underline-opacity-50-hover">
+                        Start Exam <i class="bi bi-link-45deg"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box text-bg-danger">
+                    <div class="inner">
+                        <h3>
+                            <span id="avgScore">0%</span>
+                            <small id="trendIndicator" style="font-size:0.6em;"></small>
+                        </h3>
+                        <p>Average Score</p>
+                    </div>
+                    <svg class="small-box-icon" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path clip-rule="evenodd" fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"></path>
+                    </svg>
+                    <a href="#" class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover">
+                        View Details <i class="bi bi-link-45deg"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!--end::Row-->
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Performance Trend</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="performanceChart" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Pass/Fail Rate</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="passFailChart"></canvas>
+                        <div class="mt-3 text-center">
+                            <p class="mb-1"><strong>Pass Rate:</strong> <span id="passRate">0%</span></p>
+                            <p class="mb-0"><strong>Fail Rate:</strong> <span id="failRate">0%</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Exam Type Performance</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="examTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Recent Exams</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="recentExamsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Exam Name</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Score</th>
+                                        <th>Result</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--begin::Row-->
+        <div class="row" style="display:none;">
+            <!-- Start col -->
+            <div class="col-lg-7 connectedSortable">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Sales Value</h3>
+                    </div>
+
+                    <div class="card-body">
+                        <div id="revenue-chart"></div>
+                    </div>
+                </div>
+                <!-- /.card -->
+                <!-- DIRECT CHAT -->
+                <div class="card direct-chat direct-chat-primary mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Direct Chat</h3>
+
+                        <div class="card-tools">
+                            <span title="3 New Messages" class="badge text-bg-primary"> 3 </span>
+                            <button type="button" class="btn btn-tool" data-lte-toggle="card-collapse">
+                                <i data-lte-icon="expand" class="bi bi-plus-lg"></i>
+                                <i data-lte-icon="collapse" class="bi bi-dash-lg"></i>
+                            </button>
+                            <button type="button"
+                                    class="btn btn-tool"
+                                    title="Contacts"
+                                    data-lte-toggle="chat-pane">
+                                <i class="bi bi-chat-text-fill"></i>
+                            </button>
+                            <button type="button" class="btn btn-tool" data-lte-toggle="card-remove">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body">
+                        <!-- Conversations are loaded here -->
+                        <div class="direct-chat-messages">
+                            <!-- Message. Default to the start -->
+                            <div class="direct-chat-msg">
+                                <div class="direct-chat-infos clearfix">
+                                    <span class="direct-chat-name float-start"> Alexander Pierce </span>
+                                    <span class="direct-chat-timestamp float-end"> 23 Jan 2:00 pm </span>
+                                </div>
+                                <!-- /.direct-chat-infos -->
+                                <img class="direct-chat-img"
+                                     src="@Url.Content("~/theme/assets/img/user1-128x128.jpg")"
+                                     alt="message user image" />
+                                <!-- /.direct-chat-img -->
+                                <div class="direct-chat-text">
+                                    Is this template really for free? That's unbelievable!
+                                </div>
+                                <!-- /.direct-chat-text -->
+                            </div>
+                            <!-- /.direct-chat-msg -->
+                            <!-- Message to the end -->
+                            <div class="direct-chat-msg end">
+                                <div class="direct-chat-infos clearfix">
+                                    <span class="direct-chat-name float-end"> Sarah Bullock </span>
+                                    <span class="direct-chat-timestamp float-start"> 23 Jan 2:05 pm </span>
+                                </div>
+                                <!-- /.direct-chat-infos -->
+                                <img class="direct-chat-img"
+                                     src="@Url.Content("~/theme/assets/img/user3-128x128.jpg")"
+                                     alt="message user image" />
+                                <!-- /.direct-chat-img -->
+                                <div class="direct-chat-text">You better believe it!</div>
+                                <!-- /.direct-chat-text -->
+                            </div>
+                            <!-- /.direct-chat-msg -->
+                            <!-- Message. Default to the start -->
+                            <div class="direct-chat-msg">
+                                <div class="direct-chat-infos clearfix">
+                                    <span class="direct-chat-name float-start"> Alexander Pierce </span>
+                                    <span class="direct-chat-timestamp float-end"> 23 Jan 5:37 pm </span>
+                                </div>
+                                <!-- /.direct-chat-infos -->
+                                <img class="direct-chat-img"
+                                     src="@Url.Content("~/theme/assets/img/user1-128x128.jpg")"
+                                     alt="message user image" />
+                                <!-- /.direct-chat-img -->
+                                <div class="direct-chat-text">
+                                    Working with AdminLTE on a great new app! Wanna join?
+                                </div>
+                                <!-- /.direct-chat-text -->
+                            </div>
+                            <!-- /.direct-chat-msg -->
+                            <!-- Message to the end -->
+                            <div class="direct-chat-msg end">
+                                <div class="direct-chat-infos clearfix">
+                                    <span class="direct-chat-name float-end"> Sarah Bullock </span>
+                                    <span class="direct-chat-timestamp float-start"> 23 Jan 6:10 pm </span>
+                                </div>
+                                <!-- /.direct-chat-infos -->
+                                <img class="direct-chat-img"
+                                     src="@Url.Content("~/theme/assets/img/user3-128x128.jpg")"
+                                     alt="message user image" />
+                                <!-- /.direct-chat-img -->
+                                <div class="direct-chat-text">I would love to.</div>
+                                <!-- /.direct-chat-text -->
+                            </div>
+                            <!-- /.direct-chat-msg -->
+                        </div>
+                        <!-- /.direct-chat-messages-->
+                        <!-- Contacts are loaded here -->
+                        <div class="direct-chat-contacts">
+                            <ul class="contacts-list">
+                                <li>
+                                    <a href="#">
+                                        <img class="contacts-list-img"
+                                             src="@Url.Content("~/theme/assets/img/user1-128x128.jpg")"
+                                             alt="User Avatar" />
+
+                                        <div class="contacts-list-info">
+                                            <span class="contacts-list-name">
+                                                Count Dracula
+                                                <small class="contacts-list-date float-end"> 2/28/2023 </small>
+                                            </span>
+                                            <span class="contacts-list-msg"> How have you been? I was... </span>
+                                        </div>
+                                        <!-- /.contacts-list-info -->
+                                    </a>
+                                </li>
+                                <!-- End Contact Item -->
+                                <li>
+                                    <a href="#">
+                                        <img class="contacts-list-img"
+                                             src="@Url.Content("~/theme/assets/img/user7-128x128.jpg")"
+                                             alt="User Avatar" />
+
+                                        <div class="contacts-list-info">
+                                            <span class="contacts-list-name">
+                                                Sarah Doe
+                                                <small class="contacts-list-date float-end"> 2/23/2023 </small>
+                                            </span>
+                                            <span class="contacts-list-msg"> I will be waiting for... </span>
+                                        </div>
+                                        <!-- /.contacts-list-info -->
+                                    </a>
+                                </li>
+                                <!-- End Contact Item -->
+                                <li>
+                                    <a href="#">
+                                        <img class="contacts-list-img"
+                                             src="@Url.Content("~/theme/assets/img/user3-128x128.jpg")"
+                                             alt="User Avatar" />
+
+                                        <div class="contacts-list-info">
+                                            <span class="contacts-list-name">
+                                                Nadia Jolie
+                                                <small class="contacts-list-date float-end"> 2/20/2023 </small>
+                                            </span>
+                                            <span class="contacts-list-msg"> I'll call you back at... </span>
+                                        </div>
+                                        <!-- /.contacts-list-info -->
+                                    </a>
+                                </li>
+                                <!-- End Contact Item -->
+                                <li>
+                                    <a href="#">
+                                        <img class="contacts-list-img"
+                                             src="@Url.Content("~/theme/assets/img/user5-128x128.jpg")"
+                                             alt="User Avatar" />
+
+                                        <div class="contacts-list-info">
+                                            <span class="contacts-list-name">
+                                                Nora S. Vans
+                                                <small class="contacts-list-date float-end"> 2/10/2023 </small>
+                                            </span>
+                                            <span class="contacts-list-msg"> Where is your new... </span>
+                                        </div>
+                                        <!-- /.contacts-list-info -->
+                                    </a>
+                                </li>
+                                <!-- End Contact Item -->
+                                <li>
+                                    <a href="#">
+                                        <img class="contacts-list-img"
+                                             src="@Url.Content("~/theme/assets/img/user6-128x128.jpg")"
+                                             alt="User Avatar" />
+
+                                        <div class="contacts-list-info">
+                                            <span class="contacts-list-name">
+                                                John K.
+                                                <small class="contacts-list-date float-end"> 1/27/2023 </small>
+                                            </span>
+                                            <span class="contacts-list-msg"> Can I take a look at... </span>
+                                        </div>
+                                        <!-- /.contacts-list-info -->
+                                    </a>
+                                </li>
+                                <!-- End Contact Item -->
+                                <li>
+                                    <a href="#">
+                                        <img class="contacts-list-img"
+                                             src="@Url.Content("~/theme/assets/img/user8-128x128.jpg")"
+                                             alt="User Avatar" />
+
+                                        <div class="contacts-list-info">
+                                            <span class="contacts-list-name">
+                                                Kenneth M.
+                                                <small class="contacts-list-date float-end"> 1/4/2023 </small>
+                                            </span>
+                                            <span class="contacts-list-msg"> Never mind I found... </span>
+                                        </div>
+                                        <!-- /.contacts-list-info -->
+                                    </a>
+                                </li>
+                                <!-- End Contact Item -->
+                            </ul>
+                            <!-- /.contacts-list -->
+                        </div>
+                        <!-- /.direct-chat-pane -->
+                    </div>
+                    <!-- /.card-body -->
+                    <div class="card-footer">
+                        <form action="#" method="post">
+                            <div class="input-group">
+                                <input type="text"
+                                       name="message"
+                                       placeholder="Type Message ..."
+                                       class="form-control" />
+                                <span class="input-group-append">
+                                    <button type="button" class="btn btn-primary">Send</button>
+                                </span>
+                            </div>
+                        </form>
+                    </div>
+                    <!-- /.card-footer-->
+                </div>
+                <!-- /.direct-chat -->
+            </div>
+            <!-- /.Start col -->
+            <!-- Start col -->
+            <div class="col-lg-5 connectedSortable">
+                <div class="card text-white bg-primary bg-gradient border-primary mb-4">
+                    <div class="card-header border-0">
+                        <h3 class="card-title">Sales Value</h3>
+                        <div class="card-tools">
+                            <button type="button"
+                                    class="btn btn-primary btn-sm"
+                                    data-lte-toggle="card-collapse">
+                                <i data-lte-icon="expand" class="bi bi-plus-lg"></i>
+                                <i data-lte-icon="collapse" class="bi bi-dash-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="world-map" style="height: 220px"></div>
+                    </div>
+                    <div class="card-footer border-0">
+                        <!--begin::Row-->
+                        <div class="row">
+                            <div class="col-4 text-center">
+                                <div id="sparkline-1" class="text-dark"></div>
+                                <div class="text-white">Visitors</div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div id="sparkline-2" class="text-dark"></div>
+                                <div class="text-white">Online</div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div id="sparkline-3" class="text-dark"></div>
+                                <div class="text-white">Sales</div>
+                            </div>
+                        </div>
+                        <!--end::Row-->
+                    </div>
+                </div>
+            </div>
+            <!-- /.Start col -->
+        </div>
+        <!-- /.row (main row) -->
+    </div>
+    <!--end::Container-->
+</div>
+<!--end::App Content-->
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    (function() {
+        const apiBaseUrl = '@Html.Raw(ViewBag.ApiBaseUrl ?? "https://localhost:7271/api")';
+        const userId = @(ViewBag.UserId ?? 1);
+
+        async function loadStudentDashboard() {
+            try {
+                const response = await $.get(`${apiBaseUrl}/Exam/user/${userId}`);
+                const exams = response.Data || [];
+
+                const completed = exams.filter(e => e.Status === 'Submit');
+                const pending = exams.filter(e => e.Status === 'Started');
+
+                $('#totalExams').text(exams.length);
+                $('#completedExams').text(completed.length);
+                $('#pendingExams').text(pending.length);
+
+                // Performance Trend Indicator
+                if (completed.length >= 10) {
+                    const recent5 = completed.slice(-5);
+                    const previous5 = completed.slice(-10, -5);
+                    const recentAvg = recent5.reduce((sum, e) => sum + (e.Percentage || 0), 0) / 5;
+                    const previousAvg = previous5.reduce((sum, e) => sum + (e.Percentage || 0), 0) / 5;
+                    const change = recentAvg - previousAvg;
+                    const trend = change > 0 ? `↑ ${Math.abs(Math.round(change))}%` : change < 0 ? `↓ ${Math.abs(Math.round(change))}%` : '→';
+                    const color = change > 0 ? '#28a745' : change < 0 ? '#dc3545' : '#6c757d';
+                    $('#trendIndicator').html(`<span style="color:${color}">${trend}</span>`);
+                }
+
+                if (completed.length > 0) {
+                    const avgScore = completed.reduce((sum, e) => sum + (e.Percentage || 0), 0) / completed.length;
+                    $('#avgScore').text(Math.round(avgScore) + '%');
+                }
+
+                // Pass/Fail Analysis
+                const passed = completed.filter(e => e.Percentage >= e.CutOffPercentage).length;
+                const failed = completed.length - passed;
+                const passRate = completed.length > 0 ? Math.round((passed / completed.length) * 100) : 0;
+                $('#passRate').text(passRate + '%');
+                $('#failRate').text((100 - passRate) + '%');
+
+                // Performance Chart
+                const last10 = completed.slice(-10).reverse();
+                new Chart(document.getElementById('performanceChart'), {
+                    type: 'line',
+                    data: {
+                        labels: last10.map(e => e.ExamName.substring(0, 15)),
+                        datasets: [{
+                            label: 'Score %',
+                            data: last10.map(e => e.Percentage),
+                            borderColor: '#0d6efd',
+                            tension: 0.4,
+                            fill: false
+                        }, {
+                            label: 'Pass Mark %',
+                            data: last10.map(e => e.CutOffPercentage),
+                            borderColor: '#dc3545',
+                            borderDash: [5, 5],
+                            tension: 0,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: { legend: { display: true } }
+                    }
+                });
+
+                // Pass/Fail Pie Chart
+                new Chart(document.getElementById('passFailChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Pass', 'Fail'],
+                        datasets: [{
+                            data: [passed, failed],
+                            backgroundColor: ['#198754', '#dc3545']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true
+                    }
+                });
+
+                // Exam Type Performance Bar Chart
+                const examTypes = {};
+                completed.forEach(e => {
+                    if (!examTypes[e.ExamType]) examTypes[e.ExamType] = [];
+                    examTypes[e.ExamType].push(e.Percentage);
+                });
+                const typeLabels = Object.keys(examTypes);
+                const typeAvgs = typeLabels.map(type => {
+                    const scores = examTypes[type];
+                    return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+                });
+                new Chart(document.getElementById('examTypeChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: typeLabels,
+                        datasets: [{
+                            label: 'Avg Score %',
+                            data: typeAvgs,
+                            backgroundColor: ['#0d6efd', '#6f42c1']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, max: 100 } }
+                    }
+                });
+
+                // Recent Exams Table
+                const tbody = $('#recentExamsTable tbody');
+                tbody.empty();
+                exams.slice(0, 10).forEach(exam => {
+                    const status = exam.Status === 'Submit' 
+                        ? '<span class="badge bg-success">Completed</span>' 
+                        : '<span class="badge bg-warning">Started</span>';
+                    const score = exam.Percentage !== null ? exam.Percentage + '%' : '-';
+                    const result = exam.Status === 'Submit' 
+                        ? (exam.Percentage >= exam.CutOffPercentage 
+                            ? '<span class="badge bg-success">Pass</span>' 
+                            : '<span class="badge bg-danger">Fail</span>')
+                        : '-';
+                    const date = exam.SubmitTime ? new Date(exam.SubmitTime).toLocaleDateString() : '-';
+                    tbody.append(`<tr><td>${exam.ExamName}</td><td>${exam.ExamType}</td><td>${status}</td><td>${score}</td><td>${result}</td><td>${date}</td></tr>`);
+                });
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadStudentDashboard);
+        } else {
+            loadStudentDashboard();
+        }
+    })();
+</script>
+}

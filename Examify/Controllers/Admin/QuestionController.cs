@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Examify.Controllers.Admin
 {
     //[AutoLoginAuthorize("admin", "Test@123", "Admin", "Teacher")] // Auto-login with credentials and restrict to Admin/Teacher roles
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Institute")]
     public class QuestionController : Controller
     {
         private readonly IQuestionService _QuestionService;

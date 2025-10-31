@@ -24,10 +24,14 @@ namespace DAL
 
         public async Task<User?> GetUserByUsername(string username)
         {
+            var parameters = new DynamicParameters();
+            parameters.Add("@Username", username);
+
             using var conn = Connection;
             return await conn.QueryFirstOrDefaultAsync<User>(
-                "SELECT * FROM Users WHERE Username = @Username",
-                new { Username = username });
+                "_sp_GetUser",
+                parameters,
+                commandType: CommandType.StoredProcedure);
         }
 
         public async Task<int> CreateUser(User user)
