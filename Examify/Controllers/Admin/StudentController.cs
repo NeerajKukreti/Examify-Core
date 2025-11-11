@@ -55,7 +55,9 @@ namespace Examify.Controllers.Admin
                 Mobile = "",
                 UserName = "",
                 Password = "",
-                InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 1
+                InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 1,
+                ActivationDate  = DateTime.Now,
+                Validity = DateTime.Now.AddYears(1)
             };
 
             // Load lookup data

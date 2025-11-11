@@ -19,17 +19,7 @@
             },
             "columns": [
                 {
-                    "title": "Student Name", "data": "studentName",
-                    fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                        str = '<div class="btn-group" role="group">' +
-                            '<a style="cursor:pointer" class="text-decoration-underline" data-id=' + oData.studentId +
-                            ' data-bs-target="#studentModel" data-bs-toggle="modal" id="EditStudent">' + // Fixed: matches HTML modal ID
-                            oData.studentName +
-                            '</a>' +
-                            '</div>';
-
-                        $(nTd).html(str);
-                    }
+                    "title": "Student Name", "data": "studentName" 
                 },
                 {
                     "title": "Father Name", "data": "fatherName",
@@ -57,19 +47,9 @@
                     "render": function (data, type, row) {
                         return data || '-';
                     }
-                },
-                //{
-                //    "title": "Status", "data": "isActive",
-                //    "render": function (data, type, row) {
-                //        if (data === true) {
-                //            return '<span class="badge bg-success">Active</span>';
-                //        } else {
-                //            return '<span class="badge bg-danger">Inactive</span>';
-                //        }
-                //    }
-                //},
+                }, 
                 {
-                    "title": "Status", "data": "isActive",
+                    "title": "Status", "data": "isActive", "width": "30px",
                     fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                         var active = '<i class="fas fa-check-circle text-success"></i>';
                         var inactive = '<i class="fas fa-times-circle text-danger" ></i>';
@@ -81,7 +61,20 @@
                             '</div>';
                         $(nTd).html(str);
                     }
-                }
+                },
+                {
+                    "data": "studentName","width": "30px",
+                    fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        str = '<div class="btn-group" role="group">' +
+                            '<a style="cursor:pointer" class="text-decoration-underline" data-id=' + oData.studentId +
+                            ' data-bs-target="#studentModel" data-bs-toggle="modal" id="EditStudent">' + // Fixed: matches HTML modal ID
+                            '<i class="fas fa-edit"></i>' +
+                            '</a>' +
+                            '</div>';
+
+                        $(nTd).html(str);
+                    }
+                },
             ]
         });
 

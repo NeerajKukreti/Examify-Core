@@ -28,12 +28,29 @@
         border-bottom: 2px solid #007bff;
         display: flex;
         align-items: center;
+        justify-content: space-between;
     }
 
         .section-title i {
             margin-right: 8px;
             font-size: 18px;
         }
+
+        .section-title.collapsible {
+            cursor: pointer;
+        }
+
+        .section-title.collapsible:hover {
+            color: #007bff;
+        }
+
+    .section-content {
+        display: none;
+    }
+
+    .section-content.show {
+        display: block;
+    }
 
     .form-group label {
         font-weight: 500;
@@ -82,11 +99,66 @@
 
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
+        <!-- Advanced Settings Toggle -->
+        <div class="d-flex justify-content-end mb-3">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="advancedToggle">
+                <label class="form-check-label" for="advancedToggle">
+                    <strong>Advanced Settings</strong>
+                </label>
+            </div>
+        </div>
+
+        <!-- Simple Form (Default) -->
+        <div id="simpleForm">
+            <div class="form-section">
+                <div class="section-title">
+                  <span>  <i class="fas fa-user-plus"></i>
+                    Quick Student Registration
+                    </span>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Student Name <span class="required">*</span></label>
+                            <input id="simple_StudentName" name="simple_StudentName" class="form-control" placeholder="Enter student name" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Mobile Number <span class="required">*</span></label>
+                            <input id="simple_Mobile" name="simple_Mobile" class="form-control" placeholder="Enter 10-digit mobile" maxlength="10" />
+                            <small class="form-text text-muted">This will be used as username</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input id="simple_Email" name="simple_Email" type="email" class="form-control" placeholder="Enter email address" />
+                        </div>
+                    </div>
+                    @if (Model.StudentId == 0)
+                    {
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Password <span class="required">*</span></label>
+                                <input id="simple_Password" name="simple_Password" type="password" class="form-control" placeholder="Enter password" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Form (Hidden by default) -->
+        <div id="advancedForm" style="display: none;">
+
         <!-- Personal Information Section -->
         <div class="form-section">
             <div class="section-title">
-                <i class="fas fa-user"></i>
-                Personal Information
+                <span><i class="fas fa-user"></i>
+                        Personal Information
+                    </span>
             </div>
             <div class="row">
                 <div class="col-md-6">
@@ -131,10 +203,11 @@
 
         <!-- Contact Information Section -->
         <div class="form-section">
-            <div class="section-title">
-                <i class="fas fa-phone"></i>
-                Contact Information
+            <div class="section-title collapsible" data-target="#contact-section">
+                <span><i class="fas fa-phone"></i> Contact Information</span>
+                <i class="fas fa-chevron-down"></i>
             </div>
+            <div id="contact-section" class="section-content">
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -166,14 +239,16 @@
                     </div>
                 </div>
             </div>
+            </div>
         </div>
 
         <!-- Address Information Section -->
         <div class="form-section">
-            <div class="section-title">
-                <i class="fas fa-map-marker-alt"></i>
-                Address Information
+            <div class="section-title collapsible" data-target="#address-section">
+                <span><i class="fas fa-map-marker-alt"></i> Address Information</span>
+                <i class="fas fa-chevron-down"></i>
             </div>
+            <div id="address-section" class="section-content">
             <div class="row">
                 <div class="col-md-12">
                     <div class="form-group">
@@ -213,14 +288,16 @@
                     </div>
                 </div>
             </div>
+            </div>
         </div>
 
         <!-- Account Information Section -->
         <div class="form-section">
-            <div class="section-title">
-                <i class="fas fa-key"></i>
-                Account Information
+            <div class="section-title collapsible" data-target="#account-section">
+                <span><i class="fas fa-key"></i> Account Information</span>
+                <i class="fas fa-chevron-down"></i>
             </div>
+            <div id="account-section" class="section-content">
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -259,14 +336,16 @@
                     </div>
                 </div>
             </div>
+            </div>
         </div>
 
         <!-- Class and Batch Information Section -->
         <div class="form-section">
-            <div class="section-title">
-                <i class="fas fa-graduation-cap"></i>
-                Class and Batch Information
+            <div class="section-title collapsible" data-target="#class-section">
+                <span><i class="fas fa-graduation-cap"></i> Class and Batch Information</span>
+                <i class="fas fa-chevron-down"></i>
             </div>
+            <div id="class-section" class="section-content">
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -302,7 +381,11 @@
                     </div>
                 </div>
             </div>
+            </div>
         </div>
+
+        </div>
+        <!-- End Advanced Form -->
 
         <!-- Form Actions -->
         <div class="d-flex justify-content-end">
@@ -325,6 +408,52 @@
     window.studentModelData = @Html.Raw(JsonSerializer.Serialize(Model));
 
     $(function () {
+        // Toggle between Simple and Advanced forms
+        $('#advancedToggle').on('change', function() {
+            if ($(this).is(':checked')) {
+                // Sync data from Simple to Advanced
+                syncSimpleToAdvanced();
+                $('#simpleForm').hide();
+                $('#advancedForm').show();
+            } else {
+                // Sync data from Advanced to Simple
+                syncAdvancedToSimple();
+                $('#advancedForm').hide();
+                $('#simpleForm').show();
+            }
+        });
+
+        // Sync Simple form data to Advanced form
+        function syncSimpleToAdvanced() {
+            $('#StudentName').val($('#simple_StudentName').val());
+            $('#Mobile').val($('#simple_Mobile').val());
+            $('#UserName').val($('#simple_Mobile').val());
+            $('#Email').val($('#simple_Email').val());
+            $('#Password').val($('#simple_Password').val());
+        }
+
+        // Sync Advanced form data to Simple form
+        function syncAdvancedToSimple() {
+            $('#simple_StudentName').val($('#StudentName').val());
+            $('#simple_Mobile').val($('#Mobile').val());
+            $('#simple_Email').val($('#Email').val());
+            $('#simple_Password').val($('#Password').val());
+        }
+
+        // Simple form - Auto-fill username and sync to advanced
+        $('#simple_Mobile').on('input', function() {
+            var mobile = $(this).val();
+            $('#Mobile').val(mobile);
+            $('#UserName').val(mobile);
+        });
+
+        // Collapsible sections
+        $('.section-title.collapsible').on('click', function() {
+            var target = $(this).data('target');
+            $(target).toggleClass('show');
+            $(this).find('.fa-chevron-down, .fa-chevron-up').toggleClass('fa-chevron-down fa-chevron-up');
+        });
+
         // Auto-fill username when mobile number changes
         $('#Mobile').on('input', function() {
             $('#UserName').val($(this).val());
@@ -333,6 +462,13 @@
         // Initialize username field if mobile is already filled
         if ($('#Mobile').val()) {
             $('#UserName').val($('#Mobile').val());
+        }
+
+        // Load values into simple form on edit
+        if (window.studentModelData.StudentId > 0) {
+            $('#simple_StudentName').val(window.studentModelData.StudentName);
+            $('#simple_Mobile').val(window.studentModelData.Mobile);
+            $('#simple_Email').val(window.studentModelData.Email);
         }
 
         // Handle class selection change to load batches
@@ -447,12 +583,58 @@
             });
         }
 
-        debugger;
+       
         // Form validation and submission
         $('#studentForm').validate({
             rules: {
+                simple_StudentName: { required: true, maxlength: 60 },
+                simple_Mobile: {
+                    required: true,
+                    digits: true,
+                    minlength: 10,
+                    maxlength: 10,
+                    remote: {
+                        url: endPoint + 'api/User/check-username',
+                        type: 'GET',
+                        data: {
+                            userName: function() {
+                                return $('#simple_Mobile').val();
+                            },
+                            userId: function() {
+                                return window.studentModelData?.UserId || '';
+                            }
+                        },
+                        dataFilter: function(response) {
+                            var json = JSON.parse(response);
+                            return json.Exists ? "false" : "true";
+                        }
+                    }
+                },
+                simple_Email: { email: true },
+                simple_Password: { required: function() { return window.studentModelData.StudentId === 0; } },
                 StudentName: { required: true, maxlength: 60 },
-                Mobile: { required: true, digits: true, minlength: 10, maxlength: 10 },
+                Mobile: { 
+                    required: true, 
+                    digits: true, 
+                    minlength: 10, 
+                    maxlength: 10,
+                    remote: {
+                        url: endPoint + 'api/User/check-username',
+                        type: 'GET',
+                        data: {
+                            userName: function() {
+                                return $('#Mobile').val();
+                            },
+                            userId: function() {
+                                return window.studentModelData?.UserId || '';
+                            }
+                        },
+                        dataFilter: function(response) {
+                            var json = JSON.parse(response);
+                            return json.Exists ? "false" : "true";
+                        }
+                    }
+                },
                 UserName: {
                 required: true,
                 remote: {
@@ -480,12 +662,23 @@
                 Pincode: { digits: true, minlength: 6, maxlength: 6 }
             },
             messages: {
+                simple_StudentName: { required: "Student name is required", maxlength: "Student name cannot exceed 60 characters" },
+                simple_Mobile: {
+                    required: "Mobile number is required",
+                    digits: "Please enter only digits",
+                    minlength: "Mobile number must be 10 digits",
+                    maxlength: "Mobile number must be 10 digits",
+                    remote: "This mobile number is already registered"
+                },
+                simple_Email: { email: "Please enter a valid email address" },
+                simple_Password: { required: "Password is required for new students" },
                 StudentName: { required: "Student name is required", maxlength: "Student name cannot exceed 60 characters" },
                 Mobile: {
                     required: "Mobile number is required",
                     digits: "Please enter only digits",
                     minlength: "Mobile number must be 10 digits",
-                    maxlength: "Mobile number must be 10 digits"
+                    maxlength: "Mobile number must be 10 digits",
+                    remote: "This mobile number is already registered"
                 },
                 UserName: {
                     required: "Username is required",
@@ -500,6 +693,11 @@
                 }
             },
             submitHandler: function(form) {
+                // Sync simple form data to advanced before submission
+                if (!$('#advancedToggle').is(':checked')) {
+                    syncSimpleToAdvanced();
+                }
+                
                 var formData = $(form).serialize();
                 var url = window.studentModelData.StudentId > 0 ?
                     '@Url.Action("Edit", "Student")' :
