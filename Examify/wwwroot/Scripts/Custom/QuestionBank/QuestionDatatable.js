@@ -1,17 +1,20 @@
 ﻿var QuestionBankTable = function () {
     var table;
     var QuestionBank = function () {
-        table = $('#QuestionBankTable');
-        table.dataTable({
-            "order": [], // This disables the initial sorting
+        table = $('#QuestionBankTable').dataTable({
+            "order": [],
             "createdRow": function (row, data, dataIndex) {
                 // Custom row styling if needed
             },
-            "ajax": {
-                "url": loadQuestionBankUrl,
-                "type": "GET",
-                "dataType": "json",   // correct spelling
-                "dataSrc": "data"         // response is an array
+            "ajax": function (data, callback, settings) {
+                $.ajax({
+                    url: loadQuestionBankUrl,
+                    type: "GET",
+                    dataType: "json",
+                    success: function (response) {
+                        callback({ data: response.data || [] });
+                    }
+                });
             },
             "columns": [
                 {
@@ -32,9 +35,6 @@
                 { "title": "Multi Select", "data": "isMultiSelect" }
             ]
         });
-        setInterval(function () {
-            table.DataTable().ajax.reload(null, false);
-        }, 30000);
     }
     return {
         init: function () {
@@ -44,7 +44,7 @@
             QuestionBank();
         },
         reloadTable: function () {
-            table.DataTable().ajax.reload(null, false);
+            table.ajax.reload(null, false);
         }
     };
 }();

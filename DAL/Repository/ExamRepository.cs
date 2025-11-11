@@ -24,6 +24,7 @@ namespace DAL.Repository
         Task<bool> SaveExamQuestionsAsync(ExamQuestionConfigDTO config);
         Task<bool> RemoveExamQuestionAsync(int examId, int questionId);
         Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(List<long> userIds);
+        Task<StatsDTO> GetStatsAsync();
     }
 
     public class ExamRepository : IExamRepository
@@ -412,7 +413,8 @@ namespace DAL.Repository
                 WrongAnswers = wrongAnswers,
                 UnattemptedQuestions = unattempted,
                 SubmittedAt = session.SubmitTime ?? DateTime.Now,
-                QuestionResults = questionResults
+                QuestionResults = questionResults,
+                CutOffPercentage = exam?.CutOffPercentage
             };
         }
         #endregion
@@ -522,6 +524,26 @@ namespace DAL.Repository
                 "_sp_GetUserExams",
                 new { @Userids = userIdTable.AsTableValuedParameter("IntList") },
                 commandType: CommandType.StoredProcedure);
+        }
+
+        public async Task<StatsDTO> GetStatsAsync()
+        {
+            using var connection = Connection;
+            using var multi = await connection.QueryMultipleAsync(
+                "_sp_GetStats",
+                commandType: CommandType.StoredProcedure);
+
+            var stats = new StatsDTO
+            {
+                TotalQuestions = (await multi.ReadFirstOrDefaultAsync<dynamic>())?.TotalQuestions ?? 0,
+                QuestionsByType = (await multi.ReadAsync<QuestionTypeStatsDTO>()).ToList(),
+                QuestionsByDifficulty = (await multi.ReadAsync<DifficultyStatsDTO>()).ToList(),
+                SubjectStats = (await multi.ReadAsync<SubjectStatsDTO>()).ToList(),
+                SubjectQuestionStats = (await multi.ReadAsync<SubjectQuestionStatsDTO>()).ToList(),
+                TotalClasses = (await multi.ReadFirstOrDefaultAsync<dynamic>())?.TotalClasses ?? 0
+            };
+
+            return stats;
         }
     }
 }

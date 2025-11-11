@@ -3,12 +3,16 @@ var ExamTable = function () {
     var Exam = function () {
         table = $('#ExamTable');
         table.dataTable({
-            "order": [],
-            "ajax": {
-                "url": loadExamUrl,
-                "type": "GET",
-                "dataType": "json",
-                "dataSrc": "data"
+            "order": [],             
+            "ajax": function (data, callback, settings) {
+                $.ajax({
+                    url: loadExamUrl,
+                    type: "GET",
+                    dataType: "json",
+                    success: function (response) {
+                        callback({ data: response.data || [] });
+                    }
+                });
             },
             "columns": [
                 {

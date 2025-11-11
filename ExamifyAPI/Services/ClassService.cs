@@ -7,6 +7,7 @@ namespace ExamifyAPI.Services
     public interface IClassService
     {
         Task<IEnumerable<ClassModel>> GetAllClassesAsync(int instituteId, int? classId = null);
+        Task<bool> ChangeStatus(int classId);
         Task<int> InsertOrUpdateClassAsync(
             ClassDTO dto,
             int? classId = null,
@@ -48,6 +49,10 @@ namespace ExamifyAPI.Services
             }
 
             return newClassId;
+        }
+        public async Task<bool> ChangeStatus(int classId)
+        {
+            return await _classRepository.ChangeStatus(classId);
         }
     }
 }

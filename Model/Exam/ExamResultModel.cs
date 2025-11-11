@@ -19,6 +19,7 @@ namespace DataModel
         public int UnattemptedQuestions { get; set; }
         public int TotalTimeSpent { get; set; }
         public DateTime SubmittedAt { get; set; }
+        public decimal? CutOffPercentage { get; set; }
         public List<QuestionResultModel> QuestionResults { get; set; } = new List<QuestionResultModel>();
         public List<ExamResponsePairModel> ResponsePairs { get; set; } = new List<ExamResponsePairModel>();
         public List<ExamResponseOrderModel> ResponseOrders { get; set; } = new List<ExamResponseOrderModel>();

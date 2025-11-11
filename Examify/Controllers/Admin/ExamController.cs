@@ -174,5 +174,19 @@ namespace Examify.Controllers.Admin
             else
                 return Json(new { success = false, message = "Failed to remove question." });
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetStats()
+        {
+            try
+            {
+                var stats = await _examService.GetStatsAsync();
+                return Json(new { success = true, data = stats });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
     }
 }

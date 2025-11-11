@@ -5,24 +5,19 @@ var ClassTable = function () {
         table = $('#ClassTable');
         table.dataTable({
             "order": [],
-            "ajax": {
-                "url": loadClassUrl,
-                "type": "GET",
-                "dataType": "json",
-                "dataSrc": "data"
+            "ajax": function (data, callback, settings) {
+                $.ajax({
+                    url: loadClassUrl,
+                    type: "GET",
+                    dataType: "json",
+                    success: function (response) {
+                        callback({ data: response.data || [] });
+                    }
+                });
             },
             "columns": [
                 {
-                    "title": "Class Name", "data": "className",
-                    fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                        str = '<div class="btn-group" role="group">' +
-                            '<a style="cursor:pointer" class="text-decoration-underline" data-id=' + oData.classId +
-                            ' onclick="editClass(' + oData.classId + ')">' +
-                            oData.className +
-                            '</a>' +
-                            '</div>';
-                        $(nTd).html(str);
-                    }
+                    "title": "Class Name", "data": "className"
                 },
                 {
                     "title": "Batches", "data": "batches",
@@ -43,6 +38,17 @@ var ClassTable = function () {
                         var str = '<div class="btn-group" role="group">' +
                             '<a title="Click to ' + (oData.isActive ? 'Deactivate' : 'Activate') + ' it" data-id="' + oData.classId + '" onclick="changeStatus(' + oData.classId + ')">' +
                             (oData.isActive ? active : inactive) +
+                            '</a>' +
+                            '</div>';
+                        $(nTd).html(str);
+                    }
+                },
+                {
+                    "title": "Action", "data": "isActive",
+                    fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        str = '<div class="btn-group" role="group">' +
+                            '<a style="cursor:pointer" class="text-decoration-underline" data-id=' + oData.classId +
+                            ' onclick="editClass(' + oData.classId + ')"> <i class="fas fa-edit"></i>' +
                             '</a>' +
                             '</div>';
                         $(nTd).html(str);

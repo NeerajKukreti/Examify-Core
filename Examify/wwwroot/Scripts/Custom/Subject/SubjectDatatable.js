@@ -3,12 +3,16 @@ var SubjectTable = function () {
     var Subject = function () {
         table = $('#SubjectTable');
         table.dataTable({
-            "order": [],
-            "ajax": {
-                "url": loadSubjectUrl,
-                "type": "GET",
-                "dataType": "json",
-                "dataSrc": "data"
+            "order": [],             
+            "ajax": function (data, callback, settings) {
+                $.ajax({
+                    url: loadSubjectUrl,
+                    type: "GET",
+                    dataType: "json",
+                    success: function (response) {
+                        callback({ data: response.data || [] });
+                    }
+                });
             },
             "columns": [
                 {

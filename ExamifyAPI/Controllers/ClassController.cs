@@ -101,7 +101,11 @@ namespace ExamifyApi.Controllers
         {
             try
             {
-                return Ok(new { Success = true, Message = "Class status updated successfully" });
+                var success = await _classService.ChangeStatus(id);
+                if (success)
+                    return Ok(new { Success = true, Message = "Class status updated successfully" });
+                else
+                    return NotFound(new { Success = false, Message = "Class not found or update failed" });
             }
             catch (Exception ex)
             {

@@ -867,7 +867,7 @@ $(function () {
                 if (response && response.success) {
                     // Close modal and refresh question list (customize as needed)
                     $('#questionModel').modal('hide');
-                    if (typeof reloadQuestionTable === 'function') reloadQuestionTable();
+                    QuestionBankTable.reloadTable();
                 } else {
                     // Show error (customize as needed)
                     console.error("Save failed:", response);

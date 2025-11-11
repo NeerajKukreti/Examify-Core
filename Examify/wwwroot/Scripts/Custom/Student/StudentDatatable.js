@@ -7,11 +7,15 @@
             "createdRow": function (row, data, dataIndex) {
                 // Custom row styling if needed
             },
-            "ajax": {
-                "url": loadStudentUrl,
-                "type": "GET",
-                "dataType": "json",
-                "dataSrc": "data"
+            "ajax": function (data, callback, settings) {
+                $.ajax({
+                    url: loadStudentUrl,
+                    type: "GET",
+                    dataType: "json",
+                    success: function (response) {
+                        callback({ data: response.data || [] });
+                    }
+                });
             },
             "columns": [
                 {

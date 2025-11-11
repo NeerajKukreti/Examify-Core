@@ -18,6 +18,7 @@ namespace Examify.Services
         Task<IEnumerable<ExamQuestionDTO>> GetExamQuestionsAsync(int examId);
         Task<bool> SaveExamQuestionsAsync(ExamQuestionConfigDTO config);
         Task<bool> RemoveExamQuestionAsync(int examId, int questionId);
+        Task<StatsDTO> GetStatsAsync();
     }
 
     public class ExamService : IExamService
@@ -183,6 +184,24 @@ namespace Examify.Services
             }
 
             return false;
+        }
+
+        public async Task<StatsDTO> GetStatsAsync()
+        {
+            var response = await _httpClient.GetAsync("Exam/stats");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(content);
+
+                if (apiResponse?.Success == true && apiResponse?.Data != null)
+                {
+                    return JsonConvert.DeserializeObject<StatsDTO>(apiResponse.Data.ToString());
+                }
+            }
+
+            return new StatsDTO();
         }
     }
 }

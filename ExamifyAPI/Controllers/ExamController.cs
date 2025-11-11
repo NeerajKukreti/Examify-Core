@@ -302,5 +302,19 @@ namespace ExamifyAPI.Controllers
                 return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
             }
         }
+
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetStats()
+        {
+            try
+            {
+                var stats = await _examService.GetStatsAsync();
+                return Ok(new { Success = true, Data = stats });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
+            }
+        }
     }
 }

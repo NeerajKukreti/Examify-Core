@@ -11,6 +11,7 @@ namespace DAL.Repository
     {
         Task<IEnumerable<ClassModel>> GetAllClassesAsync(int instituteId, int? classId = null);
         Task<int> InsertOrUpdateClassAsync(ClassDTO dto, int? classId = null, int? createdBy = null, int? modifiedBy = null);
+        Task<bool> ChangeStatus(int classId);
     }
 
     public class ClassRepository : IClassRepository
@@ -71,5 +72,18 @@ namespace DAL.Repository
 
             return newClassId;
         }
+
+        public async Task<bool> ChangeStatus(int classId)
+        {
+            using var connection = Connection;
+            var rowsAffected = await connection.ExecuteAsync(
+                "UPDATE Class SET IsActive = ~IsActive WHERE classId = @classId",
+                new { classId = classId },
+                commandType: CommandType.Text
+            );
+            return rowsAffected > 0;
+        }
     }
 }
+
+
