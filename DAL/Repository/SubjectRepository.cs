@@ -59,6 +59,7 @@ namespace DAL.Repository
             var topicTable = new DataTable();
             topicTable.Columns.Add("TopicId", typeof(int));
             topicTable.Columns.Add("SubjectId", typeof(int));
+            topicTable.Columns.Add("IsActive", typeof(bool));
             topicTable.Columns.Add("TopicName", typeof(string));
             topicTable.Columns.Add("Description", typeof(string));
 
@@ -69,6 +70,7 @@ namespace DAL.Repository
                     topicTable.Rows.Add(
                         topic.TopicId > 0 ? (object)topic.TopicId : DBNull.Value,
                         topic.SubjectId,
+                        topic.IsActive,
                         topic.TopicName,
                         topic.Description ?? (object)DBNull.Value
                     );

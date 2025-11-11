@@ -16,16 +16,7 @@ var SubjectTable = function () {
             },
             "columns": [
                 {
-                    "title": "Subject Name", "data": "subjectName",
-                    fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                        var str = '<div class="btn-group" role="group">' +
-                            '<a style="cursor:pointer" class="text-decoration-underline" data-id=' + oData.subjectId +
-                            ' data-bs-target="#subjectModel" data-bs-toggle="modal" id="EditSubject">' +
-                            oData.subjectName +
-                            '</a>' +
-                            '</div>';
-                        $(nTd).html(str);
-                    }
+                    "title": "Subject Name", "data": "subjectName" 
                 },
                 {
                     "title": "Description", "data": "description",
@@ -34,13 +25,25 @@ var SubjectTable = function () {
                     }
                 },
                 {
-                    "title": "Status", "data": "isActive",
+                    "title": "Status", "data": "isActive", "width": "30px",
                     fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                         var active = '<i class="fas fa-check-circle text-success"></i>';
                         var inactive = '<i class="fas fa-times-circle text-danger"></i>';
                         var str = '<div class="btn-group" role="group">' +
                             '<a title="Click to ' + (oData.isActive ? 'Deactivate' : 'Activate') + ' it" data-id="' + oData.subjectId + '" id="ActivateSubject">' +
                             (oData.isActive ? active : inactive) +
+                            '</a>' +
+                            '</div>';
+                        $(nTd).html(str);
+                    }
+                },
+                {
+                     "data": "subjectName", "width":"30px",
+                    fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        var str = '<div class="btn-group" role="group">' +
+                            '<a style="cursor:pointer" class="text-decoration-underline" data-id=' + oData.subjectId +
+                            ' data-bs-target="#subjectModel" data-bs-toggle="modal" id="EditSubject">' +
+                            '<i class="fas fa-edit text-primary"></i>' +
                             '</a>' +
                             '</div>';
                         $(nTd).html(str);

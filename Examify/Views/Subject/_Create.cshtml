@@ -61,22 +61,26 @@
                     for (int i = 0; i < Model.Topics.Count; i++)
                     {
                         <div class="topic-item" data-index="@i">
-                            <button type="button" class="btn btn-sm btn-danger btn-remove" onclick="removeTopic(this)">
-                                <i class="fas fa-times"></i>
-                            </button>
                             <input type="hidden" name="Topics[@i].TopicId" value="@Model.Topics[i].TopicId" />
                             <input type="hidden" name="Topics[@i].SubjectId" value="@Model.Topics[i].SubjectId" />
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-10">
                                     <div class="form-group">
                                         <label>Topic Name <span class="required">*</span></label>
                                         <input type="text" name="Topics[@i].TopicName" value="@Model.Topics[i].TopicName" class="form-control" placeholder="Enter topic name" required />
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-2">
                                     <div class="form-group">
-                                        <label>Description</label>
-                                        <input type="text" name="Topics[@i].Description" value="@Model.Topics[i].Description" class="form-control" placeholder="Enter topic description" />
+                                        <label>&nbsp;</label>
+                                        <div class="form-check">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" name="Topics[@i].IsActive" value="true" class="form-check-input" @(Model.Topics[i].IsActive ? "checked" : "") />
+                                                Active
+                                            </label>
+                                            <input type="hidden" name="Topics[@i].IsActive" value="false" />
+                                           
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -123,22 +127,25 @@
             var currentIndex = $('#topicsContainer .topic-item').length;
             var html = `
                 <div class="topic-item" data-index="${currentIndex}">
-                    <button type="button" class="btn btn-sm btn-danger btn-remove" onclick="removeTopic(this)">
-                        <i class="fas fa-times"></i>
-                    </button>
                     <input type="hidden" name="Topics[${currentIndex}].TopicId" value="0" />
                     <input type="hidden" name="Topics[${currentIndex}].SubjectId" value="0" />
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-10">
                             <div class="form-group">
                                 <label>Topic Name <span class="required">*</span></label>
                                 <input type="text" name="Topics[${currentIndex}].TopicName" class="form-control" placeholder="Enter topic name" required />
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-2">
                             <div class="form-group">
-                                <label>Description</label>
-                                <input type="text" name="Topics[${currentIndex}].Description" class="form-control" placeholder="Enter topic description" />
+                                <label>&nbsp;</label>
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input type="checkbox" name="Topics[${currentIndex}].IsActive" value="true" class="form-check-input" checked />
+                                    Active</label>
+                                    <input type="hidden" name="Topics[${currentIndex}].IsActive" value="false" />
+                                    
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -156,6 +163,8 @@
             },
             submitHandler: function(form) {
                 var formData = $(form).serialize();
+                console.log('📤 Form Data:', formData);
+                
                 var url = window.subjectModelData.SubjectId > 0 ?
                     '@Url.Action("Edit", "Subject")' :
                     '@Url.Action("Create", "Subject")';
