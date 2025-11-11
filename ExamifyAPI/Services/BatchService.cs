@@ -8,12 +8,7 @@ namespace ExamifyAPI.Services
     {
         Task<BatchModel?> GetBatchByIdAsync(int batchId);
         Task<IEnumerable<BatchModel>> GetBatchesByClassIdAsync(int classId);
-        Task<int> InsertOrUpdateBatchAsync(
-            BatchDTO dto,
-            int? batchId = null,
-            int? createdBy = null,
-            int? modifiedBy = null
-        );
+        
     }
 
     public class BatchService : IBatchService
@@ -34,21 +29,7 @@ namespace ExamifyAPI.Services
         {
             return await _batchRepository.GetBatchesByClassIdAsync(classId);
         }
-
-        public async Task<int> InsertOrUpdateBatchAsync(
-            BatchDTO dto,
-            int? batchId = null,
-            int? createdBy = null,
-            int? modifiedBy = null
-        )
-        {
-            return await _batchRepository.InsertOrUpdateBatchAsync(
-                dto,
-                batchId,
-                createdBy,
-                modifiedBy
-            );
-        }
+         
 
         public class ApiResponse<T>
         {

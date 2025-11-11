@@ -11,7 +11,6 @@ namespace DAL.Repository
     {
         Task<BatchModel?> GetBatchByIdAsync(int batchId);
         Task<IEnumerable<BatchModel>> GetBatchesByClassIdAsync(int classId);
-        Task<int> InsertOrUpdateBatchAsync(BatchDTO dto, int? batchId = null, int? createdBy = null, int? modifiedBy = null);
     }
 
     public class BatchRepository : IBatchRepository
@@ -41,25 +40,6 @@ namespace DAL.Repository
             );
         }
 
-        public async Task<int> InsertOrUpdateBatchAsync(BatchDTO dto, int? batchId = null, int? createdBy = null, int? modifiedBy = null)
-        {
-            using var connection = Connection;
-            var parameters = new DynamicParameters();
-
-            parameters.Add("@BatchId", batchId);
-            parameters.Add("@ClassId", dto.ClassId);
-            parameters.Add("@BatchName", dto.BatchName);
-            parameters.Add("@IsActive", dto.IsActive);
-            parameters.Add("@CreatedBy", createdBy);
-            parameters.Add("@ModifiedBy", modifiedBy);
-
-            var newBatchId = await connection.ExecuteScalarAsync<int>(
-                "_sp_InsertUpdateBatch",
-                parameters,
-                commandType: CommandType.StoredProcedure
-            );
-
-            return newBatchId;
-        }
+        
     }
 }

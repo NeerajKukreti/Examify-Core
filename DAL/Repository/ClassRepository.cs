@@ -10,7 +10,7 @@ namespace DAL.Repository
     public interface IClassRepository
     {
         Task<IEnumerable<ClassModel>> GetAllClassesAsync(int instituteId, int? classId = null);
-        Task<int> InsertOrUpdateClassAsync(ClassDTO dto, int? classId = null, int? createdBy = null, int? modifiedBy = null);
+        Task<int> InsertOrUpdateClassAsync(ClassDTO dto, int? classId = null, int? createdBy = null);
         Task<bool> ChangeStatus(int classId);
     }
 
@@ -52,17 +52,30 @@ namespace DAL.Repository
             return classes;
         }
 
-         public async Task<int> InsertOrUpdateClassAsync(ClassDTO dto, int? classId = null, int? createdBy = null, int? modifiedBy = null)
+         public async Task<int> InsertOrUpdateClassAsync(ClassDTO dto, int? classId = null, int? createdBy = null)
         {
             using var connection = Connection;
             var parameters = new DynamicParameters();
+
+            var batchTable = new DataTable();
+            batchTable.Columns.Add("BatchId", typeof(int));
+            batchTable.Columns.Add("BatchName", typeof(string));
+            batchTable.Columns.Add("IsActive", typeof(bool));
+
+            if (dto.Batches != null)
+            {
+                foreach (var batch in dto.Batches)
+                {
+                    batchTable.Rows.Add(batch.BatchId > 0 ? (object)batch.BatchId : DBNull.Value, batch.BatchName, batch.IsActive);
+                }
+            }
 
             parameters.Add("@ClassId", classId);
             parameters.Add("@InstituteId", dto.InstituteId);
             parameters.Add("@ClassName", dto.ClassName);
             parameters.Add("@IsActive", dto.IsActive);
-            parameters.Add("@CreatedBy", createdBy);
-            parameters.Add("@ModifiedBy", modifiedBy);
+            parameters.Add("@UserId", createdBy);
+            parameters.Add("@BatchList", batchTable.AsTableValuedParameter("dbo.BatchTVP"));
 
             var newClassId = await connection.ExecuteScalarAsync<int>(
                 "_sp_InsertUpdateClass",

@@ -143,11 +143,11 @@
                         <div class="batch-item" data-index="@i">
                             <input type="hidden" name="Batches[@i].BatchId" value="@Model.Batches[i].BatchId" />
                             <input type="hidden" name="Batches[@i].ClassId" value="@Model.Batches[i].ClassId" />
-                            
-                            @* @if (Model.Batches.Count > 1)
+
+                            @if (i > 0)
                             {
                                 <i class="fas fa-times remove-batch"></i>
-                            } *@
+                            }
                             
                             <div class="row">
                                 <div class="col-md-8">
@@ -159,7 +159,7 @@
                                 <div class="col-md-4">
                                     <div class="checkbox">
                                         <label>
-                                            <input name="Batches[@i].IsActive" type="checkbox" value="true" @(Model.Batches[i].IsActive == true ? "checked" : "") />
+                                            <input name="Batches[@i].IsActive" type="checkbox" value="true" class="batch-active-checkbox" @(Model.Batches[i].IsActive == true ? "checked" : "") />
                                             <input name="Batches[@i].IsActive" type="hidden" value="false" />
                                             Is Active
                                         </label>
@@ -185,7 +185,7 @@
                             <div class="col-md-4">
                                 <div class="checkbox">
                                     <label>
-                                        <input name="Batches[0].IsActive" type="checkbox" value="true" checked />
+                                        <input name="Batches[0].IsActive" type="checkbox" value="true" class="batch-active-checkbox" checked />
                                         <input name="Batches[0].IsActive" type="hidden" value="false" />
                                         Is Active
                                     </label>
@@ -230,7 +230,7 @@
                 <input type="hidden" name="Batches[${batchIndex}].BatchId" value="0" />
                 <input type="hidden" name="Batches[${batchIndex}].ClassId" value="0" />
                 
-                // <i class="fas fa-times remove-batch"></i>
+                <i class="fas fa-times remove-batch"></i>
                 
                 <div class="row">
                     <div class="col-md-8">
@@ -242,7 +242,7 @@
                     <div class="col-md-4">
                         <div class="checkbox">
                             <label>
-                                <input name="Batches[${batchIndex}].IsActive" type="checkbox" value="true" checked />
+                                <input name="Batches[${batchIndex}].IsActive" type="checkbox" value="true" class="batch-active-checkbox" checked />
                                 <input name="Batches[${batchIndex}].IsActive" type="hidden" value="false" />
                                 Is Active
                             </label>
@@ -298,6 +298,24 @@
         // Initialize remove buttons visibility
         updateRemoveButtons();
 
+        // Validate at least one active batch on checkbox change
+        $(document).on('change', '.batch-active-checkbox', function() {
+            const checkedCount = $('.batch-active-checkbox:checked').length;
+            if (checkedCount === 0) {
+                $(this).prop('checked', true);
+                if (typeof toastr !== 'undefined') {
+                    toastr.error('Atleast one active batch is required for a class');
+                } else {
+                    alert('Atleast one active batch is required for a class');
+                }
+            }
+        });
+
+        // Remove batch on click
+        $(document).on('click', '.remove-batch', function() {
+            removeBatch(this);
+        });
+
         // Form validation and submission
         $('#classForm').validate({
             rules: {
@@ -317,6 +335,17 @@
                         toastr.error('At least one batch is required.');
                     } else {
                         alert('At least one batch is required.');
+                    }
+                    return false;
+                }
+
+                // Validate at least one active batch
+                const activeBatches = document.querySelectorAll('.batch-active-checkbox:checked');
+                if (activeBatches.length === 0) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('Atleast one active batch is required for a class');
+                    } else {
+                        alert('Atleast one active batch is required for a class');
                     }
                     return false;
                 }

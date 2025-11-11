@@ -33,20 +33,6 @@ namespace ExamifyApi.Controllers
             return Ok(new { Success = true, Data = batches, Message = "Batches retrieved successfully" });
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateBatch([FromBody] BatchDTO dto)
-        {
-            var userId = _authService.GetCurrentUserID(); // logged-in user ID
-            var batchId = await _batchService.InsertOrUpdateBatchAsync(dto, createdBy: userId);
-            return Ok(new { BatchId = batchId });
-        }
-
-        [HttpPut("{batchId}")]
-        public async Task<IActionResult> UpdateBatch(int batchId, [FromBody] BatchDTO dto)
-        {
-            var userId = _authService.GetCurrentUserID(); // logged-in user ID
-            var updatedBatchId = await _batchService.InsertOrUpdateBatchAsync(dto, batchId, modifiedBy: userId);
-            return Ok(new { BatchId = updatedBatchId });
-        }
+         
     }
 }

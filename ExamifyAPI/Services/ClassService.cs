@@ -11,8 +11,7 @@ namespace ExamifyAPI.Services
         Task<int> InsertOrUpdateClassAsync(
             ClassDTO dto,
             int? classId = null,
-            int? createdBy = null,
-            int? modifiedBy = null
+            int? userId = null
         );
     }
 
@@ -32,21 +31,14 @@ namespace ExamifyAPI.Services
             return await _classRepository.GetAllClassesAsync(instituteId, classId);
         }
 
-        public async Task<int> InsertOrUpdateClassAsync(ClassDTO dto, int? classId = null, int? createdBy = null, int? modifiedBy = null)
+        public async Task<int> InsertOrUpdateClassAsync(ClassDTO dto, int? classId, int? userId)
         {
             // Business Rule: must have at least one batch
             if (dto.Batches == null || !dto.Batches.Any())
                 throw new ArgumentException("A class must have at least one batch.");
 
             // Insert/Update Class
-            var newClassId = await _classRepository.InsertOrUpdateClassAsync(dto, classId, createdBy, modifiedBy);
-
-            // Insert/Update batches linked to this class
-            foreach (var batchDto in dto.Batches)
-            {
-                batchDto.ClassId = newClassId; // ensure class is linked
-                await _batchRepository.InsertOrUpdateBatchAsync(batchDto, batchDto.BatchId, createdBy, modifiedBy);
-            }
+            var newClassId = await _classRepository.InsertOrUpdateClassAsync(dto, classId, userId); 
 
             return newClassId;
         }

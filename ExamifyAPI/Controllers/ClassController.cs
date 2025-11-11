@@ -57,7 +57,7 @@ namespace ExamifyApi.Controllers
             try
             {
                 var userId = _authService.GetCurrentUserID(); // logged-in user ID
-                var classId = await _classService.InsertOrUpdateClassAsync(dto, createdBy: userId);
+                var classId = await _classService.InsertOrUpdateClassAsync(dto, userId);
                 return Ok(new { Success = true, Data = classId, Message = "Class created successfully" });
             }
             catch (Exception ex)
@@ -72,7 +72,7 @@ namespace ExamifyApi.Controllers
             try
             {
                 var userId = _authService.GetCurrentUserID(); // logged-in user ID
-                var updatedClassId = await _classService.InsertOrUpdateClassAsync(dto, classId, modifiedBy: userId);
+                var updatedClassId = await _classService.InsertOrUpdateClassAsync(dto, classId, userId);
                 return Ok(new { Success = true, Data = updatedClassId, Message = "Class updated successfully" });
             }
             catch (Exception ex)
