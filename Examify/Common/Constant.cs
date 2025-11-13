@@ -14,6 +14,7 @@ namespace Examify.Common.constants
         public const string ExamById = "Exam"; //Api
         public const string ExamQuestions = "Exam/{0}/sessionquestions";
         public const string ExamSubmit = "Exam/{0}/submit";
+        public const string PublishExamUrl = BaseUrl+"Exam/{id}/publish";
 
         // Question endpoints
         public const string QuestionList = "question/list";

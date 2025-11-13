@@ -77,8 +77,10 @@ var ExamTable = function () {
                 {
                     "title": "Publish", "data": "examId", "orderable": false,
                     fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                        var str = '<button class="btn btn-sm btn-success" data-id="' + oData.examId + '" id="PublishExam" title="Publish Exam">' +
-                            '<i class="fas fa-paper-plane"></i>' +
+                        var btnClass = oData.isPublished ? 'btn-success' : 'btn-outline-secondary';
+                        var iconClass = oData.isPublished ? 'fas fa-paper-plane' : 'fas fa-paper-plane text-muted';
+                        var str = '<button class="btn btn-sm ' + btnClass + '" data-id="' + oData.examId + '" id="PublishExam" title="' + (oData.isPublished ? 'Unpublish' : 'Publish') + ' Exam">' +
+                            '<i class="' + iconClass + '"></i>' +
                             '</button>';
                         $(nTd).html(str);
                     }
@@ -157,13 +159,15 @@ $(document).ready(function () {
 
     $(document).on('click', '#PublishExam', function () {
         var examId = $(this).data('id');
+        var isPublished = $(this).hasClass('btn-success');
+        var action = isPublished ? 'unpublish' : 'publish';
         
-        if (confirm('Are you sure you want to publish this exam?')) {
+        if (confirm('Are you sure you want to ' + action + ' this exam?')) {
             $.ajax({
-                url: '/Exam/Publish/' + examId,
+                url: PublishExamUrl.replace("{id}", examId),
                 type: 'POST',
                 success: function (response) {
-                    if (response.success) {
+                    if (response.Success) {
                         ExamTable.reloadTable();
                         if (typeof toastr !== 'undefined') {
                             toastr.success(response.message || 'Exam published successfully!');

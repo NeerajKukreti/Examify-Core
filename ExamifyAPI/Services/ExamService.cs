@@ -10,6 +10,7 @@ namespace ExamifyAPI.Services
         Task<ExamModel> GetExamByIdAsync(int examId);
         Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null, int? userloggedIn = null);
         Task<bool> ChangeStatusAsync(int examId);
+        Task<bool> PublishExamAsync(int examId);
         int SubmitExamResponses(ExamSubmissionModel submission);
         ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId);
         ExamResultModel GetExamResult(int sessionId);
@@ -48,6 +49,11 @@ namespace ExamifyAPI.Services
         public async Task<bool> ChangeStatusAsync(int examId)
         {
             return await _examRepository.ChangeStatus(examId);
+        }
+
+        public async Task<bool> PublishExamAsync(int examId)
+        {
+            return await _examRepository.PublishExam(examId);
         }
         public int SubmitExamResponses(ExamSubmissionModel submission)
         {

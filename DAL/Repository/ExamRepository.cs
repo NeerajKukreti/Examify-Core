@@ -19,6 +19,7 @@ namespace DAL.Repository
         Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null,
             int? userloggedIn = null);
         Task<bool> ChangeStatus(int examId);
+        Task<bool> PublishExam(int examId);
         Task<IEnumerable<AvailableQuestionDTO>> GetAvailableQuestionsAsync(int examId, int instituteId);
         Task<IEnumerable<ExamQuestionDTO>> GetExamQuestionsAsync(int examId);
         Task<bool> SaveExamQuestionsAsync(ExamQuestionConfigDTO config);
@@ -75,6 +76,17 @@ namespace DAL.Repository
             using var connection = Connection;
             var rowsAffected = await connection.ExecuteAsync(
                 "UPDATE Exam SET IsActive = ~IsActive WHERE ExamId = @ExamId",
+                new { ExamId = examId },
+                commandType: CommandType.Text
+            );
+            return rowsAffected > 0;
+        }
+
+        public async Task<bool> PublishExam(int examId)
+        {
+            using var connection = Connection;
+            var rowsAffected = await connection.ExecuteAsync(
+                "UPDATE Exam SET IsPublished = ~IsPublished WHERE ExamId = @ExamId",
                 new { ExamId = examId },
                 commandType: CommandType.Text
             );

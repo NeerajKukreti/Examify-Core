@@ -113,6 +113,24 @@ namespace ExamifyAPI.Controllers
             }
         }
 
+        [HttpPost("{id}/publish")]
+        public async Task<IActionResult> PublishExam(int id)
+        {
+            try
+            {
+                var success = await _examService.PublishExamAsync(id);
+
+                if (success)
+                    return Ok(new { Success = true, Message = "Exam publish status updated successfully." });
+                else
+                    return NotFound(new { Success = false, Message = "Exam not found or update failed." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
+            }
+        }
+
  
 
         #region Exam Question Configuration

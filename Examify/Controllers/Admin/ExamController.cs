@@ -18,7 +18,8 @@ namespace Examify.Controllers.Admin
         }
         public IActionResult Index()
         {
-            return View("Index");
+            ViewBag.PublishExamUrl = Common.constants.ENDPOINTS.PublishExamUrl;
+            return View("Index");   
         }
 
         [HttpGet]
