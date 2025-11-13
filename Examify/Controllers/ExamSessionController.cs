@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Examify.Common;
+using Examify.Extensions;
 using System.Text.Json;
 using DataModel;
 using DataModel.Common;
@@ -12,13 +13,11 @@ public class ExamSessionController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ApiSettings _apiSettings;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ExamSessionController(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings, IHttpContextAccessor httpContextAccessor)
+    public ExamSessionController(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings)
     {
         _httpClientFactory = httpClientFactory;
         _apiSettings = apiSettings.Value;
-        _httpContextAccessor = httpContextAccessor;
     }
 
     public IActionResult Index()
@@ -28,7 +27,7 @@ public class ExamSessionController : Controller
 
     public IActionResult UserExam()
     {
-        ViewBag.UserId = JwtHelper.GetUserIdFromSession(_httpContextAccessor);
+        ViewBag.UserId = User.GetUserId();
         return View();
     }
 
@@ -43,14 +42,14 @@ public class ExamSessionController : Controller
             var apiResponse = JsonSerializer.Deserialize<ApiResponse<ExamModel>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             var exam = apiResponse?.Data;   
             ViewBag.ExamId = id;
-            ViewBag.UserId = JwtHelper.GetUserIdFromSession(_httpContextAccessor);
+            ViewBag.UserId = User.GetUserId();
             ViewBag.ApiBaseUrl = ENDPOINTS.BaseUrl + "Exam";
             ViewBag.StartExamUrl = ENDPOINTS.StartExamUrl;
             ViewBag.ExamResultUrl = ENDPOINTS.ExamResultUrl;
             return View(exam);
         }
         ViewBag.ExamId = id;
-        ViewBag.UserId = JwtHelper.GetUserIdFromSession(_httpContextAccessor);
+        ViewBag.UserId = User.GetUserId();
         ViewBag.ApiBaseUrl = ENDPOINTS.BaseUrl + "Exam";
         ViewBag.StartExamUrl = ENDPOINTS.StartExamUrl;
         ViewBag.ExamResultUrl = ENDPOINTS.ExamResultUrl;
@@ -61,7 +60,7 @@ public class ExamSessionController : Controller
     public IActionResult StartExam(int examId)
     {
         ViewBag.ExamId = examId;
-        ViewBag.UserId = JwtHelper.GetUserIdFromSession(_httpContextAccessor);
+        ViewBag.UserId = User.GetUserId();
         ViewBag.ApiBaseUrl = ENDPOINTS.BaseUrl + "Exam";
         ViewBag.StartExamUrl = ENDPOINTS.StartExamUrl;
         ViewBag.ExamResultUrl = ENDPOINTS.ExamResultUrl;

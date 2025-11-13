@@ -30,7 +30,7 @@ var ClassTable = function () {
                     }
                 },
                 {
-                    "title": "Status", "data": "isActive",
+                    "title": "Status", "data": "isActive", "width": "10px",
                     fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                         var active = '<i class="fas fa-check-circle text-success"></i>';
                         var inactive = '<i class="fas fa-times-circle text-danger"></i>';
@@ -44,7 +44,7 @@ var ClassTable = function () {
                     }
                 },
                 {
-                    "title": "Action", "data": "isActive",
+                    "title": "", "data": "isActive", "width": "10px", "orderable": false,
                     fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                         str = '<div class="btn-group" role="group">' +
                             '<a style="cursor:pointer" class="text-decoration-underline" data-id=' + oData.classId +

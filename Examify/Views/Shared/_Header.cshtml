@@ -146,10 +146,11 @@
             </li>
             <!--end::Fullscreen Toggle-->
             <!--begin::User Menu Dropdown-->
+            @using Examify.Extensions
             @{
-                var userName = Context.Session.GetString("UserName") ?? "Guest";
-                var userEmail = Context.Session.GetString("Email") ?? "";
-                var userRole = Context.Session.GetString("UserRole") ?? "";
+                var userName = User.GetUserName() ?? "Guest";
+                var userEmail = User.GetEmail() ?? "";
+                var userRole = User.GetRole() ?? "";
             }
             <li class="nav-item dropdown user-menu">
                 <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">

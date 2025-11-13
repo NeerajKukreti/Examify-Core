@@ -1,4 +1,5 @@
 using Examify.Services;
+using Examify.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Model.DTO;
@@ -23,7 +24,7 @@ namespace Examify.Controllers.Admin
         [HttpGet]
         public async Task<IActionResult> LoadSubjects()
         {
-            var instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+            var instituteId = User.GetInstituteId() ?? 3;
             var subjects = await _subjectService.GetAllAsync(instituteId);
             return Json(new { data = subjects });
         }
@@ -33,7 +34,7 @@ namespace Examify.Controllers.Admin
             var model = new SubjectDTO
             {
                 SubjectName = "",
-                InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3,
+                InstituteId = User.GetInstituteId() ?? 3,
                 Topics = new List<SubjectTopicDTO>()
             };
 
@@ -45,7 +46,7 @@ namespace Examify.Controllers.Admin
         {
             if (ModelState.IsValid)
             {
-                model.InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+                model.InstituteId = User.GetInstituteId() ?? 3;
                 model.IsActive = true;
 
                 var success = await _subjectService.CreateAsync(model);
@@ -63,7 +64,7 @@ namespace Examify.Controllers.Admin
 
         public async Task<IActionResult> Edit(int id)
         {
-            var instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+            var instituteId = User.GetInstituteId() ?? 3;
             var subject = await _subjectService.GetByIdAsync(id, instituteId);
 
             if (subject == null) return NotFound();
@@ -95,7 +96,7 @@ namespace Examify.Controllers.Admin
         {
             if (ModelState.IsValid)
             {
-                model.InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+                model.InstituteId = User.GetInstituteId() ?? 3;
 
                 var success = await _subjectService.UpdateAsync(model);
                 if (success)

@@ -1,4 +1,5 @@
 using Examify.Services;
+using Examify.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Text;
@@ -46,12 +47,10 @@ namespace Examify.Attributes
 
             keyBuilder.Append($"{context.Controller.GetType().Name}_{context.ActionDescriptor.RouteValues["action"]}");
 
-            // Add session-based institute ID if available
-            var instituteId = context.HttpContext.Session.GetInt32("InstituteId");
+            var instituteId = context.HttpContext.User.GetInstituteId();
             if (instituteId.HasValue)
                 keyBuilder.Append($"_inst{instituteId}");
 
-            // Add action parameters
             foreach (var param in context.ActionArguments.OrderBy(x => x.Key))
             {
                 keyBuilder.Append($"_{param.Key}{param.Value}");

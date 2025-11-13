@@ -162,7 +162,7 @@ function loadTopics(subjectId, callback) {
         var $ddl = $('#ddlTopic');
         $ddl.empty().append('<option value="">Select Topic</option>');
         $.each(data.Data, function (i, topic) {
-            $ddl.append('<option value="' + topic.TopicId + '">' + topic.Description + '</option>');
+            $ddl.append('<option value="' + topic.TopicId + '">' + topic.TopicName + '</option>');
         });
         if (callback) callback();
     });
@@ -793,6 +793,7 @@ $(function () {
         } else {
             // Options (static and dynamic) for MCQ or other question types
             let correctChecked = false;
+            let hasEmptyOption = false;
             
             // Remove existing option fields (to rebuild them in proper order)
             const keysToRemove = [];
@@ -812,6 +813,15 @@ $(function () {
                 
                 // Get text from editor
                 var optionText = qOpt ? qOpt.root.innerHTML : '';
+                var optionPlainText = qOpt ? $(qOpt.root).text().trim() : '';
+                
+                // Validate option has content
+                if (!optionPlainText) {
+                    hasEmptyOption = true;
+                    $group.find('.option-error').html('<span class="error-message" style="color:brown;">Option cannot be empty</span>');
+                } else {
+                    $group.find('.option-error').empty();
+                }
                 
                 // Get IsCorrect value
                 var isChecked = $group.find('input[type="checkbox"]').is(':checked');
@@ -826,8 +836,11 @@ $(function () {
                 formData.append(`Options[${i}].ChoiceId`, choiceId);
             });
 
-            // At least one correct option
-            if (!correctChecked) {
+            // Validate options
+            if (hasEmptyOption) {
+                $('#optionsValidation').html('<span class="error-message" style="color:brown;">All options must have content</span>');
+                valid = false;
+            } else if (!correctChecked) {
                 $('#optionsValidation').html('<span class="error-message" style="color:brown;">At least one option must be marked as correct</span>');
                 valid = false;
             } else {

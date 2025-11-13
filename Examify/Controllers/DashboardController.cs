@@ -1,11 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Examify.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
+using Examify.Extensions;
 
 namespace Examify.Controllers
 {
@@ -21,11 +16,12 @@ namespace Examify.Controllers
 
         public ActionResult Index()
         {
-            var role = User.FindFirst(ClaimTypes.Role)?.Value;
-            var userId = int.TryParse(HttpContext.Session.GetString("UserId"), out var uid) ? uid : 1; 
+            var role = User.GetRole();
+            var userId = User.GetUserId();
+            var instituteId = User.GetInstituteId();
             
             ViewBag.UserId = userId;
-            ViewBag.InstituteId = userId;
+            ViewBag.InstituteId = instituteId;
             ViewBag.ApiBaseUrl = _configuration["ApiSettings:BaseUrl"] ?? "https://localhost:7271/api";
 
             return role?.ToLower() switch

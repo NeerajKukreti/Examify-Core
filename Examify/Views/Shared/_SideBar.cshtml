@@ -19,8 +19,9 @@
     <div class="sidebar-wrapper">
         <nav class="mt-2">
             <!--begin::Sidebar Menu-->
+            @using Examify.Extensions
             @{
-                var userRole = Context.Session.GetString("UserRole") ?? "";
+                var userRole = User.GetRole() ?? "";
             }
             <ul class="nav sidebar-menu flex-column"
                 data-lte-toggle="treeview"

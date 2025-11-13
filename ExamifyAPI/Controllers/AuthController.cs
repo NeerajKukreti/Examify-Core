@@ -38,6 +38,15 @@ public class AuthController : ControllerBase
     [Authorize(Roles = "Admin")]
     [HttpGet("admin-only")]
     public IActionResult AdminOnly() => Ok("Welcome Admin!");
+
+    [Authorize]
+    [HttpGet("user/{username}")]
+    public async Task<IActionResult> GetUserByUsernameAsync(string username)
+    {
+        var user = await _authService.GetUserByUsernameAsync(username);
+        if (user == null) return NotFound();
+        return Ok(new { user.InstituteId, user.FullName });
+    } 
 }
 
 public class RefreshTokenRequest

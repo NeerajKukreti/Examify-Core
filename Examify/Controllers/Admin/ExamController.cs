@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using DataModel;
 using Examify.Services;
+using Examify.Extensions;
 using Model.DTO;
 
 namespace Examify.Controllers.Admin
@@ -135,7 +136,7 @@ namespace Examify.Controllers.Admin
         [HttpGet]
         public async Task<IActionResult> GetAvailableQuestions(int examId)
         {
-            var instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+            var instituteId = User.GetInstituteId() ?? 3;
             var questions = await _examService.GetAvailableQuestionsAsync(examId, instituteId);
             return Json(new { data = questions });
         }

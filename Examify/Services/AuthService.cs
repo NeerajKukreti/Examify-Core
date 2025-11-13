@@ -19,7 +19,8 @@ namespace Examify.Services
             _apiSettings = apiSettings.Value;
         }
 
-        public async Task<(bool Success, string? Token, string? RefreshToken, string? UserId, string? ErrorMessage)> LoginAsync(UserDTO dto)
+        public async Task<(bool Success, string? Token, string? RefreshToken, int? InstituteId, string? FullName, string? ErrorMessage)> 
+            LoginAsync(UserDTO dto)
         {
             try
             {
@@ -31,268 +32,62 @@ namespace Examify.Services
                 var response = await client.PostAsync("auth/login", content);
                 if (!response.IsSuccessStatusCode)
                 {
-                    return (false, null, null, null, "Invalid credentials");
+                    return (false, null, null, null, null, "Invalid credentials");
                 }
 
                 var result = await response.Content.ReadAsStringAsync();
                 var authResult = JsonSerializer.Deserialize<JsonElement>(result);
                 var token = authResult.GetProperty("AccessToken").GetString();
                 var refreshToken = authResult.GetProperty("RefreshToken").GetString();
+                var instituteId = authResult.TryGetProperty("InstituteId", out var instId) ? instId.GetInt32() : (int?)null;
+                var fullName = authResult.TryGetProperty("FullName", out var name) ? name.GetString() : null;
 
-                // Decode JWT to get user data
-                var tokenData = JwtHelper.DecodeToken(token!);
-
-                return (true, token, refreshToken, tokenData.UserId, null);
+                return (true, token, refreshToken, instituteId, fullName, null);
             }
             catch (Exception ex)
             {
-                return (false, null, null, null, ex.Message);
+                return (false, null, null, null, null, ex.Message);
             }
         }
 
-        public void SaveSession(string token, string refreshToken, string? userId)
+        public void SaveTokensInSession(string token, string refreshToken)
         {
-            try
-            {
-                // Parse token to get comprehensive user data and automatically set in session
-                var userTokenData = ParseToken(token);
-                
-                if (userTokenData?.IsValid == true)
-                {
-                    // Store refresh token
-                    _httpContextAccessor.HttpContext!.Session.SetString("RefreshToken", refreshToken);
-                    System.Diagnostics.Debug.WriteLine($"Session saved for user: {userTokenData.Username}");
-                }
-                else
-                {
-                    // Fallback to basic session setting if token parsing fails
-                    _httpContextAccessor.HttpContext!.Session.SetString("JWToken", token);
-                    _httpContextAccessor.HttpContext!.Session.SetString("RefreshToken", refreshToken);
-                    if (userId != null)
-                    {
-                        _httpContextAccessor.HttpContext!.Session.SetString("UserId", userId);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to save session: {ex.Message}");
-                
-                // Fallback to basic session setting
-                _httpContextAccessor.HttpContext!.Session.SetString("JWToken", token);
-                _httpContextAccessor.HttpContext!.Session.SetString("RefreshToken", refreshToken);
-                if (userId != null)
-                {
-                    _httpContextAccessor.HttpContext!.Session.SetString("UserId", userId);
-                }
-            }
+            _httpContextAccessor.HttpContext!.Session.SetString("JWToken", token);
+            _httpContextAccessor.HttpContext!.Session.SetString("RefreshToken", refreshToken);
         }
 
         public void ClearSession()
         {
-            try
-            {
-                var session = _httpContextAccessor.HttpContext?.Session;
-                if (session == null) return;
+            var session = _httpContextAccessor.HttpContext?.Session;
+            if (session == null) return;
 
-                // Clear all user-related session data
-                session.Remove("JWToken");
-                session.Remove("RefreshToken");
-                session.Remove("UserId");
-                session.Remove("UserIdInt");
-                session.Remove("UserName");
-                session.Remove("Email");
-                session.Remove("UserRole");
-                session.Remove("InstituteId");
-
-                System.Diagnostics.Debug.WriteLine("All user session data cleared");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to clear session: {ex.Message}");
-            }
+            session.Remove("JWToken");
+            session.Remove("RefreshToken");
         }
 
-        public UserTokenData? ParseToken(string token)
+        public JwtTokenData? ParseToken(string? token) => JwtHelper.ParseToken(token);
+
+        public async Task<(int? InstituteId, string? FullName)> GetUserDetailsAsync(string username)
         {
             try
             {
-                if (string.IsNullOrEmpty(token))
-                    return null;
-
-                // Use existing JwtHelper to decode the token
-                var tokenData = JwtHelper.DecodeToken(token);
+                var client = _httpClientFactory.CreateClient("ExamifyAPI");
+                var response = await client.GetAsync($"auth/user/{username}");
                 
-                if (tokenData == null)
-                    return null;
+                if (!response.IsSuccessStatusCode)
+                    return (null, null);
 
-                // Parse the JWT token to get additional claims
-                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
-                var jsonToken = handler.ReadJwtToken(token);
+                var result = await response.Content.ReadAsStringAsync();
+                var userData = JsonSerializer.Deserialize<JsonElement>(result);
+                var instituteId = userData.TryGetProperty("InstituteId", out var instId) ? instId.GetInt32() : (int?)null;
+                var fullName = userData.TryGetProperty("FullName", out var name) ? name.GetString() : null;
 
-                // Extract additional claims
-                var roleClaim = jsonToken.Claims.FirstOrDefault(x => x.Type == System.Security.Claims.ClaimTypes.Role)?.Value;
-                var instituteClaim = jsonToken.Claims.FirstOrDefault(x => x.Type == "InstituteId")?.Value;
-                
-                // Get expiry date
-                var expiryDate = jsonToken.ValidTo;
-
-                var userTokenData = new UserTokenData
-                {
-                    UserId = tokenData.UserId,
-                    Username = tokenData.Username,
-                    Email = tokenData.Email,
-                    Role = roleClaim,
-                    ExpiryDate = expiryDate,
-                    IsValid = !string.IsNullOrEmpty(tokenData.UserId) && expiryDate > DateTime.UtcNow,
-                    Token = token,
-                    IsExpired = expiryDate <= DateTime.UtcNow
-                };
-
-                // Automatically set session data when parsing token
-                if (userTokenData.IsValid && _httpContextAccessor.HttpContext?.Session != null)
-                {
-                    SetUserDataInSession(userTokenData);
-                }
-
-                return userTokenData;
+                return (instituteId, fullName);
             }
-            catch (Exception ex)
+            catch
             {
-                // Log the exception if needed
-                System.Diagnostics.Debug.WriteLine($"Token parsing failed: {ex.Message}");
-                return null;
+                return (null, null);
             }
         }
-
-        private void SetUserDataInSession(UserTokenData userTokenData)
-        {
-            try
-            {
-                var session = _httpContextAccessor.HttpContext?.Session;
-                if (session == null) return;
-
-                // Set JWT token
-                if (!string.IsNullOrEmpty(userTokenData.Token))
-                {
-                    session.SetString("JWToken", userTokenData.Token);
-                }
-
-                // Set user ID
-                if (!string.IsNullOrEmpty(userTokenData.UserId))
-                {
-                    session.SetString("UserId", userTokenData.UserId);
-                    
-                    // Also set as integer if it's a valid integer
-                    if (int.TryParse(userTokenData.UserId, out var userIdInt))
-                    {
-                        session.SetInt32("UserIdInt", userIdInt);
-                    }
-                }
-
-                // Set username
-                if (!string.IsNullOrEmpty(userTokenData.Username))
-                {
-                    session.SetString("UserName", userTokenData.Username);
-                }
-
-                // Set email
-                if (!string.IsNullOrEmpty(userTokenData.Email))
-                {
-                    session.SetString("Email", userTokenData.Email);
-                }
-
-                // Set role
-                if (!string.IsNullOrEmpty(userTokenData.Role))
-                {
-                    session.SetString("UserRole", userTokenData.Role);
-                }
-
-                System.Diagnostics.Debug.WriteLine($"Session data set for user: {userTokenData.Username} (ID: {userTokenData.UserId}, Role: {userTokenData.Role})");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to set session data: {ex.Message}");
-            }
-        }
-
-        public UserTokenData? ParseCurrentSessionToken()
-        {
-            try
-            {
-                var token = _httpContextAccessor.HttpContext?.Session.GetString("JWToken");
-                return ParseToken(token);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Session token parsing failed: {ex.Message}");
-                return null;
-            }
-        }
-
-        public CurrentUserInfo GetCurrentUserInfo()
-        {
-            try
-            {
-                var session = _httpContextAccessor.HttpContext?.Session;
-                if (session == null) return new CurrentUserInfo();
-
-                return new CurrentUserInfo
-                {
-                    UserId = session.GetString("UserId"),
-                    UserIdInt = session.GetInt32("UserIdInt"),
-                    Username = session.GetString("UserName"),
-                    Email = session.GetString("Email"),
-                    Role = session.GetString("UserRole"),
-                    InstituteId = session.GetInt32("InstituteId"),
-                    IsAuthenticated = !string.IsNullOrEmpty(session.GetString("JWToken")) && !string.IsNullOrEmpty(session.GetString("UserId"))
-                };
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to get current user info: {ex.Message}");
-                return new CurrentUserInfo();
-            }
-        }
-    }
-
-    // Current user information from session
-    public class CurrentUserInfo
-    {
-        public string? UserId { get; set; }
-        public int? UserIdInt { get; set; }
-        public string? Username { get; set; }
-        public string? Email { get; set; }
-        public string? Role { get; set; }
-        public int? InstituteId { get; set; }
-        public bool IsAuthenticated { get; set; }
-        
-        // Helper properties
-        public bool IsAdmin => string.Equals(Role, "Admin", StringComparison.OrdinalIgnoreCase);
-        public bool IsTeacher => string.Equals(Role, "Teacher", StringComparison.OrdinalIgnoreCase);
-        public bool IsStudent => string.Equals(Role, "Student", StringComparison.OrdinalIgnoreCase);
-        public bool IsInstitute => string.Equals(Role, "Institute", StringComparison.OrdinalIgnoreCase);
-    }
-
-    // Token data model for parsed JWT information
-    public class UserTokenData
-    {
-        public string? UserId { get; set; }
-        public string? Username { get; set; }
-        public string? Email { get; set; }
-        public string? Role { get; set; } 
-
-        public DateTime? ExpiryDate { get; set; }
-        public bool IsValid { get; set; }
-        public bool IsExpired { get; set; }
-        public string? Token { get; set; }
-        
-        // Additional helper properties
-        public bool IsAdmin => string.Equals(Role, "Admin", StringComparison.OrdinalIgnoreCase); 
-        public bool IsStudent => string.Equals(Role, "Student", StringComparison.OrdinalIgnoreCase);
-        public bool IsInstitute => string.Equals(Role, "Institute", StringComparison.OrdinalIgnoreCase);
-        
-        public TimeSpan? TimeUntilExpiry => ExpiryDate.HasValue ? ExpiryDate.Value - DateTime.UtcNow : null;
-        public bool IsNearExpiry => TimeUntilExpiry.HasValue && TimeUntilExpiry.Value.TotalMinutes < 30; // Expires in 30 minutes
     }
 }

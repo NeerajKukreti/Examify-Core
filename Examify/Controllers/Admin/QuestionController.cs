@@ -2,12 +2,12 @@ using DataModel;
 using Examify.Attributes;
 using Examify.Common.constants;
 using Examify.Services;
+using Examify.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Examify.Controllers.Admin
 {
-    //[AutoLoginAuthorize("admin", "Test@123", "Admin", "Teacher")] // Auto-login with credentials and restrict to Admin/Teacher roles
     [Authorize(Roles = "Institute")]
     public class QuestionController : Controller
     {
@@ -43,7 +43,7 @@ namespace Examify.Controllers.Admin
         // GET: Admin/Question/Create
         public IActionResult Create()
         {
-            ViewBag.instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+            ViewBag.instituteId = User.GetInstituteId();
             return PartialView("_Create", new QuestionModel());
         }
 
@@ -67,7 +67,7 @@ namespace Examify.Controllers.Admin
         // GET: Admin/Question/Edit/{id}
         public async Task<IActionResult> Edit(int id)
         {
-            ViewBag.instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+            ViewBag.instituteId = User.GetInstituteId();
 
             var question = await _QuestionService.GetByIdAsync(id);
 

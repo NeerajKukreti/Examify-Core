@@ -16,16 +16,7 @@ var ExamTable = function () {
             },
             "columns": [
                 {
-                    "title": "Exam Name", "data": "examName",
-                    fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                        var str = '<div class="btn-group" role="group">' +
-                            '<a style="cursor:pointer" class="text-decoration-underline" data-id=' + oData.examId +
-                            ' data-bs-target="#examModel" data-bs-toggle="modal" id="EditExam">' +
-                            oData.examName +
-                            '</a>' +
-                            '</div>';
-                        $(nTd).html(str);
-                    }
+                    "title": "Exam Name", "data": "examName" 
                 },
                 {
                     "title": "Description", "data": "description",
@@ -60,13 +51,35 @@ var ExamTable = function () {
                             '</div>';
                         $(nTd).html(str);
                     }
+                }
+                ,
+                {
+                    "title": "Edit", "data": "examId", "orderable": false,
+                    fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        var str = '<div class="btn-group" role="group">' +
+                            '<a style="cursor:pointer" class="text-decoration-underline" data-id=' + oData.examId +
+                            ' data-bs-target="#examModel" data-bs-toggle="modal" id="EditExam">' +
+                            '<i class="fas fa-edit"></i>' +
+                            '</a>' +
+                            '</div>';
+                        $(nTd).html(str);
+                    }
                 },
                 {
-                    "title": "Actions", "data": "examId",
+                    "title": "Configure", "data": "examId", "orderable": false,
                     fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                        var str = '<a href="/Exam/ConfigureQuestions/' + oData.examId + '" class="btn btn-sm btn-primary" title="Configure Questions">' +
-                            '<i class="fas fa-cog"></i> Configure' +
+                        var str = '<a href="/Exam/ConfigureQuestions/' + oData.examId + '" class="btn btn-sm btn-primary" title="Configure Exam">' +
+                            '<i class="fas fa-cog"></i> ' +
                             '</a>';
+                        $(nTd).html(str);
+                    }
+                },
+                {
+                    "title": "Publish", "data": "examId", "orderable": false,
+                    fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        var str = '<button class="btn btn-sm btn-success" data-id="' + oData.examId + '" id="PublishExam" title="Publish Exam">' +
+                            '<i class="fas fa-paper-plane"></i>' +
+                            '</button>';
                         $(nTd).html(str);
                     }
                 }
@@ -140,6 +153,40 @@ $(document).ready(function () {
                 }
             }
         });
+    });
+
+    $(document).on('click', '#PublishExam', function () {
+        var examId = $(this).data('id');
+        
+        if (confirm('Are you sure you want to publish this exam?')) {
+            $.ajax({
+                url: '/Exam/Publish/' + examId,
+                type: 'POST',
+                success: function (response) {
+                    if (response.success) {
+                        ExamTable.reloadTable();
+                        if (typeof toastr !== 'undefined') {
+                            toastr.success(response.message || 'Exam published successfully!');
+                        } else {
+                            alert(response.message || 'Exam published successfully!');
+                        }
+                    } else {
+                        if (typeof toastr !== 'undefined') {
+                            toastr.error(response.message || 'Failed to publish exam');
+                        } else {
+                            alert(response.message || 'Failed to publish exam');
+                        }
+                    }
+                },
+                error: function (err) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('An error occurred while publishing the exam');
+                    } else {
+                        alert('An error occurred while publishing the exam');
+                    }
+                }
+            });
+        }
     });
 
     $(document).on('click', '#ActivateExam', function () {

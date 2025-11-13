@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace ExamifyAPI.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class SubjectController : ControllerBase

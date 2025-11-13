@@ -63,7 +63,7 @@
                     }
                 },
                 {
-                    "data": "studentName","width": "30px",
+                    "data": "studentName", "width": "30px", "orderable": false, 
                     fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                         str = '<div class="btn-group" role="group">' +
                             '<a style="cursor:pointer" class="text-decoration-underline" data-id=' + oData.studentId +

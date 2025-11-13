@@ -38,7 +38,7 @@ var SubjectTable = function () {
                     }
                 },
                 {
-                     "data": "subjectName", "width":"30px",
+                    "data": "subjectName", "width": "10px", "orderable": false,  
                     fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                         var str = '<div class="btn-group" role="group">' +
                             '<a style="cursor:pointer" class="text-decoration-underline" data-id=' + oData.subjectId +

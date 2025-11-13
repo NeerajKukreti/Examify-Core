@@ -1,5 +1,6 @@
 using DataModel;
 using Examify.Services;
+using Examify.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Model.DTO;
@@ -39,8 +40,7 @@ namespace Examify.Controllers.Admin
         [HttpGet]
         public async Task<IActionResult> LoadStudents()
         {
-            // Get InstituteId from session (similar to how questions work)
-            var instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3; // Default to 1 for now
+            var instituteId = User.GetInstituteId() ?? 3;
 
             var students = await _studentService.GetAllAsync(instituteId);
             return Json(new { data = students });
@@ -55,7 +55,7 @@ namespace Examify.Controllers.Admin
                 Mobile = "",
                 UserName = "",
                 Password = "",
-                InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 1,
+                InstituteId = User.GetInstituteId() ?? 1,
                 ActivationDate  = DateTime.Now,
                 Validity = DateTime.Now.AddYears(1)
             };
@@ -72,7 +72,7 @@ namespace Examify.Controllers.Admin
         {
             if (ModelState.IsValid)
             {
-                model.InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+                model.InstituteId = User.GetInstituteId() ?? 3;
                 model.UserName = model.Mobile; // Username is same as mobile
                 model.IsActive = true;
 
@@ -109,7 +109,7 @@ namespace Examify.Controllers.Admin
         // GET: Admin/Student/Edit/{id}
         public async Task<IActionResult> Edit(int id)
         {
-            var instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+            var instituteId = User.GetInstituteId() ?? 3;
             var student = await _studentService.GetByIdAsync(id, instituteId);
 
             if (student == null) return NotFound();
@@ -158,7 +158,7 @@ namespace Examify.Controllers.Admin
         {
             if (ModelState.IsValid)
             {
-                model.InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+                model.InstituteId = User.GetInstituteId() ?? 3;
                 model.UserName = model.Mobile; // Username is same as mobile
 
                 // Validate that BatchId belongs to the selected ClassId (only if both are provided)

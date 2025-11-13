@@ -1,5 +1,6 @@
 using Examify.Attributes;
 using Examify.Services;
+using Examify.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Model.DTO;
@@ -27,8 +28,7 @@ namespace Examify.Controllers.Admin
         [Cached(5, "classes")]
         public async Task<IActionResult> LoadClasses()
         {
-            // Get InstituteId from session
-            var instituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3; // Default to 3 for now
+            var instituteId = User.GetInstituteId() ?? 3;
 
             var classes = await _classService.GetAllAsync(instituteId);
             return Json(new { data = classes });
@@ -40,7 +40,7 @@ namespace Examify.Controllers.Admin
             var model = new ClassDTO
             {
                 ClassName = "",
-                InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3,
+                InstituteId = User.GetInstituteId() ?? 3,
                 IsActive = true,
                 Batches = new List<BatchDTO>
                 {
@@ -58,7 +58,7 @@ namespace Examify.Controllers.Admin
         {
             if (ModelState.IsValid)
             {
-                model.InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+                model.InstituteId = User.GetInstituteId() ?? 3;
                 model.IsActive = true;
 
                 // Ensure we have at least one batch
@@ -84,7 +84,7 @@ namespace Examify.Controllers.Admin
         // GET: Admin/Class/Edit/{id}
         public async Task<IActionResult> Edit(int id)
         {
-            var insId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+            var insId = User.GetInstituteId() ?? 3;
             var classDto = await _classService.GetByIdAsync(insId, id);
 
             if (classDto == null) return NotFound();
@@ -99,7 +99,7 @@ namespace Examify.Controllers.Admin
         {
             if (ModelState.IsValid)
             {
-                model.InstituteId = HttpContext.Session.GetInt32("InstituteId") ?? 3;
+                model.InstituteId = User.GetInstituteId() ?? 3;
 
                 // Ensure we have at least one batch
                 if (model.Batches == null || !model.Batches.Any())

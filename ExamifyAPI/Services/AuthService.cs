@@ -14,6 +14,7 @@ namespace ExamAPI.Services
         Task<AuthResponse?> RefreshToken(string refreshToken);
         Task<int> Register(string username, string password, string role);
         int GetCurrentUserID();
+        Task<User?> GetUserByUsernameAsync(string username);
     }
 
     public class AuthResponse
@@ -22,6 +23,8 @@ namespace ExamAPI.Services
         public string RefreshToken { get; set; }
         public DateTime AccessTokenExpires { get; set; }
         public DateTime RefreshTokenExpires { get; set; }
+        public int InstituteId { get; set; }
+        public string FullName { get; set; }
     }
     
     public class AuthService : IAuthService
@@ -43,7 +46,10 @@ namespace ExamAPI.Services
             if (user == null || !_userService.VerifyPassword(password, user.PasswordHash))
                 return null;
 
-            return GenerateTokens(user.UserId.ToString(), user.Username, user.Role);
+            var tokens = GenerateTokens(user.UserId.ToString(), user.Username, user.Role);
+            tokens.InstituteId = user.InstituteId;
+            tokens.FullName = user.FullName;
+            return tokens; 
         }
 
         public async Task<AuthResponse?> RefreshToken(string refreshToken)
@@ -133,6 +139,11 @@ namespace ExamAPI.Services
                 return 1;
             }
             return int.Parse(userIdClaim.Value);
+        }
+
+        public async Task<User?> GetUserByUsernameAsync(string username)
+        {
+            return await _userService.GetUserByUsernameAsync(username);
         }
     }
 }

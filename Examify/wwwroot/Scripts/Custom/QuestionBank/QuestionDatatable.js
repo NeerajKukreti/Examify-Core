@@ -1,7 +1,8 @@
 ﻿var QuestionBankTable = function () {
     var table;
     var QuestionBank = function () {
-        table = $('#QuestionBankTable').dataTable({
+        table = $('#QuestionBankTable');
+        table.dataTable({
             "order": [],
             "createdRow": function (row, data, dataIndex) {
                 // Custom row styling if needed
@@ -17,22 +18,26 @@
                 });
             },
             "columns": [
+                 
                 {
-                    "title": "", "data": "questionId",
+                    "title": "English Text", "data": "questionEnglish", "width": "700px",
+                    "createdCell": function (td) {
+                        $(td).css('text-align', 'justify');
+                    }
+                },
+                /*{ "title": "Hindi Text", "data": "questionHindi" },*/
+                { "title": "Topic", "data": "topicName" },
+                { "title": "Question Type", "data": "typeName" },
+                {
+                    "title": "", "data": "questionId", "width":"10px", "orderable": false,
                     fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                         var str = ' <a class="btn" data-id=' + oData.questionId +
                             ' data-bs-target="#questionModel"  data-bs-toggle="modal" id="EditQuestion">' +
-                            '<span class="fas fa-edit"></span>' +
+                            '<span style="    color: blue;" class="fas fa-edit"></span>' +
                             '</a>';
                         $(nTd).html(str);
                     }
-                },
-                {
-                    "title": "English Text", "data": "questionEnglish"
-                },
-                { "title": "Hindi Text", "data": "questionHindi" },
-                { "title": "Topic", "data": "topicName" },
-                { "title": "Multi Select", "data": "isMultiSelect" }
+                }
             ]
         });
     }
@@ -44,7 +49,7 @@
             QuestionBank();
         },
         reloadTable: function () {
-            table.ajax.reload(null, false);
+            table.DataTable().ajax.reload(null, false);
         }
     };
 }();
