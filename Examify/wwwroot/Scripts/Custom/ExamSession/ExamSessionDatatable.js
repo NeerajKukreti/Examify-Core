@@ -11,20 +11,24 @@ function launchExam(examId) {
 $(document).ready(function () {
     $('#examTable').DataTable({
         ajax: {
-            url: 'https://localhost:7271/api/Exam/list',
+            url: 'https://localhost:7271/api/student/Exam/list',
             type: 'GET',
             dataSrc: function (json) {
-                return json.Data.filter(exam => exam.TotalQuestions > 0);
+                return json.Data;
             }
         },
         columns: [
             { data: 'ExamName' },
             { data: 'Description' },
-            { data: 'DurationMinutes' },    
+            {
+                data: 'DurationMinutes',
+                render: function (data) {
+                    return data + ' mins';
+                }            },    
             { data: 'TotalQuestions' },
             { data: 'ExamType' },
             {
-                data: 'ExamId',
+                data: 'ExamId', width:"115px",
                 render: function (data) {
                     return `<button onclick="launchExam(${data})" class="btn btn-sm btn-primary">Launch Exam</button>`;
                 }

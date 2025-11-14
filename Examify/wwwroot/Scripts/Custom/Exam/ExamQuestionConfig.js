@@ -2,6 +2,7 @@ var ExamQuestionConfig = (function () {
     var availableTable;
     var selectedQuestions = [];
     var sortOrderCounter = 1;
+    var advancedMode = false;
 
     function init() {
         initAvailableQuestionsTable();
@@ -49,17 +50,44 @@ var ExamQuestionConfig = (function () {
 
     function populateFilters(data) {
         var subjects = [...new Set(data.map(q => q.subjectName).filter(s => s))];
+        var subjectsWithIds = {};
+        data.forEach(function(q) {
+            if (q.subjectName && q.subjectId) {
+                subjectsWithIds[q.subjectName] = q.subjectId;
+            }
+        });
         var topics = [...new Set(data.map(q => q.topicName).filter(t => t))];
         var types = [...new Set(data.map(q => q.questionTypeName).filter(t => t))];
 
         $('#filterSubject').html('<option value="">All Subjects</option>' + 
-            subjects.map(s => '<option value="' + s + '">' + s + '</option>').join(''));
+            subjects.map(s => '<option value="' + s + '" data-subject-id="' + subjectsWithIds[s] + '">' + s + '</option>').join(''));
         
         $('#filterTopic').html('<option value="">All Topics</option>' + 
             topics.map(t => '<option value="' + t + '">' + t + '</option>').join(''));
         
         $('#filterType').html('<option value="">All Types</option>' + 
             types.map(t => '<option value="' + t + '">' + t + '</option>').join(''));
+    }
+
+    function loadTopicsBySubject(subjectId) {
+        if (!subjectId) {
+            $('#filterTopic').html('<option value="">All Topics</option>');
+            return;
+        }
+
+        $.ajax({
+            url: 'https://localhost:7271/api/Subject/' + subjectId + '/topics',
+            type: 'GET',
+            success: function(response) {
+                if (response.Success && response.Data) {
+                    $('#filterTopic').html('<option value="">All Topics</option>' + 
+                        response.Data.map(t => '<option value="' + t.TopicName + '">' + t.TopicName + '</option>').join(''));
+                }
+            },
+            error: function() {
+                $('#filterTopic').html('<option value="">All Topics</option>');
+            }
+        });
     }
 
     function applyFilters() {
@@ -99,7 +127,15 @@ var ExamQuestionConfig = (function () {
     }
 
     function bindEvents() {
-        $('#filterSubject, #filterTopic, #filterType, #filterDifficulty').on('change', function() {
+        $('#filterSubject').on('change', function() {
+            var subjectId = $(this).find('option:selected').data('subject-id');
+            if (subjectId) {
+                loadTopicsBySubject(subjectId);
+            }
+            applyFilters();
+        });
+
+        $('#filterTopic, #filterType, #filterDifficulty').on('change', function() {
             applyFilters();
         });
 
@@ -135,6 +171,32 @@ var ExamQuestionConfig = (function () {
         });
 
         $('#btnSaveConfiguration').on('click', saveConfiguration);
+
+        // Advanced Settings Toggle
+        $('#toggleAdvancedSettings').on('change', function() {
+            advancedMode = $(this).is(':checked');
+            if (advancedMode) {
+                $('#globalSettings').hide();
+            } else {
+                $('#globalSettings').show();
+            }
+            renderSelectedQuestions();
+        });
+
+        // Global Marks/Negative Marks Change
+        $('#globalMarks, #globalNegativeMarks').on('input', function() {
+            var marks = parseFloat($('#globalMarks').val()) || 1.0;
+            var negativeMarks = parseFloat($('#globalNegativeMarks').val()) || 0.0;
+            
+            selectedQuestions.forEach(function(q) {
+                q.marks = marks;
+                q.negativeMarks = negativeMarks;
+            });
+            
+            if (advancedMode) {
+                renderSelectedQuestions();
+            }
+        });
     }
 
     function addQuestion(rowData) {
@@ -144,12 +206,15 @@ var ExamQuestionConfig = (function () {
             return;
         }
 
+        var marks = parseFloat($('#globalMarks').val()) || 1.0;
+        var negativeMarks = parseFloat($('#globalNegativeMarks').val()) || 0.0;
+
         selectedQuestions.push({
             questionId: rowData.questionId,
             questionEnglish: rowData.questionEnglish,
             topicName: rowData.topicName,
-            marks: 1.0,
-            negativeMarks: 0.0,
+            marks: marks,
+            negativeMarks: negativeMarks,
             sortOrder: sortOrderCounter++
         });
 
@@ -185,22 +250,27 @@ var ExamQuestionConfig = (function () {
                 '<button type="button" class="btn btn-sm btn-danger btn-remove-question" data-question-id="' + q.questionId + '">' +
                 '<i class="fas fa-times"></i>' +
                 '</button>' +
-                '</div>' +
-                '<div class="d-flex gap-2">' +
-                '<div style="flex: 1;">' +
-                '<label class="form-label">MARKS</label>' +
-                '<input type="number" class="form-control marks-input" value="' + q.marks + '" min="0.01" step="0.25" />' +
-                '</div>' +
-                '<div style="flex: 1;">' +
-                '<label class="form-label">NEGATIVE</label>' +
-                '<input type="number" class="form-control negative-marks-input" value="' + q.negativeMarks + '" min="0" step="0.25" />' +
-                '</div>' +
-                '<div style="flex: 0.8;">' +
-                '<label class="form-label">ORDER</label>' +
-                '<input type="number" class="form-control" value="' + q.sortOrder + '" readonly />' +
-                '</div>' +
-                '</div>' +
                 '</div>';
+            
+            // Show individual fields only in advanced mode
+            if (advancedMode) {
+                html += '<div class="d-flex gap-2">' +
+                    '<div style="flex: 1;">' +
+                    '<label class="form-label">MARKS</label>' +
+                    '<input type="number" class="form-control marks-input" value="' + q.marks + '" min="0.01" step="0.25" />' +
+                    '</div>' +
+                    '<div style="flex: 1;">' +
+                    '<label class="form-label">NEGATIVE</label>' +
+                    '<input type="number" class="form-control negative-marks-input" value="' + q.negativeMarks + '" min="0" step="0.25" />' +
+                    '</div>' +
+                    '<div style="flex: 0.8;">' +
+                    '<label class="form-label" style="display: none">ORDER</label>' +
+                    '<input style="display: none" type="number" class="form-control" value="' + q.sortOrder + '" readonly />' +
+                    '</div>' +
+                    '</div>';
+            }
+            
+            html += '</div>';
         });
 
         $panel.html(html);
@@ -253,4 +323,17 @@ var ExamQuestionConfig = (function () {
 
 $(document).ready(function () {
     ExamQuestionConfig.init();
+
+    // Scroll to top functionality
+    $(window).scroll(function() {
+        if ($(this).scrollTop() > $(document).height() / 2) {
+            $('#scrollToTop').fadeIn();
+        } else {
+            $('#scrollToTop').fadeOut();
+        }
+    });
+
+    $('#scrollToTop').click(function() {
+        $('html, body').animate({ scrollTop: 0 }, 600);
+    });
 });

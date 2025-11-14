@@ -437,7 +437,7 @@ namespace DAL.Repository
             using var connection = Connection;
             var sql = @"
                 SELECT q.QuestionId, q.QuestionEnglish, q.QuestionHindi, 
-                       t.TopicName, s.SubjectName, qt.TypeName as QuestionTypeName,q.difficultyLevel, q.IsMultiSelect
+                       t.TopicName, s.subjectid,s.SubjectName, qt.TypeName as QuestionTypeName,q.difficultyLevel, q.IsMultiSelect
                 FROM Question q
                 LEFT JOIN SubjectTopic t ON q.TopicId = t.TopicId
                 LEFT JOIN Subject s ON t.SubjectId = s.SubjectId and s.InstituteId = @InstituteId 

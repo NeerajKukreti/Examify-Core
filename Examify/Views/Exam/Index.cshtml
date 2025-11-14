@@ -2,6 +2,9 @@
     ViewBag.Title = "Exams";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+
 <link href="@Url.Content("~/theme/plugins/datatables-2.3.4/css/datatables.bootstrap.css")" rel="stylesheet" />
 <link href="@Url.Content("~/theme/plugins/datatables-2.3.4/css/datatables.bootstrap5.min.css")" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
@@ -49,11 +52,19 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <!-- Quill core -->
+    <script src="https://cdn.quilljs.com/1.3.7/quill.js"></script>
+
+    <!-- Image resize module -->
+    <script src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js"></script>
+
     <script src="@Url.Content("~/theme/plugins/datatables-2.3.4/js/datatables.js")"></script>
     <script src="@Url.Content("~/theme/plugins/datatables-2.3.4/js/datatables.bootstrap5.min.js")"></script>
     <script src="@Url.Content("~/scripts/custom/exam/examdatatable.js")"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 }
+
 
 <script>
     var PublishExamUrl = "@ViewBag.PublishExamUrl";

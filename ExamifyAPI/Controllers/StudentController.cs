@@ -8,11 +8,13 @@ using Model.DTO;
 public class StudentController : ControllerBase
 {
     private readonly IStudentService _studentService;
+    private readonly IExamService _examService;
     private readonly IAuthService _authService;
-    public StudentController(IStudentService studentService, IAuthService authService)
+    public StudentController(IStudentService studentService, IAuthService authService, IExamService examService)
     {
         _studentService = studentService;
         _authService = authService;
+        _examService = examService;
     }
 
     [HttpGet("{instituteId:int}/{studentId:int}")]
@@ -67,11 +69,32 @@ public class StudentController : ControllerBase
 
         if (success)
         {
-            return Ok( new { Success = true, StudentId = id, Message = "Student updated successfully." });
+            return Ok(new { Success = true, StudentId = id, Message = "Student updated successfully." });
         }
         else
         {
-            return NotFound( new { Success = false, StudentId = id, Message = "Student not found or update failed." });
+            return NotFound(new { Success = false, StudentId = id, Message = "Student not found or update failed." });
+        }
+    }
+
+    [HttpGet("Exam/list")]
+    public async Task<IActionResult> GetExamList()
+    {
+        try
+        {
+            var exams = await _examService.GetAllExamsAsync();
+            exams = exams?.Where(x => x.IsPublished && (x.IsActive ?? false) && x.TotalQuestions > 0);
+
+            return Ok(new
+            {
+                Success = true,
+                Count = exams?.Count() ?? 0,
+                Data = exams?.Where(x => x.IsPublished && (x.IsActive ?? false))
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
         }
     }
 }

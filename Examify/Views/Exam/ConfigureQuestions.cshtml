@@ -62,6 +62,28 @@
         font-weight: 600;
         margin-bottom: 4px;
     }
+    #scrollToTop {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        z-index: 1000;
+        transition: all 0.3s;
+    }
+    #scrollToTop:hover {
+        background: #0056b3;
+        transform: translateY(-3px);
+    }
 </style>
 
 <div class="app-content-header">
@@ -145,18 +167,43 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5>Selected Questions (<span id="selectedCount">0</span>)</h5>
-                        <button type="button" class="btn btn-success" id="btnSaveConfiguration">
-                            <i class="fas fa-save"></i> Save Configuration
-                        </button>
+                        <div class="d-flex gap-2 align-items-center ms-auto">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="toggleAdvancedSettings">
+                                <label class="form-check-label" for="toggleAdvancedSettings">Advanced Settings</label>
+                            </div>
+                            <button type="button" class="btn btn-success" id="btnSaveConfiguration">
+                                <i class="fas fa-save"></i> Save Configuration
+                            </button>
+                        </div>
                     </div>
-                    <div class="card-body selected-questions-panel" id="selectedQuestionsPanel">
-                        <p class="text-muted text-center">No questions selected yet</p>
+                    <div class="card-body">
+                        <!-- Global Settings (visible when Advanced OFF) -->
+                        <div id="globalSettings" class="mb-3 p-3 bg-light rounded">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Default Marks for All Questions</label>
+                                    <input type="number" class="form-control" id="globalMarks" value="1.0" min="0.01" step="0.25" placeholder="Enter marks">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Default Negative Marks for All Questions</label>
+                                    <input type="number" class="form-control" id="globalNegativeMarks" value="0.0" min="0" step="0.25" placeholder="Enter negative marks">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="selected-questions-panel" id="selectedQuestionsPanel">
+                            <p class="text-muted text-center">No questions selected yet</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<button id="scrollToTop" title="Scroll to top">
+    <i class="fas fa-arrow-up"></i>
+</button>
 
 @section Scripts {
     <script src="@Url.Content("~/theme/plugins/datatables-2.3.4/js/datatables.js")"></script>

@@ -34,6 +34,7 @@ namespace Model.DTO
         public string? QuestionHindi { get; set; }
         public string? TopicName { get; set; }
         public string? SubjectName { get; set; }
+        public int SubjectId { get; set; }
         public string? QuestionTypeName { get; set; }
         public string? DifficultyLevel { get; set; }
         public bool IsMultiSelect { get; set; }

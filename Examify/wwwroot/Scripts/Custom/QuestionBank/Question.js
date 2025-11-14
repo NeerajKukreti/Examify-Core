@@ -793,6 +793,7 @@ $(function () {
         } else {
             // Options (static and dynamic) for MCQ or other question types
             let correctChecked = false;
+            let correctCount = 0;
             let hasEmptyOption = false;
             
             // Remove existing option fields (to rebuild them in proper order)
@@ -825,7 +826,10 @@ $(function () {
                 
                 // Get IsCorrect value
                 var isChecked = $group.find('input[type="checkbox"]').is(':checked');
-                if (isChecked) correctChecked = true;
+                if (isChecked) {
+                    correctChecked = true;
+                    correctCount++;
+                }
                 
                 // Get ChoiceId if it exists
                 var choiceId = $group.find('.option-choiceid-field').val() || '';
@@ -836,12 +840,18 @@ $(function () {
                 formData.append(`Options[${i}].ChoiceId`, choiceId);
             });
 
+            // Check if multi-select is enabled
+            var isMultiSelect = $('#IsMultiSelect').is(':checked');
+
             // Validate options
             if (hasEmptyOption) {
                 $('#optionsValidation').html('<span class="error-message" style="color:brown;">All options must have content</span>');
                 valid = false;
             } else if (!correctChecked) {
                 $('#optionsValidation').html('<span class="error-message" style="color:brown;">At least one option must be marked as correct</span>');
+                valid = false;
+            } else if (!isMultiSelect && correctCount > 1) {
+                $('#optionsValidation').html('<span class="error-message" style="color:brown;">Only one option can be marked as correct when multi-select is disabled</span>');
                 valid = false;
             } else {
                 $('#optionsValidation').empty();

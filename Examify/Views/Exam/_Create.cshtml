@@ -57,6 +57,29 @@
     }
 </style>
 
+<div class="toolbar2" style="display: none">
+    <span class="ql-formats">
+        <select class="ql-font"></select>
+        <select class="ql-size"></select>
+    </span>
+    <span class="ql-formats">
+        <button class="ql-bold"></button>
+        <button class="ql-italic"></button>
+        <button class="ql-underline"></button>
+        <button class="ql-strike"></button>
+    </span>
+    <span class="ql-formats">
+        <button class="ql-list" value="ordered"></button>
+        <button class="ql-list" value="bullet"></button>
+        <button class="ql-indent" value="-1"></button>
+        <button class="ql-indent" value="+1"></button>
+    </span>
+    <span class="ql-formats">
+        <button class="ql-link"></button>
+        <button class="ql-image"></button> 
+    </span>
+</div>
+
 <form id="examForm" method="post">
     <div class="container-fluid">
         <input type="hidden" asp-for="ExamId" />
@@ -139,7 +162,8 @@
                 <div class="col-md-12">
                     <div class="form-group">
                         <label asp-for="Instructions">Exam Instructions</label>
-                        <textarea asp-for="Instructions" class="form-control" rows="5" placeholder="Enter exam instructions"></textarea>
+                        <div id="editor-instructions" style="height: 150px;"></div>
+                        <input type="hidden" asp-for="Instructions" id="hfInstructions" />
                         <span asp-validation-for="Instructions" class="text-danger"></span>
                     </div>
                 </div>
@@ -164,6 +188,31 @@
     window.examModelData = @Html.Raw(JsonSerializer.Serialize(Model));
 
     $(function () {
+        // Initialize Quill editor for Instructions
+        if (typeof Quill !== 'undefined') {
+            var $template = $('.toolbar2').first();
+            var toolbarId = 'toolbar-for-editor-instructions';
+            var $clone = $template.clone(true).removeClass('toolbar2').attr('id', toolbarId);
+            $clone.css('display', '');
+            $clone.insertBefore('#editor-instructions');
+
+            var instructionsEditor = new Quill('#editor-instructions', {
+                theme: 'snow',
+                placeholder: 'Enter exam instructions...',
+                modules: {
+                    toolbar: '#' + toolbarId
+                }
+            });
+
+            // Load existing instructions if editing
+            if (window.examModelData && window.examModelData.Instructions) {
+                instructionsEditor.root.innerHTML = window.examModelData.Instructions;
+            }
+
+            // Store editor globally
+            window.instructionsQuillEditor = instructionsEditor;
+        }
+
         $('#examForm').validate({
             rules: {
                 ExamName: { required: true, maxlength: 200 },
@@ -178,6 +227,11 @@
                 CutOffPercentage: { min: "Cut off must be at least 0%", max: "Cut off cannot exceed 100%" }
             },
             submitHandler: function(form) {
+                // Sync Quill editor content to hidden field
+                if (window.instructionsQuillEditor) {
+                    $('#hfInstructions').val(window.instructionsQuillEditor.root.innerHTML);
+                }
+                
                 var formData = $(form).serialize();
                 var url = window.examModelData.ExamId > 0 ?
                     '@Url.Action("Edit", "Exam")' :
