@@ -232,14 +232,12 @@ function showQuestion(globalIndex = 0) {
                 const choiceId = choice.SessionChoiceId || choice.ChoiceId;
                 const checked = Array.isArray(response.SessionChoiceIds) && response.SessionChoiceIds.includes(choiceId) ? 'checked' : '';
                 const selectedClass = checked ? 'selected' : '';
-                $form.append(`
-                    <div class="option-item ${selectedClass}" data-choice-id="${choiceId}">
-                        <label for="opt${index}">
-                            <input type="checkbox" name="q_multi" value="${choiceId}" id="opt${index}" ${checked}>
-                            ${choice.ChoiceTextEnglish || choice.ChoiceText || `Choice ${index + 1}`}
-                        </label>
-                    </div>
-                `);
+                const choiceText = choice.ChoiceTextEnglish || choice.ChoiceText || `Choice ${index + 1}`;
+                const $optionItem = $(`<div class="option-item ${selectedClass}" data-choice-id="${choiceId}"></div>`);
+                const $input = $(`<input type="checkbox" name="q_multi" value="${choiceId}" id="opt${index}" ${checked}>`);
+                const $label = $(`<label for="opt${index}"></label>`).html(choiceText);
+                $optionItem.append($input).append($label);
+                $form.append($optionItem);
             });
             $form.off('click', '.option-item').on('click', '.option-item', function () {
                 const $this = $(this);
@@ -254,12 +252,12 @@ function showQuestion(globalIndex = 0) {
                 const choiceId = choice.SessionChoiceId || choice.ChoiceId;
                 const checked = response.SessionChoiceId == choiceId ? 'checked' : '';
                 const selectedClass = checked ? 'selected' : '';
-                $form.append(`
-                    <div class="option-item ${selectedClass}" data-choice-id="${choiceId}">
-                        <input type="radio" name="q" value="${choiceId}" id="opt${index}" ${checked}>
-                        <label for="opt${index}">${choice.ChoiceTextEnglish || choice.ChoiceText || `Choice ${index + 1}`}</label>
-                    </div>
-                `);
+                const choiceText = choice.ChoiceTextEnglish || choice.ChoiceText || `Choice ${index + 1}`;
+                const $optionItem = $(`<div class="option-item ${selectedClass}" data-choice-id="${choiceId}"></div>`);
+                $optionItem.append(`<input type="radio" name="q" value="${choiceId}" id="opt${index}" ${checked}>`);
+                const $label = $(`<label for="opt${index}"></label>`).html(choiceText);
+                $optionItem.append($label);
+                $form.append($optionItem);
             });
             $form.off('click', '.option-item').on('click', '.option-item', function () {
                 const $this = $(this);
@@ -287,7 +285,11 @@ function showQuestion(globalIndex = 0) {
         }
         let orderedSessionOrders = orderIds.map(id => question.SessionOrders.find(o => o.CorrectOrder === id)).filter(Boolean);
         orderedSessionOrders.forEach((order, idx) => {
-            $list.append(`<li class="list-group-item ordering-item" draggable="true" data-order-id="${order.SessionOrderId}" data-correct-order="${order.CorrectOrder}">${order.ItemText}</li>`);
+            const $item = $('<li class="list-group-item ordering-item" draggable="true"></li>')
+                .attr('data-order-id', order.SessionOrderId)
+                .attr('data-correct-order', order.CorrectOrder)
+                .html(order.ItemText);
+            $list.append($item);
         });
         // Enable drag-and-drop using HTML5
         setupOrderingDragAndDrop($list, response);
@@ -302,24 +304,28 @@ function showQuestion(globalIndex = 0) {
             if (response.PairedItems && response.PairedItems[idx] && response.PairedItems[idx].RightText) {
                 selectedRight = response.PairedItems[idx].RightText;
             }
-            $pairing.append(`
-                <div class="row mb-2">
-                    <div class="col-6">
-                        <input type="text" class="form-control pair-left" value="${pair.LeftText}" readonly>
-                    </div>
-                    <div class="col-6">
-                        <select class="form-control pair-right-select" data-pair-idx="${idx}">
-                            <option value="">Select answer</option>
-                            ${shuffledRight.map(rt => `<option value="${rt}" ${selectedRight === rt ? 'selected' : ''}>${rt}</option>`).join('')}
-                        </select>
-                    </div>
-                </div>
-            `);
+            const $row = $('<div class="row mb-2"></div>');
+            const $leftCol = $('<div class="col-6"></div>');
+            const $leftDiv = $('<div class="form-control pair-left" style="background-color: #e9ecef;"></div>').html(pair.LeftText);
+            $leftCol.append($leftDiv);
+            
+            const $rightCol = $('<div class="col-6"></div>');
+            const $select = $('<select class="form-control pair-right-select"></select>').attr('data-pair-idx', idx);
+            $select.append('<option value="">Select answer</option>');
+            shuffledRight.forEach(rt => {
+                const $option = $('<option></option>').val(rt).html(rt);
+                if (selectedRight === rt) $option.prop('selected', true);
+                $select.append($option);
+            });
+            $rightCol.append($select);
+            
+            $row.append($leftCol).append($rightCol);
+            $pairing.append($row);
         });
         // Save pairing selection immediately
         $('#pairingList .pair-right-select').on('change', function() {
             const idx = $(this).data('pair-idx');
-            const left = $('#pairingList .pair-left').eq(idx).val();
+            const left = $('#pairingList .pair-left').eq(idx).text();
             const right = $(this).val();
             response.PairedItems = response.PairedItems || [];
             response.PairedItems[idx] = { LeftText: left, RightText: right };
@@ -376,7 +382,6 @@ function saveCurrentResponse() {
     else if (uiType === 'ordering') {
         response.OrderedItems = [];
         $('#orderingList .ordering-item').each(function () {
-            // Instead of SessionOrderId, use CorrectOrder
             const correctOrder = $(this).data('correct-order');
             response.OrderedItems.push(correctOrder);
         });
@@ -386,7 +391,7 @@ function saveCurrentResponse() {
         response.PairedItems = [];
         let allSelected = true;
         $('#pairingList .pair-left').each(function (idx) {
-            const left = $(this).val();
+            const left = $(this).text();
             const right = $('#pairingList .pair-right-select').eq(idx).val();
             if (!right) allSelected = false;
             response.PairedItems.push({ LeftText: left, RightText: right });
@@ -600,11 +605,18 @@ async function finalSubmit() {
             };
             // Ordering
             if (r.OrderedItems && r.OrderedItems.length > 0) {
-                resp.OrderedItems = r.OrderedItems.map((correctOrder, idx) => ({
-                    ResponseOrderId: 0,
-                    ResponseId: 0,
-                    UserOrder: correctOrder
-                }));
+                const question = allQuestions.find(q => q.SessionQuestionId === r.SessionQuestionId);
+                resp.OrderedItems = r.OrderedItems.map((correctOrder, idx) => {
+                    const orderItem = question?.SessionOrders?.find(o => o.CorrectOrder === correctOrder);
+                    return {
+                        ResponseOrderId: 0,
+                        ResponseId: 0,
+                        SessionQuestionId: r.SessionQuestionId,
+                        ItemText: orderItem?.ItemText || '',
+                        UserOrder: idx + 1,
+                        CorrectOrder: correctOrder
+                    };
+                });
             }
             // Pairing
             if (r.PairedItems && r.PairedItems.length > 0) {
@@ -883,8 +895,37 @@ function initializeExam(id) {
 
     $('#btnClear').on('click', function (e) {
         e.preventDefault();
+        const question = allQuestions[currentQuestionIndex];
+        const response = examResponses[question.SessionQuestionId];
+        const uiType = getQuestionUiType(question);
+        
         $('#optionsForm input[name="q"]').prop('checked', false);
         $('#optionsForm input[name="q_multi"]').prop('checked', false);
+        $('#optionsForm .option-item').removeClass('selected');
+        $('#subjectiveAnswer').val('');
+        
+        if (uiType === 'ordering') {
+            // Reset to initial randomized order
+            const $list = $('#orderingList').empty();
+            if (response._randomizedOrder) {
+                response._randomizedOrder.forEach(correctOrder => {
+                    const order = question.SessionOrders.find(o => o.CorrectOrder === correctOrder);
+                    if (order) {
+                        const $item = $('<li class="list-group-item ordering-item" draggable="true"></li>')
+                            .attr('data-order-id', order.SessionOrderId)
+                            .attr('data-correct-order', order.CorrectOrder)
+                            .html(order.ItemText);
+                        $list.append($item);
+                    }
+                });
+                setupOrderingDragAndDrop($list, response);
+            }
+            response.OrderedItems = [];
+        } else if (uiType === 'pairing') {
+            response.PairedItems = [];
+            $('#pairingList .pair-right-select').val('');
+        }
+        
         saveCurrentResponse();
         renderQuestionGrid();
     });
@@ -892,6 +933,7 @@ function initializeExam(id) {
     $('#btnNext').on('click', function (e) {
         e.preventDefault();
         saveCurrentResponse();
+        renderQuestionGrid();
 
         if (currentQuestionIndex < allQuestions.length - 1) {
             showQuestion(currentQuestionIndex + 1);
