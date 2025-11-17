@@ -1,0 +1,93 @@
+@{
+    ViewData["Title"] = "Create Questions from Images";
+    var imagePaths = ViewBag.ImagePaths as List<string>;
+    var extractedQuestions = ViewBag.ExtractedQuestions as List<Examify.Controllers.Admin.QuestionImageModel> ?? new List<Examify.Controllers.Admin.QuestionImageModel>();
+}
+
+<div class="container-fluid mt-4">
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h4><i class="fas fa-edit"></i> Create Questions (@imagePaths.Count Images)</h4>
+        </div>
+        <div class="card-body">
+            @if (extractedQuestions.Count == 0)
+            {
+                <div class="alert alert-warning">
+                    <strong>No questions extracted!</strong> OCR may have failed or tessdata files are missing.
+                    <br/>Check that <code>tessdata/eng.traineddata</code> and <code>tessdata/hin.traineddata</code> exist.
+                </div>
+            }
+            else
+            {
+                <form asp-action="SaveQuestions" method="post">
+                    @for (int i = 0; i < extractedQuestions.Count; i++)
+                {
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <strong>Question @(i + 1)</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <img src="@extractedQuestions[i].ImagePath" class="img-fluid border" alt="Question @(i + 1)" style="max-height: 500px;" />
+                                    <input type="hidden" name="questions[@i].ImagePath" value="@extractedQuestions[i].ImagePath" />
+                                    <button type="button" class="btn btn-sm btn-info mt-2" data-toggle="collapse" data-target="#raw@(i)">View Raw Text</button>
+                                    <div id="raw@(i)" class="collapse mt-2">
+                                        <pre style="font-size: 10px; max-height: 150px; overflow-y: auto;">@extractedQuestions[i].ExtractedText</pre>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    @if (!string.IsNullOrEmpty(extractedQuestions[i].QuestionText))
+                                    {
+                                        <div class="alert alert-info">
+                                            <small><strong>Extracted:</strong> @extractedQuestions[i].QuestionText</small>
+                                        </div>
+                                    }
+                                    <div class="form-group">
+                                        <label><strong>Option 1</strong></label>
+                                        <input type="text" name="questions[@i].Option1" class="form-control" value="@extractedQuestions[i].Option1" required />
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label><strong>Option 2</strong></label>
+                                        <input type="text" name="questions[@i].Option2" class="form-control" value="@extractedQuestions[i].Option2" required />
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label><strong>Option 3</strong></label>
+                                        <input type="text" name="questions[@i].Option3" class="form-control" value="@extractedQuestions[i].Option3" required />
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label><strong>Option 4</strong></label>
+                                        <input type="text" name="questions[@i].Option4" class="form-control" value="@extractedQuestions[i].Option4" required />
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label><strong>Correct Answer</strong></label>
+                                        <select name="questions[@i].CorrectOption" class="form-control" required>
+                                            <option value="1">Option 1</option>
+                                            <option value="2">Option 2</option>
+                                            <option value="3">Option 3</option>
+                                            <option value="4">Option 4</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-save"></i> Save All Questions
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</div>
