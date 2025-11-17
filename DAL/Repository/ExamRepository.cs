@@ -11,13 +11,13 @@ namespace DAL.Repository
 {
     public interface IExamRepository
     {
-        List<ExamModel> GetActiveExams();
-        ExamModel GetExamById(int examId);
+        List<ExamModel> GetActiveExams(int instituteId);
+        ExamModel GetExamById(int examId, int instituteId);
         ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId);
         int SubmitExamResponses(ExamSubmissionModel submission);
         ExamResultModel GetExamResult(int sessionId);
         Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null,
-            int? userloggedIn = null);
+            int? userloggedIn = null, int instituteId = 0);
         Task<bool> ChangeStatus(int examId);
         Task<bool> PublishExam(int examId);
         Task<IEnumerable<AvailableQuestionDTO>> GetAvailableQuestionsAsync(int examId, int instituteId);
@@ -25,7 +25,7 @@ namespace DAL.Repository
         Task<bool> SaveExamQuestionsAsync(ExamQuestionConfigDTO config);
         Task<bool> RemoveExamQuestionAsync(int examId, int questionId);
         Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(List<long> userIds);
-        Task<StatsDTO> GetStatsAsync();
+        Task<StatsDTO> GetStatsAsync(int instituteId);
     }
 
     public class ExamRepository : IExamRepository
@@ -35,12 +35,13 @@ namespace DAL.Repository
 
         private IDbConnection Connection => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
 
-        public List<ExamModel> GetActiveExams()
+        public List<ExamModel> GetActiveExams(int instituteId)
         {
             using var connection = Connection;
             {
                 var exams = connection.Query<ExamModel>(
                     "_sp_GetAllExams",
+                    new { InstituteId = instituteId },
                     commandType: CommandType.StoredProcedure
                 ).ToList();
 
@@ -49,7 +50,7 @@ namespace DAL.Repository
         }
 
         public async Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null,
-            int? userloggedIn = null)
+            int? userloggedIn = null, int instituteId = 0)
         {
             using var connection = Connection;
             var parameters = new DynamicParameters();
@@ -63,6 +64,7 @@ namespace DAL.Repository
             parameters.Add("@ExamType", dto.ExamType);
             parameters.Add("@CutOffPercentage", dto.CutOffPercentage);
             parameters.Add("@UserId", userloggedIn);
+            parameters.Add("@InstituteId", instituteId);
 
             return await connection.ExecuteScalarAsync<int>(
                 "_sp_InsertUpdateExam",
@@ -95,13 +97,13 @@ namespace DAL.Repository
 
 
         #region Exam Session
-        public ExamModel GetExamById(int examId)
+        public ExamModel GetExamById(int examId, int instituteId)
         {
             using var connection = Connection;
             {
                 var exam = connection.QueryFirstOrDefault<ExamModel>(
                     "_sp_GetAllExams",
-                    new { ExamId = examId },
+                    new { ExamId = examId, InstituteId = instituteId },
                     commandType: CommandType.StoredProcedure
                 );
 
@@ -124,7 +126,7 @@ namespace DAL.Repository
                 // Get exam details
                 var exam = connection.QueryFirstOrDefault<ExamModel>(
                     "_sp_GetAllExams",
-                    new { ExamId = examId },
+                    new { ExamId = examId, InstituteId = 0 },
                     commandType: CommandType.StoredProcedure
                 );
 
@@ -538,11 +540,12 @@ namespace DAL.Repository
                 commandType: CommandType.StoredProcedure);
         }
 
-        public async Task<StatsDTO> GetStatsAsync()
+        public async Task<StatsDTO> GetStatsAsync(int instituteId)
         {
             using var connection = Connection;
             using var multi = await connection.QueryMultipleAsync(
                 "_sp_GetStats",
+                new { InstituteId = instituteId },
                 commandType: CommandType.StoredProcedure);
 
             var stats = new StatsDTO

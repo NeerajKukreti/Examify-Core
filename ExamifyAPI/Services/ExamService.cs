@@ -1,5 +1,6 @@
 using DAL.Repository;
 using DataModel;
+using ExamAPI.Services;
 using Model.DTO;
 
 namespace ExamifyAPI.Services
@@ -25,25 +26,30 @@ namespace ExamifyAPI.Services
     public class ExamService : IExamService
     {
         private readonly IExamRepository _examRepository;
+        private readonly IAuthService _authService;
 
-        public ExamService(IExamRepository examRepository)
+        public ExamService(IExamRepository examRepository, IAuthService authService)
         {
             _examRepository = examRepository;
+            _authService = authService;
         }
 
         public async Task<IEnumerable<ExamModel>> GetAllExamsAsync()
         {
-            return await Task.FromResult(_examRepository.GetActiveExams());
+            var instituteId = _authService.GetCurrentInstituteId();
+            return await Task.FromResult(_examRepository.GetActiveExams(instituteId));
         }
 
         public async Task<ExamModel> GetExamByIdAsync(int examId)
         {
-            return await Task.FromResult(_examRepository.GetExamById(examId));
+            var instituteId = _authService.GetCurrentInstituteId();
+            return await Task.FromResult(_examRepository.GetExamById(examId, instituteId));
         }
 
         public async Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null, int? userloggedIn = null)
         {
-            return await _examRepository.InsertOrUpdateExamAsync(dto, examId, userloggedIn);
+            var instituteId = _authService.GetCurrentInstituteId();
+            return await _examRepository.InsertOrUpdateExamAsync(dto, examId, userloggedIn, instituteId);
         }
 
         public async Task<bool> ChangeStatusAsync(int examId)
@@ -96,7 +102,8 @@ namespace ExamifyAPI.Services
 
         public async Task<StatsDTO> GetStatsAsync()
         {
-            return await _examRepository.GetStatsAsync();
+            var instituteId = _authService.GetCurrentInstituteId();
+            return await _examRepository.GetStatsAsync(instituteId);
         }
     }
 }

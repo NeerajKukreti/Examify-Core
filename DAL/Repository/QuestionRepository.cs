@@ -15,9 +15,9 @@ namespace DAL.Repository
     public interface IQuestionRepository
     {
         // CRUD for Question Bank
-        Task<List<QuestionModel>> GetAllQuestionsAsync();
-        Task<QuestionModel?> GetQuestionAsync(int id);
-        Task<int> CreateQuestionAsync(QuestionModel model);
+        Task<List<QuestionModel>> GetAllQuestionsAsync(int instituteId);
+        Task<QuestionModel?> GetQuestionAsync(int id, int instituteId);
+        Task<int> CreateQuestionAsync(QuestionModel model, int instituteId);
         Task<int> UpdateQuestionAsync(QuestionModel model);
         Task<int> DeleteQuestionAsync(int id);
         Task<List<QuestionTypeModel>> GetQuestionTypesAsync();
@@ -30,17 +30,17 @@ namespace DAL.Repository
 
         private IDbConnection Connection => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
 
-        public async Task<List<QuestionModel>> GetAllQuestionsAsync()
+        public async Task<List<QuestionModel>> GetAllQuestionsAsync(int instituteId)
         {
             using var connection = Connection;
-            var result = await connection.QueryAsync<QuestionModel>("_sp_GetAllQuestions", commandType: CommandType.StoredProcedure);
+            var result = await connection.QueryAsync<QuestionModel>("_sp_GetAllQuestions", new { InstituteId = instituteId }, commandType: CommandType.StoredProcedure);
             return result.ToList();
         }
 
-        public async Task<QuestionModel?> GetQuestionAsync(int id)
+        public async Task<QuestionModel?> GetQuestionAsync(int id, int instituteId)
         {
             using var connection = Connection;
-            var p = new { QuestionId = id };
+            var p = new { QuestionId = id, InstituteId = instituteId };
             using var multi = await connection.QueryMultipleAsync(
                 "_sp_GetAllQuestions", p, commandType: CommandType.StoredProcedure);
 
@@ -84,7 +84,7 @@ namespace DAL.Repository
             return question;
         }
 
-        public async Task<int> CreateQuestionAsync(QuestionModel model)
+        public async Task<int> CreateQuestionAsync(QuestionModel model, int instituteId)
         {
             try
             {
@@ -152,6 +152,7 @@ namespace DAL.Repository
                 p.Add("@UserId", model.CreatedBy, DbType.Int32);
                 p.Add("@IsMultiSelect", model.IsMultiSelect, DbType.Boolean);
                 p.Add("@Choices", dtChoices.AsTableValuedParameter("dbo.CommonTextFlagType"));
+                p.Add("@InstituteId", instituteId, DbType.Int32);
 
                 return await connection.ExecuteScalarAsync<int>("_sp_UpsertQuestion", p, commandType: CommandType.StoredProcedure);
             }

@@ -46,7 +46,14 @@ public class AuthController : ControllerBase
         var user = await _authService.GetUserByUsernameAsync(username);
         if (user == null) return NotFound();
         return Ok(new { user.InstituteId, user.FullName });
-    } 
+    }
+
+    [HttpPost("getHash")]
+    public IActionResult HashPassword([FromBody] string password)
+    {
+        var hash = BCrypt.Net.BCrypt.HashPassword(password);
+        return Ok(new { Hash = hash });
+    }
 }
 
 public class RefreshTokenRequest

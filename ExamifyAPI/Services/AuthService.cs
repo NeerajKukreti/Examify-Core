@@ -14,6 +14,7 @@ namespace ExamAPI.Services
         Task<AuthResponse?> RefreshToken(string refreshToken);
         Task<int> Register(string username, string password, string role);
         int GetCurrentUserID();
+        int GetCurrentInstituteId();
         Task<User?> GetUserByUsernameAsync(string username);
     }
 
@@ -46,7 +47,7 @@ namespace ExamAPI.Services
             if (user == null || !_userService.VerifyPassword(password, user.PasswordHash))
                 return null;
 
-            var tokens = GenerateTokens(user.UserId.ToString(), user.Username, user.Role);
+            var tokens = GenerateTokens(user.UserId.ToString(), user.Username, user.Role, user.InstituteId);
             tokens.InstituteId = user.InstituteId;
             tokens.FullName = user.FullName;
             return tokens; 
@@ -74,11 +75,12 @@ namespace ExamAPI.Services
                 var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var username = principal.FindFirst(ClaimTypes.Name)?.Value;
                 var role = principal.FindFirst(ClaimTypes.Role)?.Value;
+                var instituteId = principal.FindFirst("InstituteId")?.Value;
 
                 if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(username))
                     return null;
 
-                return GenerateTokens(userId, username, role);
+                return GenerateTokens(userId, username, role, int.Parse(instituteId ?? "0"));
             }
             catch
             {
@@ -86,13 +88,13 @@ namespace ExamAPI.Services
             }
         }
 
-        private AuthResponse GenerateTokens(string userId, string username, string role)
+        private AuthResponse GenerateTokens(string userId, string username, string role, int instituteId)
         {
             var accessTokenExpiry = DateTime.UtcNow.AddHours(int.Parse(_config["Jwt:ExpireHours"] ?? "3"));
             var refreshTokenExpiry = DateTime.UtcNow.AddDays(7);
 
-            var accessToken = GenerateJwtToken(userId, username, role, accessTokenExpiry);
-            var refreshToken = GenerateJwtToken(userId, username, role, refreshTokenExpiry);
+            var accessToken = GenerateJwtToken(userId, username, role, instituteId, accessTokenExpiry);
+            var refreshToken = GenerateJwtToken(userId, username, role, instituteId, refreshTokenExpiry);
 
             return new AuthResponse
             {
@@ -103,13 +105,14 @@ namespace ExamAPI.Services
             };
         }
 
-        private string GenerateJwtToken(string userId, string username, string role, DateTime expires)
+        private string GenerateJwtToken(string userId, string username, string role, int instituteId, DateTime expires)
         {
             var claims = new[]
             {
                 new Claim(ClaimTypes.Name, username),
                 new Claim(ClaimTypes.Role, role),
-                new Claim(ClaimTypes.NameIdentifier, userId)
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim("InstituteId", instituteId.ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
@@ -139,6 +142,12 @@ namespace ExamAPI.Services
                 return 1;
             }
             return int.Parse(userIdClaim.Value);
+        }
+
+        public int GetCurrentInstituteId()
+        {
+            var instituteIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst("InstituteId");
+            return instituteIdClaim != null ? int.Parse(instituteIdClaim.Value) : 0;
         }
 
         public async Task<User?> GetUserByUsernameAsync(string username)
