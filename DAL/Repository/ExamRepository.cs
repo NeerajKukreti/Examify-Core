@@ -26,6 +26,8 @@ namespace DAL.Repository
         Task<bool> RemoveExamQuestionAsync(int examId, int questionId);
         Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(List<long> userIds);
         Task<StatsDTO> GetStatsAsync(int instituteId);
+        Task<IEnumerable<ExamInstructionModel>> GetInstructionsAsync(int instituteId);
+        Task<int> UpsertInstructionAsync(ExamInstructionModel model);
     }
 
     public class ExamRepository : IExamRepository
@@ -38,15 +40,30 @@ namespace DAL.Repository
         public List<ExamModel> GetActiveExams(int instituteId)
         {
             using var connection = Connection;
-            {
-                var exams = connection.Query<ExamModel>(
-                    "_sp_GetAllExams",
-                    new { InstituteId = instituteId },
-                    commandType: CommandType.StoredProcedure
-                ).ToList();
+            // Stored procedure now returns two result sets: exams and exam-class mapping (ClassId, ExamId)
+            using var multi = connection.QueryMultiple(
+                "_sp_GetAllExams",
+                new { InstituteId = instituteId },
+                commandType: CommandType.StoredProcedure);
 
-                return exams;
+            var exams = multi.Read<ExamModel>().ToList();
+            var classMappings = multi.Read<dynamic>().ToList(); // each row has ClassId and ExamId (ExamId may be null for all)
+
+            // build lookup
+            var map = classMappings
+                .Where(x => x.ExamId != null)
+                .GroupBy(x => (int)x.ExamId)
+                .ToDictionary(g => g.Key, g => g.Select(r => (int)r.ClassId).ToList());
+
+            foreach (var exam in exams)
+            {
+                if (map.TryGetValue(exam.ExamId, out var classIds))
+                {
+                    exam.ClassIds = classIds;
+                }
             }
+
+            return exams;
         }
 
         public async Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null,
@@ -65,6 +82,19 @@ namespace DAL.Repository
             parameters.Add("@CutOffPercentage", dto.CutOffPercentage);
             parameters.Add("@UserId", userloggedIn);
             parameters.Add("@InstituteId", instituteId);
+
+            // Prepare TVP for ClassIds (SP parameter name: @classIds) using IntList TVP
+            var classIdsTable = new DataTable();
+            classIdsTable.Columns.Add("id", typeof(int));
+            if (dto.ClassIds != null)
+            {
+                foreach (var cid in dto.ClassIds)
+                {
+                    classIdsTable.Rows.Add(cid);
+                }
+            }
+            // Add the TVP parameter (SQL type name expected: IntList)
+            parameters.Add("@classIds", classIdsTable.AsTableValuedParameter("IntList"));
 
             return await connection.ExecuteScalarAsync<int>(
                 "_sp_InsertUpdateExam",
@@ -100,15 +130,28 @@ namespace DAL.Repository
         public ExamModel GetExamById(int examId, int instituteId)
         {
             using var connection = Connection;
-            {
-                var exam = connection.QueryFirstOrDefault<ExamModel>(
-                    "_sp_GetAllExams",
-                    new { ExamId = examId, InstituteId = instituteId },
-                    commandType: CommandType.StoredProcedure
-                );
+            // Stored procedure returns exam as first result set and class rows as second result set
+            using var multi = connection.QueryMultiple(
+                "_sp_GetAllExams",
+                new { ExamId = examId, InstituteId = instituteId },
+                commandType: CommandType.StoredProcedure);
 
-                return exam;
+            var exam = multi.ReadFirstOrDefault<ExamModel>();
+            if (exam == null) return null;
+
+            // Second result set: ClassId (and possibly ExamId). Read as dynamic and extract ClassId values
+            var classRows = multi.Read<dynamic>().ToList();
+            if (classRows != null && classRows.Count > 0)
+            {
+                var classIds = classRows
+                    .Where(r => r.ClassId != null)
+                    .Select(r => (int)r.ClassId)
+                    .ToList();
+
+                exam.ClassIds = classIds;
             }
+
+            return exam;
         }
 
         public ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId)
@@ -124,11 +167,14 @@ namespace DAL.Repository
 
 
                 // Get exam details
-                var exam = connection.QueryFirstOrDefault<ExamModel>(
+                using var examMulti = connection.QueryMultiple(
                     "_sp_GetAllExams",
                     new { ExamId = examId, InstituteId = 0 },
                     commandType: CommandType.StoredProcedure
                 );
+
+                var exam = examMulti.ReadFirstOrDefault<ExamModel>();
+                examMulti.Read(); // Skip class rows result set
 
                 // Get session questions with all options in one go
                 var questionRows = connection.Query(
@@ -559,6 +605,30 @@ namespace DAL.Repository
             };
 
             return stats;
+        }
+
+        public async Task<IEnumerable<ExamInstructionModel>> GetInstructionsAsync(int instituteId)
+        {
+            using var connection = Connection;
+            return await connection.QueryAsync<ExamInstructionModel>(
+                "_sp_getExamInstructions",
+                new { InstituteId = instituteId },
+                commandType: CommandType.StoredProcedure);
+        }
+
+        public async Task<int> UpsertInstructionAsync(ExamInstructionModel model)
+        {
+            using var connection = Connection;
+            return await connection.ExecuteScalarAsync<int>(
+                "_sp_UpsertExamInstruction",
+                new
+                {
+                    Instructionid = model.InstructionId,
+                    InstituteId = model.InstituteId,
+                    Name = model.InstructionName,
+                    Description = model.Description
+                },
+                commandType: CommandType.StoredProcedure);
         }
     }
 }

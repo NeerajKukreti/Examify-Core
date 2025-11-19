@@ -529,6 +529,14 @@
                     </div>
                 </div>
                 <div class="col-md-6 mt-2">
+                    <div class="form-group">
+                        <label>Assign to Classes <span class="text-danger">*</span></label>
+                        <!-- multi select dropdown (no size/listbox) -->
+                        <select id="ClassIds" name="ClassIds" multiple class="form-control select2 mt-2" aria-label="Select classes"></select>
+                        <span class="text-danger" id="ClassIds-error"></span>
+                    </div>
+                </div>
+                <div class="col-md-6 mt-2">
                     <div class="form-group ">
                         <label asp-for="DifficultyLevel">Difficulty Level <span class="text-danger">*</span></label>
                         <select asp-for="DifficultyLevel" class="form-control select" id="ddlDifficultyLevel" name="DifficultyLevel">
@@ -852,11 +860,13 @@
 </form>
 
 <!-- Shared JavaScript Modules -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="@Url.Content("~/Scripts/Custom/QuestionBank/QuestionTypeManager.js")"></script>
 <script src="@Url.Content("~/Scripts/Custom/QuestionBank/FieldManager.js")"></script>
 <script src="@Url.Content("~/Scripts/Custom/QuestionBank/QuestionForm.js")"></script>
 <script src="@Url.Content("~/Scripts/Custom/QuestionBank/Question.js")"></script>
 <script src="@Url.Content("~/theme/plugins/jquery-validation 1.19.5/jquery.validate.js")"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
     var instituteId = "@ViewBag.instituteId";
@@ -871,6 +881,43 @@
     }
 
     $(function () {
+        // Load classes from API
+        (function loadClasses() {
+            var endpoint = 'https://localhost:7271/api/Class/GetAll/' + instituteId;
+
+            $.ajax({
+                url: endpoint,
+                type: 'GET',
+                success: function(res) {
+                    if (res && res.Success && Array.isArray(res.Data)) {
+                        var classes = res.Data;
+                        var $select = $('#ClassIds');
+                        $select.empty();
+
+                        var items = classes.filter(function(c){ return c.IsActive === undefined || c.IsActive; })
+                            .map(function(c){ return { id: String(c.ClassId), text: c.ClassName }; });
+
+                        if ($select.hasClass('select2-hidden-accessible')) {
+                            $select.select2('destroy');
+                        }
+
+                        var modal = $('#questionModel');
+                        var dropdownParent = modal.length ? modal : $(document.body);
+                        $select.select2({ data: items, placeholder: 'Select classes', width: '100%', dropdownParent: dropdownParent, closeOnSelect: false, allowClear: true });
+
+                        // Preselect when editing
+                        if (window.modelData && Array.isArray(window.modelData.ClassIds) && window.modelData.ClassIds.length > 0) {
+                            var vals = window.modelData.ClassIds.map(function(x){ return String(x); });
+                            $select.val(vals).trigger('change');
+                        }
+                    }
+                },
+                error: function() {
+                    console.error('Error loading classes');
+                }
+            });
+        })();
+
         // OPTIMIZED: Initialize the question form using the centralized QuestionForm module
         // This approach eliminates duplicate change event calls by:
         // 1. Using a single initialization point

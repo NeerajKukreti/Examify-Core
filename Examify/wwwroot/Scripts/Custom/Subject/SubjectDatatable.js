@@ -16,7 +16,7 @@ var SubjectTable = function () {
             },
             "columns": [
                 {
-                    "title": "Subject Name", "data": "subjectName" 
+                    "title": "Subject Name", "data": "subjectName", "width": "150px",
                 },
                 {
                     "title": "Description", "data": "description",

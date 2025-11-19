@@ -31,6 +31,8 @@ namespace Examify.Controllers.Admin
 
         public async Task<IActionResult> Create()
         {
+            ViewBag.InstituteId = User.GetInstituteId();
+
             var model = new ExamDTO
             {
                 ExamName = "",
@@ -63,6 +65,8 @@ namespace Examify.Controllers.Admin
 
         public async Task<IActionResult> Edit(int id)
         {
+            ViewBag.InstituteId = User.GetInstituteId();
+
             var exam = await _examService.GetByIdAsync(id);
 
             if (exam == null) return NotFound();
@@ -77,7 +81,8 @@ namespace Examify.Controllers.Admin
                 TotalQuestions = exam.TotalQuestions,
                 Instructions = exam.Instructions,
                 ExamType = exam.ExamType,
-                CutOffPercentage = exam.CutOffPercentage
+                CutOffPercentage = exam.CutOffPercentage,
+                ClassIds = exam.ClassIds
             };
 
             return PartialView("_Create", model);

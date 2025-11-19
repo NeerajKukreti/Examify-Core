@@ -334,5 +334,36 @@ namespace ExamifyAPI.Controllers
                 return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
             }
         }
+
+        [HttpGet("instructions/{instituteId}")]
+        public async Task<IActionResult> GetInstructions(int instituteId)
+        {
+            try
+            {
+                var instructions = await _examService.GetInstructionsAsync(instituteId);
+                return Ok(new { Success = true, Data = instructions });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
+            }
+        }
+
+        [HttpPost("instructions")]
+        public async Task<IActionResult> UpsertInstruction([FromBody] ExamInstructionModel model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new { Success = false, Errors = ModelState });
+
+            try
+            {
+                var id = await _examService.UpsertInstructionAsync(model);
+                return Ok(new { Success = true, InstructionId = id, Message = "Instruction saved successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
+            }
+        }
     }
 }

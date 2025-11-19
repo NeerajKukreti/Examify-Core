@@ -523,6 +523,14 @@ $(function () {
             valid = false;
         }
         
+        // ClassIds
+        if (!$('#ClassIds').val() || $('#ClassIds').val().length === 0) {
+            $('#ClassIds-error').html('Question must be tagged with at least one Class');
+            valid = false;
+        } else {
+            $('#ClassIds-error').empty();
+        }
+        
         // Question English (Quill)
         let qEng = window.__quillEditors && window.__quillEditors['editor-question-english'];
         let qEngText = qEng ? $(qEng.root).text().trim() : '';
@@ -807,6 +815,8 @@ $(function () {
             
             // Gather MCQ options and add them back to formData
             $('#options-wrapper .option-group').each(function (i) {
+           
+
                 var $group = $(this);
                 var $editor = $group.find('.editor-container');
                 var editorId = $editor.attr('id');
@@ -815,9 +825,10 @@ $(function () {
                 // Get text from editor
                 var optionText = qOpt ? qOpt.root.innerHTML : '';
                 var optionPlainText = qOpt ? $(qOpt.root).text().trim() : '';
+                var hasMedia = qOpt ? $(qOpt.root).find('img, iframe, video, audio, a[href]').length > 0 : false;
                 
-                // Validate option has content
-                if (!optionPlainText) {
+                // Validate option has content (text or media)
+                if (!optionPlainText && !hasMedia) {
                     hasEmptyOption = true;
                     $group.find('.option-error').html('<span class="error-message" style="color:brown;">Option cannot be empty</span>');
                 } else {

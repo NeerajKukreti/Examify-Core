@@ -9,11 +9,14 @@ function launchExam(examId) {
 }
 
 $(document).ready(function () {
+    let userExams = [];
+    
     $('#examTable').DataTable({
         ajax: {
             url: 'https://localhost:7271/api/student/Exam/list',
             type: 'GET',
             dataSrc: function (json) {
+                userExams = json.UserExams || [];
                 return json.Data;
             }
         },
@@ -30,6 +33,10 @@ $(document).ready(function () {
             {
                 data: 'ExamId', width:"115px",
                 render: function (data) {
+                    const userExam = userExams.find(ue => ue.ExamId === data);
+                    if (userExam && userExam.UserExamSessionId) {
+                        return `<a href="/ExamSession/ExamResult?sessionId=${userExam.UserExamSessionId}" target="_blank" class="badge bg-success" style="text-decoration: none;">View Result</a>`;
+                    }
                     return `<button onclick="launchExam(${data})" class="btn btn-sm btn-primary">Launch Exam</button>`;
                 }
             }

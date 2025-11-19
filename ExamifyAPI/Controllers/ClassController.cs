@@ -57,7 +57,7 @@ namespace ExamifyApi.Controllers
             try
             {
                 var userId = _authService.GetCurrentUserID(); // logged-in user ID
-                var classId = await _classService.InsertOrUpdateClassAsync(dto, userId);
+                var classId = await _classService.InsertOrUpdateClassAsync(dto, dto.ClassId, userId);
                 return Ok(new { Success = true, Data = classId, Message = "Class created successfully" });
             }
             catch (Exception ex)
@@ -106,6 +106,20 @@ namespace ExamifyApi.Controllers
                     return Ok(new { Success = true, Message = "Class status updated successfully" });
                 else
                     return NotFound(new { Success = false, Message = "Class not found or update failed" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Success = false, Message = ex.Message });
+            }
+        }
+
+        [HttpGet("student/{studentId}")]
+        public async Task<IActionResult> GetStudentClasses(int studentId)
+        {
+            try
+            {
+                var classes = await _classService.GetStudentClassesAsync(studentId);
+                return Ok(new { Success = true, Data = classes, Message = "Student classes retrieved successfully" });
             }
             catch (Exception ex)
             {

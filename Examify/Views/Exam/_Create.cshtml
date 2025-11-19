@@ -30,10 +30,10 @@
         align-items: center;
     }
 
-    .section-title i {
-        margin-right: 8px;
-        font-size: 18px;
-    }
+        .section-title i {
+            margin-right: 8px;
+            font-size: 18px;
+        }
 
     .form-group label {
         font-weight: 500;
@@ -47,38 +47,31 @@
         transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
     }
 
-    .form-control:focus {
-        border-color: #007bff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-    }
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
 
     .required {
         color: #dc3545;
     }
-</style>
-
-<div class="toolbar2" style="display: none">
-    <span class="ql-formats">
-        <select class="ql-font"></select>
-        <select class="ql-size"></select>
-    </span>
-    <span class="ql-formats">
-        <button class="ql-bold"></button>
-        <button class="ql-italic"></button>
-        <button class="ql-underline"></button>
-        <button class="ql-strike"></button>
-    </span>
-    <span class="ql-formats">
-        <button class="ql-list" value="ordered"></button>
-        <button class="ql-list" value="bullet"></button>
-        <button class="ql-indent" value="-1"></button>
-        <button class="ql-indent" value="+1"></button>
-    </span>
-    <span class="ql-formats">
-        <button class="ql-link"></button>
-        <button class="ql-image"></button> 
-    </span>
-</div>
+    /* Ensure Select2 multiple selection height matches form controls */
+    .select2-container--default .select2-selection--multiple {
+        min-height: calc(1.5em + .5rem + 2px);
+        padding: .25rem .5rem;
+        border-radius: .25rem;
+        border: 1px solid #ced4da;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+        padding: 0 2px;
+    }
+    /* make select2 input align vertically with other .form-control inputs */
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        margin: 2px 4px 2px 0;
+    }
+    /* keep checkbox inline with label */
+    .form-check.mb-2 { margin-bottom: .25rem; }
+</style> 
 
 <form id="examForm" method="post">
     <div class="container-fluid">
@@ -128,6 +121,21 @@
                 Exam Configuration
             </div>
             <div class="row">
+                <!-- Classes dropdown moved here (multi-select dropdown) -->
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <label class="mb-0">Assign to Classes <span class="required">*</span></label>
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="selectAllClasses" />
+                                <label class="form-check-label ms-2" for="selectAllClasses">Select All</label>
+                            </div>
+                        </div>
+                        <!-- multi select dropdown (no size/listbox) -->
+                        <select id="ClassIds" name="ClassIds" multiple class="form-control select2 mt-2" aria-label="Select classes"></select>
+                        <span class="text-danger" id="ClassIds-error"></span>
+                    </div>
+                </div>
                 <div class="col-md-4">
                     <div class="form-group">
                         <label asp-for="DurationMinutes">Duration (Minutes) <span class="required">*</span></label>
@@ -135,7 +143,7 @@
                         <span asp-validation-for="DurationMinutes" class="text-danger"></span>
                     </div>
                 </div>
-                <div class="col-md-4" style="display:none">
+                <div class="col-md-4" style="display:none;">
                     <div class="form-group">
                         <label asp-for="TotalQuestions">Total Questions <span class="required">*</span></label>
                         <input asp-for="TotalQuestions" type="number" class="form-control" placeholder="Enter total questions" />
@@ -161,10 +169,33 @@
             <div class="row">
                 <div class="col-md-12">
                     <div class="form-group">
-                        <label asp-for="Instructions">Exam Instructions</label>
+                        <div>
                         <div id="editor-instructions" style="height: 150px;"></div>
                         <input type="hidden" asp-for="Instructions" id="hfInstructions" />
                         <span asp-validation-for="Instructions" class="text-danger"></span>
+                        <div class="toolbar2" style="display: none">
+                            <span class="ql-formats">
+                                <select class="ql-font"></select>
+                                <select class="ql-size"></select>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-bold"></button>
+                                <button class="ql-italic"></button>
+                                <button class="ql-underline"></button>
+                                <button class="ql-strike"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-list" value="ordered"></button>
+                                <button class="ql-list" value="bullet"></button>
+                                <button class="ql-indent" value="-1"></button>
+                                <button class="ql-indent" value="+1"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-link"></button>
+                                <button class="ql-image"></button>
+                            </span>
+                        </div> 
+                        </div>
                     </div>
                 </div>
             </div>
@@ -182,107 +213,394 @@
     </div>
 </form>
 
+<!-- Select2 CSS/JS (for dropdown multi-select) -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="@Url.Content("~/theme/plugins/jquery-validation 1.19.5/jquery.validate.js")"></script>
 
 <script>
-    window.examModelData = @Html.Raw(JsonSerializer.Serialize(Model));
+        window.examModelData = @Html.Raw(JsonSerializer.Serialize(Model));
+        
 
-    $(function () {
-        // Initialize Quill editor for Instructions
-        if (typeof Quill !== 'undefined') {
-            var $template = $('.toolbar2').first();
-            var toolbarId = 'toolbar-for-editor-instructions';
-            var $clone = $template.clone(true).removeClass('toolbar2').attr('id', toolbarId);
-            $clone.css('display', '');
-            $clone.insertBefore('#editor-instructions');
+        $(function () {
+            // Initialize Quill editor for Instructions
+            if (typeof Quill !== 'undefined') {
+                var $template = $('.toolbar2').first();
+                var toolbarId = 'toolbar-for-editor-instructions';
+                var $clone = $template.clone(true).removeClass('toolbar2').attr('id', toolbarId);
+                $clone.css('display', '');
+                
+                // Add instruction controls outside toolbar
+                var instructionControls = '<div style="display: flex; justify-content: flex-end; gap: 5px; position: relative; top: 37px; left: -6px; margin-top: -42px;">' +
+                    '<select id="ddlInstructionTemplate" class="form-control" style="width: 150px; height: 32px; font-size: 13px;">' +
+                    '<option value="">Select Template</option>' +
+                    '</select>' +
+                    '<button type="button" id="btnApplyTemplate" class="btn btn-success btn-sm" style="height: 32px; width: 50px; display: none;">Apply</button>' +
+                    '<button type="button" id="btnManageInstructions" class="btn btn-primary btn-sm" style="height: 32px; width: 70px;">Manage</button>' +
+                    '</div>'
+                $(instructionControls).insertBefore('#editor-instructions');
+                $clone.insertBefore('#editor-instructions');
+                
+                // Load instruction templates
+                window.loadInstructionTemplates = function() {
+                    var instituteId = "@ViewBag.InstituteId";
+                    var endpoint = 'https://localhost:7271/api/Exam/instructions/' + instituteId;
+                    $.ajax({
+                        url: endpoint,
+                        type: 'GET',
+                        success: function(res) {
+                            console.log('API Response:', res);
+                            if (res && res.Success && Array.isArray(res.Data)) {
+                                var $ddl = $('#ddlInstructionTemplate');
+                                
+                                // Store descriptions globally
+                                window.instructionDescriptions = {};
+                                
+                                $ddl.empty().append('<option value="">Select Template</option>');
+                                window.instructionTemplates = res.Data;
+                                res.Data.forEach(function(inst) {
+                                    console.log('Instruction:', inst);
+                                    window.instructionDescriptions[inst.InstructionId] = inst.Description;
+                                    $ddl.append('<option value="' + inst.InstructionId + '">' + inst.InstructionName + '</option>');
+                                });
+                                
+                                $ddl.off('change').on('change', function() {
+                                    var selectedId = $(this).val();
+                                    $('#btnApplyTemplate').toggle(!!selectedId);
+                                });
+                                
+                                $('#btnApplyTemplate').off('click').on('click', function() {
+                                    var selectedId = $('#ddlInstructionTemplate').val();
+                                    if (selectedId && window.instructionDescriptions[selectedId] && window.instructionsQuillEditor) {
+                                        var currentContent = window.instructionsQuillEditor.root.innerHTML.trim();
+                                        if (currentContent && currentContent !== '<p><br></p>') {
+                                            if (!confirm('This will replace your current instructions. Continue?')) {
+                                                return;
+                                            }
+                                        }
+                                        window.instructionsQuillEditor.root.innerHTML = window.instructionDescriptions[selectedId];
+                                    }
+                                });
+                            }
+                        }
+                    });
+                };
+                
+                // Load on page load
+                window.loadInstructionTemplates();
 
-            var instructionsEditor = new Quill('#editor-instructions', {
-                theme: 'snow',
-                placeholder: 'Enter exam instructions...',
-                modules: {
-                    toolbar: '#' + toolbarId
+                var instructionsEditor = new Quill('#editor-instructions', {
+                    theme: 'snow',
+                    placeholder: 'Enter exam instructions...',
+                    modules: {
+                        toolbar: '#' + toolbarId
+                    }
+                });
+
+                // Load existing instructions if editing
+                if (window.examModelData && window.examModelData.Instructions) {
+                    instructionsEditor.root.innerHTML = window.examModelData.Instructions;
+                }
+
+                // Store editor globally
+                window.instructionsQuillEditor = instructionsEditor;
+            }
+
+            $.validator.addMethod('multiRequired', function(value, element) {
+            return $(element).val() && $(element).val().length > 0;
+    });
+            $('#examForm').validate({
+                // include hidden fields (Select2 hides original select); custom rule checks underlying value
+                ignore: [],
+                rules: {
+                    ExamName: { required: true, maxlength: 200 },
+                    ClassIds: { multiRequired: true },
+                    DurationMinutes: { required: true, min: 1, max: 1440 },
+                    //TotalQuestions: { required: true, min: 1, max: 500 },
+                    CutOffPercentage: { min: 0, max: 100 }
+                },
+                messages: {
+                    ExamName: { required: "Exam name is required", maxlength: "Exam name cannot exceed 200 characters" },
+                    ClassIds: { multiRequired: "At least one class must be selected" },
+                    DurationMinutes: { required: "Duration is required", min: "Duration must be at least 1 minute", max: "Duration cannot exceed 1440 minutes" },
+                    //TotalQuestions: { required: "Total questions is required", min: "Must have at least 1 question", max: "Cannot exceed 500 questions" },
+                    CutOffPercentage: { min: "Cut off must be at least 0%", max: "Cut off cannot exceed 100%" }
+                },
+                submitHandler: function(form) {
+                    // Sync Quill editor content to hidden field
+                    if (window.instructionsQuillEditor) {
+                        $('#hfInstructions').val(window.instructionsQuillEditor.root.innerHTML);
+                    }
+                    // ensure multi-select values are selected (no-op but kept for clarity)
+                    $('#ClassIds option').prop('selected', function() { return $(this).is(':selected'); });
+
+                    var formData = $(form).serialize();
+                    var url = window.examModelData.ExamId > 0 ?
+                        '@Url.Action("Edit", "Exam")' :
+                        '@Url.Action("Create", "Exam")';
+
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: formData,
+                        success: function(response) {
+                            if (response.success) {
+                                $('#examModel').modal('hide');
+
+                                if (typeof window.reloadExamTable === 'function') {
+                                    window.reloadExamTable();
+                                }
+
+                                if (typeof toastr !== 'undefined') {
+                                    toastr.success(response.message || 'Exam saved successfully!');
+                                } else {
+                                    alert(response.message || 'Exam saved successfully!');
+                                }
+                            } else {
+                                if (response.errors) {
+                                    response.errors.forEach(function(error) {
+                                        if (typeof toastr !== 'undefined') {
+                                            error.Errors.forEach(function(err) {
+                                                toastr.error(err);
+                                            });
+                                        }
+                                    });
+                                } else if (response.message) {
+                                    if (typeof toastr !== 'undefined') {
+                                        toastr.error(response.message);
+                                    } else {
+                                        alert(response.message);
+                                    }
+                                }
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            if (typeof toastr !== 'undefined') {
+                                toastr.error('An error occurred while saving the exam.');
+                            } else {
+                                alert('An error occurred while saving the exam.');
+                            }
+                        }
+                    });
                 }
             });
 
-            // Load existing instructions if editing
-            if (window.examModelData && window.examModelData.Instructions) {
-                instructionsEditor.root.innerHTML = window.examModelData.Instructions;
-            }
-
-            // Store editor globally
-            window.instructionsQuillEditor = instructionsEditor;
-        }
-
-        $('#examForm').validate({
-            rules: {
-                ExamName: { required: true, maxlength: 200 },
-                DurationMinutes: { required: true, min: 1, max: 1440 },
-                //TotalQuestions: { required: true, min: 1, max: 500 },
-                CutOffPercentage: { min: 0, max: 100 }
-            },
-            messages: {
-                ExamName: { required: "Exam name is required", maxlength: "Exam name cannot exceed 200 characters" },
-                DurationMinutes: { required: "Duration is required", min: "Duration must be at least 1 minute", max: "Duration cannot exceed 1440 minutes" },
-                //TotalQuestions: { required: "Total questions is required", min: "Must have at least 1 question", max: "Cannot exceed 500 questions" },
-                CutOffPercentage: { min: "Cut off must be at least 0%", max: "Cut off cannot exceed 100%" }
-            },
-            submitHandler: function(form) {
-                // Sync Quill editor content to hidden field
-                if (window.instructionsQuillEditor) {
-                    $('#hfInstructions').val(window.instructionsQuillEditor.root.innerHTML);
-                }
-                
-                var formData = $(form).serialize();
-                var url = window.examModelData.ExamId > 0 ?
-                    '@Url.Action("Edit", "Exam")' :
-                    '@Url.Action("Create", "Exam")';
+            // Load classes from API (example uses instituteId = 2; replace as needed)
+            (function loadClasses() {
+                var instituteId = "@ViewBag.InstituteId"; // TODO: replace with dynamic institute id if available
+                var endpoint = 'https://localhost:7271/api/Class/GetAll/' + instituteId;
 
                 $.ajax({
-                    url: url,
-                    type: 'POST',
-                    data: formData,
-                    success: function(response) {
-                        if (response.success) {
-                            $('#examModel').modal('hide');
+                    url: endpoint,
+                    type: 'GET',
+                    success: function(res) {
+                        // debugger removed
+                        if (res && res.Success && Array.isArray(res.Data)) {
+                            var classes = res.Data;
+                            var $select = $('#ClassIds');
+                            $select.empty();
 
-                            if (typeof window.reloadExamTable === 'function') {
-                                window.reloadExamTable();
+                            // Use only active classes
+                            var items = classes.filter(function(c){ return c.IsActive === undefined || c.IsActive; })
+                                .map(function(c){ return { id: String(c.ClassId), text: c.ClassName }; });
+
+                            // Destroy previous Select2 instance to avoid duplicates
+                            if ($select.hasClass('select2-hidden-accessible')) {
+                                $select.select2('destroy');
                             }
 
-                            if (typeof toastr !== 'undefined') {
-                                toastr.success(response.message || 'Exam saved successfully!');
-                            } else {
-                                alert(response.message || 'Exam saved successfully!');
-                            }
-                        } else {
-                            if (response.errors) {
-                                response.errors.forEach(function(error) {
-                                    if (typeof toastr !== 'undefined') {
-                                        error.Errors.forEach(function(err) {
-                                            toastr.error(err);
-                                        });
-                                    }
-                                });
-                            } else if (response.message) {
-                                if (typeof toastr !== 'undefined') {
-                                    toastr.error(response.message);
-                                } else {
-                                    alert(response.message);
+                            // Initialize Select2 using data to ensure search works correctly
+                            var modal = $('#examModel');
+                            var dropdownParent = modal.length ? modal : $(document.body);
+                            $select.select2({ data: items, placeholder: 'Select classes', width: '100%', dropdownParent: dropdownParent, closeOnSelect: false, allowClear: true });
+
+                            // Preselect when editing using ExamDTO.ClassIds (server-populated)
+                            if (window.examModelData && Array.isArray(window.examModelData.ClassIds) && window.examModelData.ClassIds.length > 0) {
+                                var vals = window.examModelData.ClassIds.map(function(x){ return String(x); });
+                                $select.val(vals).trigger('change');
+                                if ($('#selectAllClasses').length && vals.length === items.length) {
+                                    $('#selectAllClasses').prop('checked', true);
                                 }
                             }
+                        } else {
+                            console.warn('Failed to load classes or empty response');
                         }
                     },
-                    error: function(xhr, status, error) {
-                        if (typeof toastr !== 'undefined') {
-                            toastr.error('An error occurred while saving the exam.');
-                        } else {
-                            alert('An error occurred while saving the exam.');
-                        }
+                    error: function() {
+                        console.error('Error loading classes');
                     }
                 });
+            })();
+
+            // Handle manage instructions button
+            $(document).on('click', '#btnManageInstructions', function(e) {
+                e.preventDefault();
+                
+                var selectedId = $('#ddlInstructionTemplate').val();
+                if (selectedId && window.instructionTemplates) {
+                    var template = window.instructionTemplates.find(function(t) { return String(t.InstructionId) === String(selectedId); });
+                    if (template) {
+                        window.editingTemplate = template;
+                    }
+                } else {
+                    window.editingTemplate = null;
+                }
+                
+                $('#instructionManageModal').modal('show');
+            });
+            
+            // Prevent ESC key from closing modals with capture phase
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' || e.keyCode === 27) {
+                    var examModalOpen = $('#examModel').hasClass('show');
+                    var instructionModalOpen = $('#instructionManageModal').hasClass('show');
+                    if (examModalOpen || instructionModalOpen) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        return false;
+                    }
+                }
+            }, true);
+
+            console.log('✅ Exam form initialized');
+        });
+</script>
+
+<!-- Instruction Management Modal -->
+<div class="modal fade" id="instructionManageModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage Instruction Templates</h5>
+                <button type="button" class="close" data-dismiss="modal" style="margin-left: auto;border: 0;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Template Name <span class="text-danger">*</span></label>
+                    <input type="text" id="txtInstructionName" class="form-control" placeholder="Enter template name" />
+                </div>
+                <div class="form-group">
+                    <label>Description <span class="text-danger">*</span></label>
+                    <div id="editorInstructionDescription" style="height: 150px;"></div>
+                    <input type="hidden" id="txtInstructionDescription" />
+                </div>
+                <input type="hidden" id="hfInstructionId" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnCloseInstructionModal">Close</button>
+                <button type="button" class="btn btn-success" id="btnSaveAndAddNew">Save & Add New</button>
+                <button type="button" class="btn btn-primary" id="btnSaveInstruction">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Quill editor for instruction description
+    var instructionDescEditor;
+    $('#instructionManageModal').on('shown.bs.modal', function() {
+        if (!instructionDescEditor && typeof Quill !== 'undefined') {
+            var $template = $('.toolbar2').first();
+            var toolbarId = 'toolbar-instruction-desc';
+            var $clone = $template.clone(true).removeClass('toolbar2').attr('id', toolbarId);
+            $clone.css('display', '');
+            $clone.insertBefore('#editorInstructionDescription');
+            
+            instructionDescEditor = new Quill('#editorInstructionDescription', {
+                theme: 'snow',
+                placeholder: 'Enter instruction description...',
+                modules: { toolbar: '#' + toolbarId }
+            });
+        }
+        
+        if (window.editingTemplate) {
+            $('#txtInstructionName').val(window.editingTemplate.InstructionName);
+            $('#hfInstructionId').val(window.editingTemplate.InstructionId);
+            if (instructionDescEditor) {
+                instructionDescEditor.root.innerHTML = window.editingTemplate.Description;
+            }
+            window.editingTemplate = null;
+        }
+    });
+    
+    $('#instructionManageModal').on('hidden.bs.modal', function() {
+        $('#txtInstructionName').val('');
+        $('#hfInstructionId').val('');
+        if (instructionDescEditor) {
+            instructionDescEditor.root.innerHTML = '';
+            $('#toolbar-instruction-desc').remove();
+            $('#editorInstructionDescription').empty();
+            instructionDescEditor = null;
+        }
+        window.editingTemplate = null;
+    });
+    
+    // Close button handlers
+    $('#btnCloseInstructionModal, #instructionManageModal .close').on('click', function() {
+        $('#instructionManageModal').modal('hide');
+    });
+    
+    function saveInstruction(keepModalOpen) {
+        var name = $('#txtInstructionName').val().trim();
+        
+        // Sync Quill content to hidden field
+        if (instructionDescEditor) {
+            $('#txtInstructionDescription').val(instructionDescEditor.root.innerHTML);
+        }
+        
+        var description = $('#txtInstructionDescription').val().trim();
+        var instructionId = $('#hfInstructionId').val();
+        var instituteId = "@ViewBag.InstituteId";
+
+        if (!name || !description) {
+            toastr.error('Please fill all required fields');
+            return;
+        }
+
+        var data = {
+            InstructionId: instructionId || null,
+            InstituteId: parseInt(instituteId),
+            InstructionName: name,
+            Description: description
+        };
+
+        $.ajax({
+            url: 'https://localhost:7271/api/Exam/instructions',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(res) {
+                if (res.Success) {
+                    if (!keepModalOpen) {
+                        $('#instructionManageModal').modal('hide');
+                    }
+                    $('#txtInstructionName').val('');
+                    if (instructionDescEditor) {
+                        instructionDescEditor.root.innerHTML = '';
+                    }
+                    $('#txtInstructionDescription').val('');
+                    $('#hfInstructionId').val('');
+                    toastr.success(instructionId ? 'Instruction template updated successfully' : 'Instruction template created successfully');
+                    
+                    if (typeof window.loadInstructionTemplates === 'function') {
+                        window.loadInstructionTemplates();
+                    }
+                } else {
+                    toastr.error(res.Message || 'Failed to save instruction template');
+                }
+            },
+            error: function() {
+                toastr.error('Error saving instruction template');
             }
         });
-
-        console.log('✅ Exam form initialized');
+    }
+    
+    $('#btnSaveInstruction').on('click', function() {
+        saveInstruction(false);
+    });
+    
+    $('#btnSaveAndAddNew').on('click', function() {
+        saveInstruction(true);
     });
 </script>

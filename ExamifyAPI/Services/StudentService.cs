@@ -16,6 +16,7 @@ namespace ExamifyAPI.Services
         Task<int> AssignStudentToClassAsync(int studentId, int classId, int createdBy);
         Task<int> AssignStudentToBatchAsync(int studentId, int batchId, int createdBy);
         Task<bool> ChangeStatus(int studentId);
+        Task<IEnumerable<ExamModel>> GetAllExamsAsync();
     }
 
     public class StudentService : IStudentService
@@ -23,16 +24,30 @@ namespace ExamifyAPI.Services
         private readonly IStudentRepository _studentRepository;
         private readonly IUserService _userService;
         private readonly IConfiguration _config;
+        private readonly IAuthService _authService;
+        private readonly IExamService _examService;
+        private readonly IClassService _classService;
 
-        public StudentService(IStudentRepository studentRepository, IUserService userService, IConfiguration config)
+        public StudentService(IStudentRepository studentRepository, 
+            IUserService userService, 
+            IConfiguration config, 
+            IAuthService authService, 
+            IExamService examService,
+            IClassService classService)
         {
             _studentRepository = studentRepository;
             _userService = userService;
             _config = config;
+            _authService = authService;
+            _examService = examService;
+            _classService = classService;
         }
 
         public async Task<IEnumerable<StudentModel>> GetAllStudentsAsync(int instituteId, int? studentId)
         {
+            var instituteId1 = _authService.GetCurrentInstituteId();
+            var userid = _authService.GetCurrentUserID();
+
             return await _studentRepository.GetAllStudentsAsync(instituteId, studentId);
         }
 
@@ -84,5 +99,15 @@ namespace ExamifyAPI.Services
         public async Task<bool> ChangeStatus(int studentId) {
             return await _studentRepository.ChangeStatus(studentId);
         }
+
+        public async Task<IEnumerable<ExamModel>> GetAllExamsAsync()
+        {
+            var allExams = await _examService.GetAllExamsAsync();
+            var studentClasses = await _classService.GetStudentClassesAsync(_authService.GetCurrentUserID());
+            var studentClassIds = studentClasses.Select(sc => sc.ClassId).ToHashSet();
+            
+            return allExams.Where(exam => exam.ClassIds.Any(classId => studentClassIds.Contains(classId)))
+                .Where(x => x.IsPublished && (x.IsActive ?? false) && x.TotalQuestions > 0);
+        } 
     }
 }

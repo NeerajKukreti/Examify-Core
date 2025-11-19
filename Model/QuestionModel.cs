@@ -27,6 +27,7 @@ namespace DataModel
         public List<OptionModel> Options { get; set; } = new List<OptionModel>();
         public List<PairModel> Pairs { get; set; } = new List<PairModel>(); // For Pairing questions
         public List<OrderModel> Orders { get; set; } = new List<OrderModel>(); // For Ordering questions
+        public List<int>? ClassIds { get; set; }
     }
 
     public class OptionModel

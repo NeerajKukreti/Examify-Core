@@ -49,11 +49,16 @@ namespace DAL.Repository
             if (question == null)
                 return null;
 
-            // Second result: Options OR Pairs depending on type
+            // Read all result sets in order
+            var choiceRows = await multi.ReadAsync();
+            var pairRows = await multi.ReadAsync();
+            var orderRows = await multi.ReadAsync();
+            var classRows = await multi.ReadAsync();
+
+            // Map based on question type
             if (question.TypeName is "MCQ" or "True/False" or "Descriptive")
             {
-                var optionRows = await multi.ReadAsync();
-                question.Options = optionRows.Select(opt => new OptionModel
+                question.Options = choiceRows.Select(opt => new OptionModel
                 {
                     ChoiceId = opt.ChoiceId,
                     Text = (string)opt.ChoiceTextEnglish,
@@ -62,7 +67,6 @@ namespace DAL.Repository
             }
             else if (question.TypeName == "Matching")
             {
-                var pairRows = await multi.ReadAsync();
                 question.Pairs = pairRows.Select(p => new PairModel
                 {
                     PairId = p.PairId,
@@ -72,13 +76,23 @@ namespace DAL.Repository
             }
             else if (question.TypeName == "Ordering")
             {
-                var orderRows = await multi.ReadAsync();
                 question.Orders = orderRows.Select(p => new OrderModel
                 {
                     OrderId = p.OrderId,
                     ItemText = (string)p.ItemText,
                     CorrectOrder = (int)p.CorrectOrder
                 }).ToList(); 
+            }
+
+            // Map class ids from the final result set (QuestionClass)
+            try
+            {
+                question.ClassIds = classRows.Select(c => (int)c.ClassId).ToList();
+            }
+            catch
+            {
+                // If classRows is empty or mapping fails, leave ClassIds as null or empty list
+                question.ClassIds = question.ClassIds ?? new List<int>();
             }
 
             return question;
@@ -138,7 +152,19 @@ namespace DAL.Repository
                     }
                 }
 
+                // Prepare TVP for ClassIds (SP parameter name: @classIds) using IntList TVP
+                var classIdsTable = new DataTable();
+                classIdsTable.Columns.Add("id", typeof(int));
+                if (model.ClassIds != null)
+                {
+                    foreach (var cid in model.ClassIds)
+                    {
+                        classIdsTable.Rows.Add(cid);
+                    }
+                }
+                
                 var p = new DynamicParameters();
+                p.Add("@classIds", classIdsTable.AsTableValuedParameter("IntList"));
                 p.Add("@QuestionId", model.QuestionId, DbType.Int32);
                 p.Add("@TopicId", model.TopicId, DbType.Int32);
                 p.Add("@QuestionEnglish", model.QuestionEnglish, DbType.String);

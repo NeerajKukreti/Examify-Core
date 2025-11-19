@@ -40,17 +40,17 @@
             cursor: pointer;
         }
 
-        .section-title.collapsible:hover {
-            color: #007bff;
-        }
+            .section-title.collapsible:hover {
+                color: #007bff;
+            }
 
     .section-content {
         display: none;
     }
 
-    .section-content.show {
-        display: block;
-    }
+        .section-content.show {
+            display: block;
+        }
 
     .form-group label {
         font-weight: 500;
@@ -113,8 +113,9 @@
         <div id="simpleForm">
             <div class="form-section">
                 <div class="section-title">
-                  <span>  <i class="fas fa-user-plus"></i>
-                    Quick Student Registration
+                    <span>
+                        <i class="fas fa-user-plus"></i>
+                        Quick Student Registration
                     </span>
                 </div>
                 <div class="row">
@@ -137,15 +138,64 @@
                             <input id="simple_Email" name="simple_Email" type="email" class="form-control" placeholder="Enter email address" />
                         </div>
                     </div>
-                    @if (Model.StudentId == 0)
-                    {
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Password <span class="required">*</span></label>
-                                <input id="simple_Password" name="simple_Password" type="password" class="form-control" placeholder="Enter password" />
-                            </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Password <span class="required">*</span></label>
+                            <input id="simple_Password" name="simple_Password" type="password" class="form-control" placeholder="Enter password" />
                         </div>
-                    }
+                    </div>
+
+
+                    <!-- Class and Batch in Simple Form -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Class <span class="required">*</span></label>
+                            <select id="simple_ClassId" name="simple_ClassId" class="form-control">
+                                <option value="">Select Class</option>
+                                @if (Model.Classes != null)
+                                {
+                                    foreach (var classItem in Model.Classes)
+                                    {
+                                        if (classItem.IsCurrent)
+                                        {
+                                            <option value="@classItem.ClassId" selected="selected">@classItem.ClassName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@classItem.ClassId">@classItem.ClassName</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                            <span class="text-danger" id="simple_ClassId-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Batch <span id="simple_batch-required-indicator" class="required" style="display: none;">*</span></label>
+                            <select id="simple_BatchId" name="simple_BatchId" class="form-control">
+                                <option value="">Select Batch</option>
+                                @if (Model.Batches != null)
+                                {
+                                    foreach (var batch in Model.Batches)
+                                    {
+                                        if (batch.IsCurrent)
+                                        {
+                                            <option value="@batch.BatchId" selected="selected">@batch.BatchName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@batch.BatchId">@batch.BatchName</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                            <span class="text-danger" id="simple_BatchId-error"></span>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -153,240 +203,254 @@
         <!-- Advanced Form (Hidden by default) -->
         <div id="advancedForm" style="display: none;">
 
-        <!-- Personal Information Section -->
-        <div class="form-section">
-            <div class="section-title">
-                <span><i class="fas fa-user"></i>
+            <!-- Personal Information Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <span>
+                        <i class="fas fa-user"></i>
                         Personal Information
                     </span>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="StudentName">Student Name <span class="required">*</span></label>
-                        <input asp-for="StudentName" class="form-control" placeholder="Enter student name" />
-                        <span asp-validation-for="StudentName" class="text-danger"></span>
-                    </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="FatherName">Father Name</label>
-                        <input asp-for="FatherName" class="form-control" placeholder="Enter father name" />
-                        <span asp-validation-for="FatherName" class="text-danger"></span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="DateOfBirth">Date of Birth</label>
-                        <input asp-for="DateOfBirth" type="date" class="form-control" />
-                        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="Category">Category</label>
-                        <select asp-for="Category" class="form-control">
-                            <option value="">Select Category</option>
-                            @if (Model.Categories != null)
-                            {
-                                @foreach (var category in Model.Categories)
-                                {
-                                    <option value="@category">@category</option>
-                                }
-                            }
-                        </select>
-                        <span asp-validation-for="Category" class="text-danger"></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Contact Information Section -->
-        <div class="form-section">
-            <div class="section-title collapsible" data-target="#contact-section">
-                <span><i class="fas fa-phone"></i> Contact Information</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div id="contact-section" class="section-content">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="Mobile">Mobile Number <span class="required">*</span></label>
-                        <input asp-for="Mobile" class="form-control" placeholder="Enter 10-digit mobile number" maxlength="10" />
-                        <span asp-validation-for="Mobile" class="text-danger"></span>
-                        <small class="form-text text-muted">This will be used as username for login</small>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="Email">Email Address</label>
-                        <input asp-for="Email" type="email" class="form-control" placeholder="Enter email address" />
-                        <span asp-validation-for="Email" class="text-danger"></span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="SecondaryContact">Secondary Contact</label>
-                        <input asp-for="SecondaryContact" class="form-control" placeholder="Enter secondary contact" maxlength="10" />
-                        <span asp-validation-for="SecondaryContact" class="text-danger"></span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="ParentContact">Parent Contact</label>
-                        <input asp-for="ParentContact" class="form-control" placeholder="Enter parent contact" maxlength="10" />
-                        <span asp-validation-for="ParentContact" class="text-danger"></span>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-
-        <!-- Address Information Section -->
-        <div class="form-section">
-            <div class="section-title collapsible" data-target="#address-section">
-                <span><i class="fas fa-map-marker-alt"></i> Address Information</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div id="address-section" class="section-content">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="form-group">
-                        <label asp-for="Address">Address</label>
-                        <textarea asp-for="Address" class="form-control" rows="3" placeholder="Enter full address"></textarea>
-                        <span asp-validation-for="Address" class="text-danger"></span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label asp-for="City">City</label>
-                        <input asp-for="City" class="form-control" placeholder="Enter city" />
-                        <span asp-validation-for="City" class="text-danger"></span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label asp-for="StateId">State</label>
-                        <select asp-for="StateId" class="form-control">
-                            <option value="">Select State</option>
-                            @if (Model.States != null)
-                            {
-                                @foreach (var state in Model.States)
-                                {
-                                    <option value="@state.StateId">@state.StateName</option>
-                                }
-                            }
-                        </select>
-                        <span asp-validation-for="StateId" class="text-danger"></span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label asp-for="Pincode">Pincode</label>
-                        <input asp-for="Pincode" class="form-control" placeholder="Enter 6-digit pincode" maxlength="6" />
-                        <span asp-validation-for="Pincode" class="text-danger"></span>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </div>
-
-        <!-- Account Information Section -->
-        <div class="form-section">
-            <div class="section-title collapsible" data-target="#account-section">
-                <span><i class="fas fa-key"></i> Account Information</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div id="account-section" class="section-content">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="UserName">Username <span class="required">*</span></label>
-                        <input asp-for="UserName" class="form-control" placeholder="Username (same as mobile)" readonly />
-                        <span asp-validation-for="UserName" class="text-danger"></span>
-                        <small class="form-text text-muted">Username will be same as mobile number</small>
-                    </div>
-                </div>
-                @if (Model.StudentId == 0)
-                {
+                <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label asp-for="Password">Password <span class="required">*</span></label>
-                            <input asp-for="Password" type="password" class="form-control" placeholder="Enter password" />
-                            <span asp-validation-for="Password" class="text-danger"></span>
-                            @if (Model.StudentId > 0)
-                            {
-                                <small class="form-text text-muted">Leave blank to keep current password</small>
-                            }
+                            <label asp-for="StudentName">Student Name <span class="required">*</span></label>
+                            <input asp-for="StudentName" class="form-control" placeholder="Enter student name" />
+                            <span asp-validation-for="StudentName" class="text-danger"></span>
                         </div>
                     </div>
-                }
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="ActivationDate">Activation Date</label>
-                        <input asp-for="ActivationDate" type="date" class="form-control" />
-                        <span asp-validation-for="ActivationDate" class="text-danger"></span>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="FatherName">Father Name</label>
+                            <input asp-for="FatherName" class="form-control" placeholder="Enter father name" />
+                            <span asp-validation-for="FatherName" class="text-danger"></span>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="Validity">Validity Date</label>
-                        <input asp-for="Validity" type="date" class="form-control" />
-                        <span asp-validation-for="Validity" class="text-danger"></span>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="DateOfBirth">Date of Birth</label>
+                            <input asp-for="DateOfBirth" type="date" class="form-control" />
+                            <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="Category">Category</label>
+                            <select asp-for="Category" class="form-control">
+                                <option value="">Select Category</option>
+                                @if (Model.Categories != null)
+                                {
+                                    foreach (var category in Model.Categories)
+                                    {
+                                        <option value="@category">@category</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="Category" class="text-danger"></span>
+                        </div>
                     </div>
                 </div>
             </div>
-            </div>
-        </div>
 
-        <!-- Class and Batch Information Section -->
-        <div class="form-section">
-            <div class="section-title collapsible" data-target="#class-section">
-                <span><i class="fas fa-graduation-cap"></i> Class and Batch Information</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div id="class-section" class="section-content">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="ClassId">Class</label>
-                        <select id="ClassId" name="ClassId" class="form-control">
-                            <option value="">Select Class</option>
-                            @if (Model.Classes != null)
-                            {
-                                @foreach (var classItem in Model.Classes)
-                                {
-                                    <option value="@classItem.ClassId" selected="@classItem.IsCurrent">@classItem.ClassName</option>
-                                }
-                            }
-                        </select>
-                        <span class="text-danger" id="ClassId-error"></span>
+            <!-- Contact Information Section -->
+            <div class="form-section">
+                <div class="section-title collapsible" data-target="#contact-section">
+                    <span><i class="fas fa-phone"></i> Contact Information</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div id="contact-section" class="section-content">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Mobile">Mobile Number <span class="required">*</span></label>
+                                <input asp-for="Mobile" class="form-control" placeholder="Enter 10-digit mobile number" maxlength="10" />
+                                <span asp-validation-for="Mobile" class="text-danger"></span>
+                                <small class="form-text text-muted">This will be used as username for login</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Email">Email Address</label>
+                                <input asp-for="Email" type="email" class="form-control" placeholder="Enter email address" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="SecondaryContact">Secondary Contact</label>
+                                <input asp-for="SecondaryContact" class="form-control" placeholder="Enter secondary contact" maxlength="10" />
+                                <span asp-validation-for="SecondaryContact" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="ParentContact">Parent Contact</label>
+                                <input asp-for="ParentContact" class="form-control" placeholder="Enter parent contact" maxlength="10" />
+                                <span asp-validation-for="ParentContact" class="text-danger"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="BatchId">Batch <span id="batch-required-indicator" class="required" style="display: none;">*</span></label>
-                        <select asp-for="BatchId" class="form-control">
-                            <option value="">Select Batch</option>
-                            @if (Model.Batches != null)
-                            {
-                                @foreach (var batch in Model.Batches)
-                                {
-                                    <option selected="@batch.IsCurrent" value="@batch.BatchId">@batch.BatchName</option>
-                                }
-                            }
-                        </select>
-                        <span asp-validation-for="BatchId" class="text-danger"></span>
-                        
+            </div>
+
+            <!-- Address Information Section -->
+            <div class="form-section">
+                <div class="section-title collapsible" data-target="#address-section">
+                    <span><i class="fas fa-map-marker-alt"></i> Address Information</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div id="address-section" class="section-content">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label asp-for="Address">Address</label>
+                                <textarea asp-for="Address" class="form-control" rows="3" placeholder="Enter full address"></textarea>
+                                <span asp-validation-for="Address" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="City">City</label>
+                                <input asp-for="City" class="form-control" placeholder="Enter city" />
+                                <span asp-validation-for="City" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="StateId">State</label>
+                                <select asp-for="StateId" class="form-control">
+                                    <option value="">Select State</option>
+                                    @if (Model.States != null)
+                                    {
+                                        foreach (var state in Model.States)
+                                        {
+                                            <option value="@state.StateId">@state.StateName</option>
+                                        }
+                                    }
+                                </select>
+                                <span asp-validation-for="StateId" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="Pincode">Pincode</label>
+                                <input asp-for="Pincode" class="form-control" placeholder="Enter 6-digit pincode" maxlength="6" />
+                                <span asp-validation-for="Pincode" class="text-danger"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Account Information Section -->
+            <div class="form-section">
+                <div class="section-title collapsible" data-target="#account-section">
+                    <span><i class="fas fa-key"></i> Account Information</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div id="account-section" class="section-content">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="UserName">Username <span class="required">*</span></label>
+                                <input asp-for="UserName" class="form-control" placeholder="Username (same as mobile)" readonly />
+                                <span asp-validation-for="UserName" class="text-danger"></span>
+                                <small class="form-text text-muted">Username will be same as mobile number</small>
+                            </div>
+                        </div>
+                        @if (Model.StudentId == 0)
+                        {
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Password">Password <span class="required">*</span></label>
+                                    <input asp-for="Password" type="password" class="form-control" placeholder="Enter password" />
+                                    <span asp-validation-for="Password" class="text-danger"></span>
+                                    @if (Model.StudentId > 0)
+                                    {
+                                        <small class="form-text text-muted">Leave blank to keep current password</small>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="ActivationDate">Activation Date</label>
+                                <input asp-for="ActivationDate" type="date" class="form-control" />
+                                <span asp-validation-for="ActivationDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Validity">Validity Date</label>
+                                <input asp-for="Validity" type="date" class="form-control" />
+                                <span asp-validation-for="Validity" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+
+            <!-- Class and Batch Information Section (Advanced form only - fields exist in advanced too) -->
+            <div class="form-section">
+                <div class="section-title collapsible" data-target="#class-section">
+                    <span><i class="fas fa-graduation-cap"></i> Class and Batch Information</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div id="class-section" class="section-content">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ClassId">Class</label>
+                                <select id="ClassId" name="ClassId" class="form-control">
+                                    <option value="">Select Class</option>
+                                    @if (Model.Classes != null)
+                                    {
+                                        foreach (var classItem in Model.Classes)
+                                        {
+                                            if (classItem.IsCurrent)
+                                            {
+                                                <option value="@classItem.ClassId" selected="selected">@classItem.ClassName</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@classItem.ClassId">@classItem.ClassName</option>
+                                            }
+                                        }
+                                    }
+                                </select>
+                                <span class="text-danger" id="ClassId-error"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="BatchId">Batch <span id="batch-required-indicator" class="required" style="display: none;">*</span></label>
+                                <select asp-for="BatchId" class="form-control">
+                                    <option value="">Select Batch</option>
+                                    @if (Model.Batches != null)
+                                    {
+                                        foreach (var batch in Model.Batches)
+                                        {
+                                            if (batch.IsCurrent)
+                                            {
+                                                <option value="@batch.BatchId" selected="selected">@batch.BatchName</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@batch.BatchId">@batch.BatchName</option>
+                                            }
+                                        }
+                                    }
+                                </select>
+                                <span asp-validation-for="BatchId" class="text-danger"></span>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         </div>
         <!-- End Advanced Form -->
-
         <!-- Form Actions -->
         <div class="d-flex justify-content-end">
             <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">
@@ -429,7 +493,24 @@
             $('#Mobile').val($('#simple_Mobile').val());
             $('#UserName').val($('#simple_Mobile').val());
             $('#Email').val($('#simple_Email').val());
-            $('#Password').val($('#simple_Password').val());
+
+            var pwd = $('#simple_Password').val() || '';
+            // If advanced password input exists, set it. Otherwise ensure a hidden input named 'Password' is present so server receives the value.
+            if ($('#Password').length) {
+                $('#Password').val(pwd);
+                // remove any helper if present
+                $('#_hidden_Password').remove();
+            } else {
+                // remove previous helper then add fresh hidden input with name 'Password'
+                $('#_hidden_Password').remove();
+                $('<input>').attr({ type: 'hidden', id: '_hidden_Password', name: 'Password', value: pwd }).appendTo('#studentForm');
+            }
+
+            // copy class and batch
+            $('#ClassId').val($('#simple_ClassId').val());
+            $('#BatchId').val($('#simple_BatchId').val());
+            // keep hidden SelectedClassId in sync
+            $('#SelectedClassId').val($('#simple_ClassId').val());
         }
 
         // Sync Advanced form data to Simple form
@@ -437,7 +518,13 @@
             $('#simple_StudentName').val($('#StudentName').val());
             $('#simple_Mobile').val($('#Mobile').val());
             $('#simple_Email').val($('#Email').val());
-            $('#simple_Password').val($('#Password').val());
+            // read password from advanced if present, otherwise from helper hidden field
+            var advPwd = '';
+            if ($('#Password').length) advPwd = $('#Password').val();
+            else if ($('#_hidden_Password').length) advPwd = $('#_hidden_Password').val();
+            $('#simple_Password').val(advPwd);
+            $('#simple_ClassId').val($('#ClassId').val());
+            $('#simple_BatchId').val($('#BatchId').val());
         }
 
         // Simple form - Auto-fill username and sync to advanced
@@ -469,56 +556,48 @@
             $('#simple_StudentName').val(window.studentModelData.StudentName);
             $('#simple_Mobile').val(window.studentModelData.Mobile);
             $('#simple_Email').val(window.studentModelData.Email);
+            // set simple class/batch if present
+            if (window.studentModelData.ClassId) {
+                $('#simple_ClassId').val(window.studentModelData.ClassId);
+            }
+            if (window.studentModelData.BatchId) {
+                $('#simple_BatchId').val(window.studentModelData.BatchId);
+            }
         }
 
-        // Handle class selection change to load batches
-        $('#ClassId').on('change', function() {
-            debugger;
-
-            var classId = $(this).val();
-            var batchSelect = $('#BatchId');
-            var batchRequiredIndicator = $('#batch-required-indicator');
-            
-            // Update hidden field for form submission
-            $('#SelectedClassId').val(classId);
-            
+        // Helper to load batches into a target select and handle UI
+        function loadBatchesInto(classId, batchSelect, batchRequiredIndicator, selectBatchIdIfAny) {
             // Clear and disable batch dropdown
             batchSelect.empty().append('<option value="">Select Batch</option>').prop('disabled', true);
-            
+
             if (classId) {
-                // Show required indicator for batch when class is selected
                 batchRequiredIndicator.show();
-                
-                // Add required rule for BatchId
-                $('#BatchId').rules('add', {
+
+                // Add required rule for the batch select
+                batchSelect.rules('add', {
                     required: true,
-                    messages: {
-                        required: "Please select a batch when class is selected"
-                    }
+                    messages: { required: 'Please select a batch when class is selected' }
                 });
-                
-                // Show loading indicator
+
                 batchSelect.append('<option value="">Loading batches...</option>');
-                
-                // Load batches for selected class
+
                 $.ajax({
                     url: '@Url.Action("LoadBatchesByClass", "Batch")',
                     type: 'GET',
                     data: { classId: classId },
                     success: function(response) {
                         batchSelect.empty().append('<option value="">Select Batch</option>');
-                        
+
                         if (response.data && response.data.length > 0) {
                             $.each(response.data, function(index, batch) {
-                                if (batch.isActive) { // Only show active batches
-                                    batchSelect.append('<option value="' + batch.batchId + '">' + batch.batchName+ '</option>');
+                                if (batch.isActive) {
+                                    batchSelect.append('<option value="' + batch.batchId + '">' + batch.batchName + '</option>');
                                 }
                             });
                             batchSelect.prop('disabled', false);
-                            
-                            // Re-select batch if in edit mode
-                            if (window.studentModelData?.BatchId) {
-                                batchSelect.val(window.studentModelData.BatchId);
+
+                            if (selectBatchIdIfAny) {
+                                batchSelect.val(selectBatchIdIfAny);
                             }
                         } else {
                             batchSelect.append('<option value="">No batches available</option>');
@@ -528,62 +607,87 @@
                         batchSelect.empty()
                             .append('<option value="">Select Batch</option>')
                             .append('<option value="">Error loading batches</option>');
-                        
-                        if (typeof toastr !== 'undefined') {
-                            toastr.error('Failed to load batches for the selected class.');
-                        }
+
+                        if (typeof toastr !== 'undefined') toastr.error('Failed to load batches for the selected class.');
                     }
                 });
             } else {
-                // Hide required indicator when no class is selected
                 batchRequiredIndicator.hide();
-                
-                // Remove required rule for BatchId
-                $('#BatchId').rules('remove', 'required');
-                
-                // Clear any existing validation error for BatchId
-                $('#BatchId').valid();
+                batchSelect.rules('remove', 'required');
+                batchSelect.valid();
             }
-        });
-
-        // Initialize for edit mode - find the class that contains the selected batch
-        if (window.studentModelData?.BatchId && window.studentModelData.BatchId > 0) {
-            // Find which class contains this batch
-            var foundClass = false;
-            
-            $('#ClassId option').each(function() {
-                var classId = $(this).val();
-                if (classId && !foundClass) {
-                    $.ajax({
-                        url: '@Url.Action("LoadBatchesByClass", "Batch")',
-                        type: 'GET',
-                        data: { classId: classId },
-                        async: false, // Make synchronous for initialization
-                        success: function(response) {
-                            if (response.success && response.data) {
-                                var batchExists = response.data.find(function(batch) {
-                                    return batch.value == window.studentModelData.BatchId;
-                                });
-                                
-                                if (batchExists) {
-                                    $('#ClassId').val(classId);
-                                    $('#SelectedClassId').val(classId);
-                                    foundClass = true;
-                                    
-                                    // Show batch required indicator since class is selected
-                                    $('#batch-required-indicator').show();
-                                    
-                                    // Trigger change to load batches
-                                    $('#ClassId').trigger('change');
-                                }
-                            }
-                        }
-                    });
-                }
-            });
         }
 
-       
+        // Handle advanced class selection change to load batches
+        $('#ClassId').on('change', function() {
+            var classId = $(this).val();
+            var batchSelect = $('#BatchId');
+            var batchRequiredIndicator = $('#batch-required-indicator');
+
+            // Update hidden field for form submission
+            $('#SelectedClassId').val(classId);
+
+            // Load into advanced batch select
+            loadBatchesInto(classId, batchSelect, batchRequiredIndicator, window.studentModelData?.BatchId);
+
+            // Keep simple selector in sync when advanced changes (do NOT trigger its change to avoid recursion)
+            $('#simple_ClassId').val(classId);
+            // Also pre-load simple batches so UI is consistent (do not trigger its change)
+            loadBatchesInto(classId, $('#simple_BatchId'), $('#simple_batch-required-indicator'), window.studentModelData?.BatchId);
+        });
+
+        // Handle simple form class selection change to load batches
+        $('#simple_ClassId').on('change', function() {
+            var classId = $(this).val();
+
+            // Keep advanced selector in sync without triggering its change
+            $('#ClassId').val(classId);
+            $('#SelectedClassId').val(classId);
+
+            // Load into simple batch select
+            loadBatchesInto(classId, $('#simple_BatchId'), $('#simple_batch-required-indicator'), window.studentModelData?.BatchId);
+
+            // Also ensure advanced batches are loaded to keep both in sync (but avoid triggering handlers)
+            loadBatchesInto(classId, $('#BatchId'), $('#batch-required-indicator'), window.studentModelData?.BatchId);
+        });
+
+        // Initialize for edit mode - find the class that contains the selected batch (async approach)
+        if (window.studentModelData?.BatchId && window.studentModelData.BatchId > 0) {
+            // Try to select class that contains the batch by loading batches for each class asynchronously
+            var classOptions = $('#ClassId option').map(function() { return $(this).val(); }).get();
+            var foundClass = false;
+
+            (function findClass(i) {
+                if (i >= classOptions.length || foundClass) return;
+                var classId = classOptions[i];
+                if (!classId) { findClass(i+1); return; }
+
+                $.ajax({
+                    url: '@Url.Action("LoadBatchesByClass", "Batch")',
+                    type: 'GET',
+                    data: { classId: classId },
+                    success: function(response) {
+                        if (response && response.data) {
+                            var batchExists = response.data.find(function(batch) { return batch.batchId == window.studentModelData.BatchId; });
+                            if (batchExists) {
+                                foundClass = true;
+                                $('#ClassId').val(classId);
+                                $('#SelectedClassId').val(classId);
+                                $('#batch-required-indicator').show();
+                                // load batches for this class
+                                $('#ClassId').trigger('change');
+                                // also set simple selector
+                                $('#simple_ClassId').val(classId);
+                                $('#simple_ClassId').trigger('change');
+                            }
+                        }
+                    },
+                    complete: function() { if (!foundClass) findClass(i+1); }
+                });
+            })(0);
+        }
+
+
         // Form validation and submission
         $('#studentForm').validate({
             rules: {
@@ -612,11 +716,14 @@
                 },
                 simple_Email: { email: true },
                 simple_Password: { required: function() { return window.studentModelData.StudentId === 0; } },
+                simple_ClassId: { required: true },
+                simple_BatchId: { /* conditionally added/removed */ },
+
                 StudentName: { required: true, maxlength: 60 },
-                Mobile: { 
-                    required: true, 
-                    digits: true, 
-                    minlength: 10, 
+                Mobile: {
+                    required: true,
+                    digits: true,
+                    minlength: 10,
                     maxlength: 10,
                     remote: {
                         url: endPoint + 'api/User/check-username',
@@ -641,7 +748,6 @@
                     url: endPoint + 'api/User/check-username', // make sure endPoint has trailing slash
                     type: 'GET',
                     data: {
-                            // Use functions to get dynamic values
                             userName: function() {
                                 return $('#UserName').val();
                             },
@@ -650,13 +756,14 @@
                             }
                         },
                         dataFilter: function(response) {
-                            debugger;
                             var json = JSON.parse(response);
                             return json.Exists ? "false" : "true";
                         }
                     }
                 },
-                // Class and Batch are now conditionally required - handled dynamically
+                // Class in advanced mode required only when advanced form is shown
+                ClassId: { required: function() { return $('#advancedToggle').is(':checked'); } },
+                // BatchId rule is managed dynamically above
                 Password: { required: function() { return window.studentModelData.StudentId === 0; } }, // Required only for new students
                 Email: { email: true },
                 Pincode: { digits: true, minlength: 6, maxlength: 6 }
@@ -672,6 +779,7 @@
                 },
                 simple_Email: { email: "Please enter a valid email address" },
                 simple_Password: { required: "Password is required for new students" },
+                simple_ClassId: { required: "Please select a class" },
                 StudentName: { required: "Student name is required", maxlength: "Student name cannot exceed 60 characters" },
                 Mobile: {
                     required: "Mobile number is required",
@@ -693,11 +801,15 @@
                 }
             },
             submitHandler: function(form) {
-                // Sync simple form data to advanced before submission
+                // Before submit, ensure simple -> advanced sync so server receives ClassId/BatchId values
                 if (!$('#advancedToggle').is(':checked')) {
                     syncSimpleToAdvanced();
                 }
-                
+                // If advanced is checked, ensure SelectedClassId is in sync
+                if ($('#advancedToggle').is(':checked')) {
+                    $('#SelectedClassId').val($('#ClassId').val());
+                }
+
                 var formData = $(form).serialize();
                 var url = window.studentModelData.StudentId > 0 ?
                     '@Url.Action("Edit", "Student")' :

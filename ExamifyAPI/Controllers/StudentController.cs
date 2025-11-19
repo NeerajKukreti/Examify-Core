@@ -82,14 +82,16 @@ public class StudentController : ControllerBase
     {
         try
         {
-            var exams = await _examService.GetAllExamsAsync();
-            exams = exams?.Where(x => x.IsPublished && (x.IsActive ?? false) && x.TotalQuestions > 0);
+            var userid = _authService.GetCurrentUserID();
+            var exams = await _studentService.GetAllExamsAsync();
+            var userExams = await _examService.GetUserExamsAsync(new List<long>(){userid});
 
             return Ok(new
             {
                 Success = true,
                 Count = exams?.Count() ?? 0,
-                Data = exams?.Where(x => x.IsPublished && (x.IsActive ?? false))
+                Data = exams,
+                UserExams = userExams
             });
         }
         catch (Exception ex)

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace DataModel
 {
@@ -19,5 +20,8 @@ namespace DataModel
         public string? Instructions { get; set; }
         public string? ExamType { get; set; }
         public decimal? CutOffPercentage { get; set; }
+
+        // New: list of class ids associated with this exam (populated by repository)
+        public List<int> ClassIds { get; set; } = new List<int>();
     }
 }

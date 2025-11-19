@@ -12,6 +12,7 @@ namespace DAL.Repository
         Task<IEnumerable<ClassModel>> GetAllClassesAsync(int instituteId, int? classId = null);
         Task<int> InsertOrUpdateClassAsync(ClassDTO dto, int? classId = null, int? createdBy = null);
         Task<bool> ChangeStatus(int classId);
+        Task<IEnumerable<StudentClassModel>> GetStudentClassesAsync(int studentId);
     }
 
     public class ClassRepository : IClassRepository
@@ -95,6 +96,16 @@ namespace DAL.Repository
                 commandType: CommandType.Text
             );
             return rowsAffected > 0;
+        }
+
+        public async Task<IEnumerable<StudentClassModel>> GetStudentClassesAsync(int studentId)
+        {
+            using var connection = Connection;
+            return await connection.QueryAsync<StudentClassModel>(
+                "_sp_GetStudentClass",
+                new { StudentId = studentId },
+                commandType: CommandType.StoredProcedure
+            );
         }
     }
 }

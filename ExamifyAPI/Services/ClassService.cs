@@ -13,6 +13,7 @@ namespace ExamifyAPI.Services
             int? classId = null,
             int? userId = null
         );
+        Task<IEnumerable<StudentClassModel>> GetStudentClassesAsync(int studentId);
     }
 
     public class ClassService : IClassService
@@ -45,6 +46,11 @@ namespace ExamifyAPI.Services
         public async Task<bool> ChangeStatus(int classId)
         {
             return await _classRepository.ChangeStatus(classId);
+        }
+
+        public async Task<IEnumerable<StudentClassModel>> GetStudentClassesAsync(int studentId)
+        {
+            return await _classRepository.GetStudentClassesAsync(studentId);
         }
     }
 }

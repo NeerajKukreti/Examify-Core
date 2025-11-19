@@ -16,3 +16,11 @@
         public ICollection<BatchModel> Batches { get; set; }
     }
 }
+
+    public class StudentClassModel
+    {
+        public string ClassName { get; set; }
+        public int ClassId { get; set; }
+        public int BatchId { get; set; }
+        public string BatchName { get; set; }
+    }

@@ -2,17 +2,17 @@
 console.log('Exam.js file loaded successfully');
 
 // API Configuration - will be set from window.examUrls
-let API_BASE_URL = 'https://localhost:7271/api/Exam'; // fallback
+var API_BASE_URL = window.API_BASE_URL || 'https://localhost:7271/api/Exam';
 
-let examData = null;
-let allQuestions = [];
-let currentSectionIndex = 0;
-let currentQuestionIndex = 0;
-let examResponses = {};
-let questionStartTime = Date.now();
-let examStartTime = Date.now();
-let examId = 0;
-let timeRemaining = 7200;
+var examData = examData || null;
+var allQuestions = allQuestions || [];
+var currentSectionIndex = currentSectionIndex || 0;
+var currentQuestionIndex = currentQuestionIndex || 0;
+var examResponses = examResponses || {};
+var questionStartTime = questionStartTime || Date.now();
+var examStartTime = examStartTime || Date.now();
+var examId = examId || 0;
+var timeRemaining = timeRemaining || 7200;
 
 // Anti-cheating variables
 let tabSwitchCount = 0;
@@ -165,20 +165,17 @@ function updateProgressIndicator(answered) {
 }
 
 function getQuestionUiType(q) {
-    switch (q.QuestionTypeId) {
-        case 20: // MCQ
-        case 21: // True/False
-            return 'objective';
-        case 22: // Descriptive
-        case 25: // Coding
-            return 'subjective';
-        case 23: // Matching
-            return 'pairing';
-        case 24: // Ordering
-            return 'ordering';
-        default:
-            return 'unknown';
+    const typeName = (q.QuestionTypeName || '').toLowerCase();
+    if (typeName === 'mcq' || typeName === 'true/false') {
+        return 'objective';
+    } else if (typeName === 'descriptive' || typeName === 'coding') {
+        return 'subjective';
+    } else if (typeName === 'matching' || typeName === 'pairing') {
+        return 'pairing';
+    } else if (typeName === 'ordering') {
+        return 'ordering';
     }
+    return 'unknown';
 }
 
 function showQuestion(globalIndex = 0) {
