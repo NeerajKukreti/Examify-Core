@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using DataModel;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
@@ -21,11 +21,11 @@ namespace DAL.Repository
         private readonly IConfiguration _config;
         public StudentRepository(IConfiguration config) => _config = config;
 
-        private IDbConnection Connection => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+        private IDbConnection CreateConnection() => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
 
         public async Task<int> InsertOrUpdateStudentAsync(StudentDTO dto, int? studentId = null, int? createdBy = null, int? modifiedBy = null)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var parameters = new DynamicParameters();
             parameters.Add("@StudentId", studentId);
             parameters.Add("@StudentName", dto.StudentName);
@@ -56,7 +56,7 @@ namespace DAL.Repository
 
         public async Task<int> InsertStudentClassAsync(int studentId, int classId, int createdBy)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var parameters = new DynamicParameters();
             parameters.Add("@StudentId", studentId);
             parameters.Add("@ClassId", classId);
@@ -71,7 +71,7 @@ namespace DAL.Repository
 
         public async Task<int> InsertStudentBatchAsync(int studentId, int batchId, int createdBy, DateTime? enrollmentDate = null)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var parameters = new DynamicParameters();
             parameters.Add("@StudentId", studentId);
             parameters.Add("@BatchId", batchId);
@@ -85,7 +85,7 @@ namespace DAL.Repository
 
         public async Task<IEnumerable<StudentModel>> GetAllStudentsAsync(int instituteId, int? studentId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             
             // Execute the stored procedure that returns multiple result sets
             using var multi = await connection.QueryMultipleAsync(
@@ -117,10 +117,10 @@ namespace DAL.Repository
         }
         public async Task<bool> ChangeStatus(int studentId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             // Toggle IsActive for the given studentId
             var rowsAffected = await connection.ExecuteAsync(
-                "UPDATE Student SET IsActive = ~IsActive WHERE StudentId = @StudentId",
+                "UPDATE Student SET IsActive = 1 - IsActive WHERE StudentId = @StudentId",
                 new { StudentId = studentId },
                 commandType: CommandType.Text
             );

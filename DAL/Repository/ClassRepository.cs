@@ -20,11 +20,11 @@ namespace DAL.Repository
         private readonly IConfiguration _config;
         public ClassRepository(IConfiguration config) => _config = config;
 
-        private IDbConnection Connection => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+        private IDbConnection CreateConnection() => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
 
         public async Task<IEnumerable<ClassModel>> GetAllClassesAsync(int instituteId, int? classId = null)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             
             // Execute the stored procedure that returns multiple result sets
             using var multi = await connection.QueryMultipleAsync(
@@ -55,7 +55,7 @@ namespace DAL.Repository
 
          public async Task<int> InsertOrUpdateClassAsync(ClassDTO dto, int? classId = null, int? createdBy = null)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var parameters = new DynamicParameters();
 
             var batchTable = new DataTable();
@@ -89,9 +89,9 @@ namespace DAL.Repository
 
         public async Task<bool> ChangeStatus(int classId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var rowsAffected = await connection.ExecuteAsync(
-                "UPDATE Class SET IsActive = ~IsActive WHERE classId = @classId",
+                "UPDATE Class SET IsActive = 1 - IsActive WHERE classId = @classId",
                 new { classId = classId },
                 commandType: CommandType.Text
             );
@@ -100,7 +100,7 @@ namespace DAL.Repository
 
         public async Task<IEnumerable<StudentClassModel>> GetStudentClassesAsync(int studentId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             return await connection.QueryAsync<StudentClassModel>(
                 "_sp_GetStudentClass",
                 new { StudentId = studentId },

@@ -19,11 +19,11 @@ namespace DAL.Repository
         private readonly IConfiguration _config;
         public InstituteRepository(IConfiguration config) => _config = config;
 
-        private IDbConnection Connection => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+        private IDbConnection CreateConnection() => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
 
         public async Task<IEnumerable<InstituteModel>> GetAllInstitutesAsync()
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             return await connection.QueryAsync<InstituteModel>(
                 "_sp_GetAllInstitutes",
                 commandType: CommandType.StoredProcedure
@@ -32,7 +32,7 @@ namespace DAL.Repository
 
         public async Task<InstituteModel?> GetInstituteByIdAsync(int instituteId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             return await connection.QueryFirstOrDefaultAsync<InstituteModel>(
                 "_sp_GetInstituteById",
                 new { InstituteId = instituteId },
@@ -42,7 +42,7 @@ namespace DAL.Repository
 
         public async Task<int> InsertOrUpdateInstituteAsync(InstituteDTO dto, int? instituteId = null, int? createdBy = null, int? modifiedBy = null)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var parameters = new DynamicParameters();
 
             parameters.Add("@InstituteId", instituteId);

@@ -18,11 +18,11 @@ namespace DAL.Repository
         private readonly IConfiguration _config;
         public BatchRepository(IConfiguration config) => _config = config;
 
-        private IDbConnection Connection => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+        private IDbConnection CreateConnection() => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
 
         public async Task<BatchModel?> GetBatchByIdAsync(int batchId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             return await connection.QueryFirstOrDefaultAsync<BatchModel>(
                 "_sp_GetBatchById",
                 new { BatchId = batchId },
@@ -32,7 +32,7 @@ namespace DAL.Repository
 
         public async Task<IEnumerable<BatchModel>> GetBatchesByClassIdAsync(int classId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             return await connection.QueryAsync<BatchModel>(
                 "_sp_GetBatchesByClassId",
                 new { ClassId = classId },

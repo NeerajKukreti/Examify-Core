@@ -20,14 +20,14 @@ namespace DAL
         private readonly IConfiguration _config;
         public UserRepository(IConfiguration config) => _config = config;
 
-        private IDbConnection Connection => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+        private IDbConnection CreateConnection() => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
 
         public async Task<User?> GetUserByUsername(string username)
         {
             var parameters = new DynamicParameters();
             parameters.Add("@Username", username);
 
-            using var conn = Connection;
+            using var conn = CreateConnection();
             return await conn.QueryFirstOrDefaultAsync<User>(
                 "_sp_GetUser",
                 parameters,
@@ -36,7 +36,7 @@ namespace DAL
 
         public async Task<int> CreateUser(User user)
         {
-            using var conn = Connection;
+            using var conn = CreateConnection();
             var parameters = new DynamicParameters();
             parameters.Add("@UserName", user.Username);
             parameters.Add("@PasswordHash", user.PasswordHash);
@@ -54,7 +54,7 @@ namespace DAL
 
         public async Task<bool> CheckUserNameExistsAsync(string userName, int? userId = null)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var parameters = new DynamicParameters();
             parameters.Add("@UserName", userName);
             parameters.Add("@UserId", userId);

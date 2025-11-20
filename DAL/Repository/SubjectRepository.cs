@@ -21,11 +21,11 @@ namespace DAL.Repository
         private readonly IConfiguration _config;
         public SubjectRepository(IConfiguration config) => _config = config;
 
-        private IDbConnection Connection => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+        private IDbConnection CreateConnection() => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
 
         public async Task<IEnumerable<SubjectModel>> GetAllSubjectsAsync(int instituteId, int? subjectId = null)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var parameters = new { InstituteId = instituteId, SubjectId = subjectId };
             return await connection.QueryAsync<SubjectModel>(
                 "_sp_GetAllSubjects",
@@ -36,7 +36,7 @@ namespace DAL.Repository
 
         public async Task<int> InsertOrUpdateSubjectAsync(SubjectDTO dto, int? subjectId = null, int? userId = null)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var parameters = new DynamicParameters();
             parameters.Add("@SubjectId", subjectId);
             parameters.Add("@InstituteId", dto.InstituteId);
@@ -54,7 +54,7 @@ namespace DAL.Repository
 
         public async Task InsertOrUpdateTopicsAsync(List<SubjectTopicDTO> topics, int userId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             
             var topicTable = new DataTable();
             topicTable.Columns.Add("TopicId", typeof(int));
@@ -90,7 +90,7 @@ namespace DAL.Repository
 
         public async Task<IEnumerable<SubjectTopicModel>> GetTopicsBySubjectIdAsync(int subjectId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             return await connection.QueryAsync<SubjectTopicModel>(
                 "_sp_GetTopicsBySubjectId",
                 new { SubjectId = subjectId },
@@ -100,9 +100,9 @@ namespace DAL.Repository
 
         public async Task<bool> ChangeStatus(int subjectId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var rowsAffected = await connection.ExecuteAsync(
-                "UPDATE Subject SET IsActive = ~IsActive WHERE SubjectId = @SubjectId",
+                "UPDATE Subject SET IsActive = 1 - IsActive WHERE SubjectId = @SubjectId",
                 new { SubjectId = subjectId },
                 commandType: CommandType.Text
             );

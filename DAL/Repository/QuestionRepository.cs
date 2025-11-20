@@ -28,18 +28,18 @@ namespace DAL.Repository
         private readonly IConfiguration _config;
         public QuestionRepository(IConfiguration config) => _config = config;
 
-        private IDbConnection Connection => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+        private IDbConnection CreateConnection() => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
 
         public async Task<List<QuestionModel>> GetAllQuestionsAsync(int instituteId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var result = await connection.QueryAsync<QuestionModel>("_sp_GetAllQuestions", new { InstituteId = instituteId }, commandType: CommandType.StoredProcedure);
             return result.ToList();
         }
 
         public async Task<QuestionModel?> GetQuestionAsync(int id, int instituteId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var p = new { QuestionId = id, InstituteId = instituteId };
             using var multi = await connection.QueryMultipleAsync(
                 "_sp_GetAllQuestions", p, commandType: CommandType.StoredProcedure);
@@ -102,7 +102,7 @@ namespace DAL.Repository
         {
             try
             {
-                using var connection = Connection;
+                using var connection = CreateConnection();
 
                 // Prepare table-valued parameter for choices (Options)
                 var dtChoices = new DataTable();
@@ -191,7 +191,7 @@ namespace DAL.Repository
 
         public async Task<int> UpdateQuestionAsync(QuestionModel model)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             return await connection.ExecuteScalarAsync<int>("_sp_UpdateQuestion", new
             {
                 model.QuestionId,
@@ -205,13 +205,13 @@ namespace DAL.Repository
 
         public async Task<int> DeleteQuestionAsync(int id)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             return await connection.ExecuteScalarAsync<int>("_sp_DeleteQuestion", new { QuestionId = id }, commandType: CommandType.StoredProcedure);
         }
 
         public async Task<List<QuestionTypeModel>> GetQuestionTypesAsync()
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var result = await connection.QueryAsync<QuestionTypeModel>("_sp_GetQuesionType", commandType: CommandType.StoredProcedure);
             return result.ToList();
         }

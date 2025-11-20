@@ -18,11 +18,11 @@ namespace DAL.Repository
     {
         private readonly IConfiguration _config;
         public StateRepository(IConfiguration config) => _config = config;
-        private IDbConnection Connection => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+        private IDbConnection CreateConnection() => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
 
         public async Task<List<StateModel>> GetAllStatesAsync()
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var result = await connection.QueryAsync<StateModel>(
                 "_sp_GetAllStates", 
                 commandType: CommandType.StoredProcedure

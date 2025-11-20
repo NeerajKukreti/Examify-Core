@@ -35,11 +35,11 @@ namespace DAL.Repository
         private readonly IConfiguration _config;
         public ExamRepository(IConfiguration config) => _config = config;
 
-        private IDbConnection Connection => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+        private IDbConnection CreateConnection() => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
 
         public List<ExamModel> GetActiveExams(int instituteId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             // Stored procedure now returns two result sets: exams and exam-class mapping (ClassId, ExamId)
             using var multi = connection.QueryMultiple(
                 "_sp_GetAllExams",
@@ -69,7 +69,7 @@ namespace DAL.Repository
         public async Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null,
             int? userloggedIn = null, int instituteId = 0)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var parameters = new DynamicParameters();
             parameters.Add("@ExamId", examId);
             parameters.Add("@ExamName", dto.ExamName);
@@ -105,9 +105,9 @@ namespace DAL.Repository
 
         public async Task<bool> ChangeStatus(int examId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var rowsAffected = await connection.ExecuteAsync(
-                "UPDATE Exam SET IsActive = ~IsActive WHERE ExamId = @ExamId",
+                "UPDATE Exam SET IsActive = 1 - IsActive WHERE ExamId = @ExamId",
                 new { ExamId = examId },
                 commandType: CommandType.Text
             );
@@ -116,7 +116,7 @@ namespace DAL.Repository
 
         public async Task<bool> PublishExam(int examId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var rowsAffected = await connection.ExecuteAsync(
                 "UPDATE Exam SET IsPublished = ~IsPublished WHERE ExamId = @ExamId",
                 new { ExamId = examId },
@@ -129,7 +129,7 @@ namespace DAL.Repository
         #region Exam Session
         public ExamModel GetExamById(int examId, int instituteId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             // Stored procedure returns exam as first result set and class rows as second result set
             using var multi = connection.QueryMultiple(
                 "_sp_GetAllExams",
@@ -156,7 +156,7 @@ namespace DAL.Repository
 
         public ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             {
                 //Begin exam session first
                 var sessionId = connection.QuerySingle<long>(
@@ -292,7 +292,7 @@ namespace DAL.Repository
 
         public int SubmitExamResponses(ExamSubmissionModel submission)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             connection.Open();
             using (var transaction = connection.BeginTransaction())
             {
@@ -365,7 +365,7 @@ namespace DAL.Repository
 
         public ExamResultModel GetExamResult(int sessionId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             using var multi = connection.QueryMultiple(
                 "_sp_GetExamResults",
                 new { UserExamSessionId = sessionId },
@@ -482,7 +482,7 @@ namespace DAL.Repository
         #region Exam Question Configuration
         public async Task<IEnumerable<AvailableQuestionDTO>> GetAvailableQuestionsAsync(int examId, int instituteId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var sql = @"
                 SELECT q.QuestionId, q.QuestionEnglish, q.QuestionHindi, 
                        t.TopicName, s.subjectid,s.SubjectName, qt.TypeName as QuestionTypeName,q.difficultyLevel, q.IsMultiSelect
@@ -499,7 +499,7 @@ namespace DAL.Repository
 
         public async Task<IEnumerable<ExamQuestionDTO>> GetExamQuestionsAsync(int examId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var sql = @"
                 SELECT eq.ExamId, eq.QuestionId, eq.Marks, eq.NegativeMarks, eq.SortOrder,
                        q.QuestionEnglish, t.TopicName, qt.TypeName as QuestionTypeName
@@ -515,7 +515,7 @@ namespace DAL.Repository
 
         public async Task<bool> SaveExamQuestionsAsync(ExamQuestionConfigDTO config)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             connection.Open();
             using var transaction = connection.BeginTransaction();
             try
@@ -554,7 +554,7 @@ namespace DAL.Repository
 
         public async Task<bool> RemoveExamQuestionAsync(int examId, int questionId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var rowsAffected = await connection.ExecuteAsync(
                 "DELETE FROM ExamQuestion WHERE ExamId = @ExamId AND QuestionId = @QuestionId",
                 new { ExamId = examId, QuestionId = questionId });
@@ -574,7 +574,7 @@ namespace DAL.Repository
 
         public async Task<IEnumerable<UserExamDTO>> GetUserExamsAsync(List<long> userIds)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             var userIdTable = new DataTable();
             userIdTable.Columns.Add("id", typeof(int));
             foreach (var id in userIds)
@@ -588,7 +588,7 @@ namespace DAL.Repository
 
         public async Task<StatsDTO> GetStatsAsync(int instituteId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             using var multi = await connection.QueryMultipleAsync(
                 "_sp_GetStats",
                 new { InstituteId = instituteId },
@@ -609,7 +609,7 @@ namespace DAL.Repository
 
         public async Task<IEnumerable<ExamInstructionModel>> GetInstructionsAsync(int instituteId)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             return await connection.QueryAsync<ExamInstructionModel>(
                 "_sp_getExamInstructions",
                 new { InstituteId = instituteId },
@@ -618,7 +618,7 @@ namespace DAL.Repository
 
         public async Task<int> UpsertInstructionAsync(ExamInstructionModel model)
         {
-            using var connection = Connection;
+            using var connection = CreateConnection();
             return await connection.ExecuteScalarAsync<int>(
                 "_sp_UpsertExamInstruction",
                 new
