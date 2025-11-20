@@ -1,7 +1,12 @@
 @{
     Layout = null;
 }
-
+@inject Microsoft.Extensions.Options.IOptions<Examify.Common.ApiSettings> ApiSettings
+<script>
+    window.API_ENDPOINTS = {
+        baseUrl: 'https://localhost:7271/api/'
+    };
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -394,6 +399,29 @@
             border-color: var(--tb-red);
         }
 
+        .explanation-section {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #fff9e6;
+            border: 1px solid #ffd54f;
+            border-left: 4px solid #ffa000;
+            border-radius: 6px;
+        }
+
+        .explanation-section strong {
+            color: #f57c00;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .explanation-text {
+            color: var(--text);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
         .loading-container {
             text-align: center;
             padding: 2rem;
@@ -556,6 +584,33 @@
                     <p class="text-secondary">Please wait while we prepare your detailed results.</p>
                 </div>
             </div>
+            
+            <!-- Hidden template for question card -->
+            <template id="questionCardTemplate">
+                <div class="question-card">
+                    <div class="question-header">
+                        <div>
+                            <strong class="question-number"></strong>
+                            <span class="topic-badge question-type"></span>
+                        </div>
+                        <div>
+                            <span class="status-badge"></span>
+                            <div class="marks-display"></div>
+                        </div>
+                    </div>
+                    <div class="question-text"></div>
+                    <div class="choices-container"></div>
+                    <div class="mt-3 explanation-wrapper" style="display:none;">
+                        <button class="btn btn-sm btn-outline-warning toggle-explanation">
+                            <i class="fas fa-lightbulb me-2"></i>Show Explanation
+                        </button>
+                        <div class="explanation-section" style="display:none;">
+                            <strong>Explanation:</strong>
+                            <div class="explanation-text"></div>
+                        </div>
+                    </div>
+                </div>
+            </template>
         </div>
     </div>
 

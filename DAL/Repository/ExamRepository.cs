@@ -420,6 +420,7 @@ namespace DAL.Repository
                 return new QuestionResultModel
                 {
                     QuestionId = q.SessionQuestionId,
+                    Explanation = q.Explanation,
                     QuestionText = q.QuestionTextEnglish,
                     QuestionType = q.TypeName,
                     Marks = q.Marks ?? 0,

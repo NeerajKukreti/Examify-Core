@@ -1,7 +1,7 @@
 $(document).ready(function () {
     $('#userExamTable').DataTable({
         ajax: {
-            url: `https://localhost:7271/api/Exam/user/${userId}`,
+            url: window.API_ENDPOINTS.baseUrl + `Exam/user/${userId}`,
             type: 'GET',
             dataSrc: function (json) {
                 debugger;

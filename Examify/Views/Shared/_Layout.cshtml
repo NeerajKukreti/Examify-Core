@@ -1,4 +1,14 @@
+
 @using Microsoft.AspNetCore.Http
+@inject Microsoft.Extensions.Options.IOptions<Examify.Common.ApiSettings> ApiSettings
+<script>
+    // Global API configuration - DO NOT hardcode URLs
+    window.API_BASE_URL = '@ApiSettings.Value.BaseUrl'.replace('/api/', '');
+    window.API_ENDPOINTS = {
+        baseUrl: 'https://localhost:7271/api/'
+    };
+</script>
+
 <!doctype html>
 <html lang="en">
 <!--begin::Head-->
@@ -97,9 +107,11 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
+   
+
     @{
-        var accessTokenValue = Context.Session.GetString("JWToken");
-        var refreshTokenValue = Context.Session.GetString("RefreshToken");
+        var accessTokenValue = Context.Request.Cookies["JWToken"];
+        var refreshTokenValue = Context.Request.Cookies["RefreshToken"];
     }
     @if (!string.IsNullOrEmpty(accessTokenValue))
     {
@@ -123,7 +135,7 @@
 
             function refreshAccessToken() {
                 return $.ajax({
-                    url: 'https://localhost:7271/api/auth/refresh',
+                    url: window.API_ENDPOINTS.baseUrl + 'auth/refresh',
                     method: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({ RefreshToken: refreshToken })
@@ -139,10 +151,21 @@
 
             var originalAjax = $.ajax;
             $.ajax = function(settings) {
-                if (accessToken && settings.url && settings.url.includes('localhost:7271')) {
-                    settings.beforeSend = function(xhr) {
-                        xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-                    };
+                // Add Authorization header to all API calls
+                if (accessToken && settings.url) {
+                    var isApiCall = settings.url.includes('/api/') || 
+                                   settings.url.includes(window.API_BASE_URL) ||
+                                   settings.url.startsWith('api/');
+                    
+                    if (isApiCall) {
+                        var originalBeforeSend = settings.beforeSend;
+                        settings.beforeSend = function(xhr) {
+                            xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+                            if (originalBeforeSend) {
+                                originalBeforeSend.call(this, xhr);
+                            }
+                        };
+                    }
                 }
 
                 var dfd = $.Deferred();

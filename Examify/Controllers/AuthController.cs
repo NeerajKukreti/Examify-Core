@@ -66,7 +66,10 @@ public class AuthController : Controller
             new Claim(ClaimTypes.Name, tokenData.Username ?? ""),
             new Claim(ClaimTypes.Email, tokenData.Email ?? ""),
             new Claim(ClaimTypes.Role, tokenData.Role ?? ""),
-            new Claim("InstituteId", instituteId?.ToString() ?? "0")
+            new Claim("InstituteId", instituteId?.ToString() ?? "0"),
+            // Store tokens in claims as backup
+            new Claim("JWToken", tokenData.Token ?? ""),
+            new Claim("RefreshToken", HttpContext.Request.Cookies["RefreshToken"] ?? "")
         };
         
         if (!string.IsNullOrEmpty(fullName))

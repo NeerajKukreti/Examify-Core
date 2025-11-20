@@ -437,7 +437,7 @@
         // Set global variables
         window.currentUserId = @(ViewBag.UserId ?? 1);
         window.examUrls = {
-            apiBaseUrl: '@Html.Raw(ViewBag.ApiBaseUrl ?? "https://localhost:7271/api/Exam")',
+             
             startExamUrl: '@Html.Raw(ViewBag.StartExamUrl ?? "/Exam/StartExam")',
             examResultUrl: '@Html.Raw(ViewBag.ExamResultUrl ?? "/Exam/ExamResult")'
         };

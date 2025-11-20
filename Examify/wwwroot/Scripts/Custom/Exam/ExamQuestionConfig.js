@@ -76,7 +76,7 @@ var ExamQuestionConfig = (function () {
         }
 
         $.ajax({
-            url: 'https://localhost:7271/api/Subject/' + subjectId + '/topics',
+            url: window.API_ENDPOINTS.baseUrl +"subject/"+ subjectId + '/topics',
             type: 'GET',
             success: function(response) {
                 if (response.Success && response.Data) {

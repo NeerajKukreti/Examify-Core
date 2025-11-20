@@ -11,12 +11,21 @@ namespace Examify.Services
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ApiSettings _apiSettings;
+        private readonly IWebHostEnvironment _environment;
+        private readonly ILogger<AuthService> _logger;
 
-        public AuthService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, IOptions<ApiSettings> apiSettings)
+        public AuthService(
+            IHttpClientFactory httpClientFactory, 
+            IHttpContextAccessor httpContextAccessor, 
+            IOptions<ApiSettings> apiSettings,
+            IWebHostEnvironment environment,
+            ILogger<AuthService> logger)
         {
             _httpClientFactory = httpClientFactory;
             _httpContextAccessor = httpContextAccessor;
             _apiSettings = apiSettings.Value;
+            _environment = environment;
+            _logger = logger;
         }
 
         public async Task<(bool Success, string? Token, string? RefreshToken, int? InstituteId, string? FullName, string? ErrorMessage)> 
@@ -52,17 +61,54 @@ namespace Examify.Services
 
         public void SaveTokensInSession(string token, string refreshToken)
         {
-            _httpContextAccessor.HttpContext!.Session.SetString("JWToken", token);
-            _httpContextAccessor.HttpContext!.Session.SetString("RefreshToken", refreshToken);
+            try
+            {
+                var isSecure = !_environment.IsDevelopment();
+                
+                var cookieOptions = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = isSecure,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddHours(3)
+                };
+
+                var refreshCookieOptions = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = isSecure,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddDays(7)
+                };
+
+                _httpContextAccessor.HttpContext!.Response.Cookies.Append("JWToken", token, cookieOptions);
+                _httpContextAccessor.HttpContext!.Response.Cookies.Append("RefreshToken", refreshToken, refreshCookieOptions);
+                
+                _logger.LogInformation("Tokens saved to cookies successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to save tokens to cookies");
+                throw;
+            }
         }
 
         public void ClearSession()
         {
-            var session = _httpContextAccessor.HttpContext?.Session;
-            if (session == null) return;
+            try
+            {
+                var response = _httpContextAccessor.HttpContext?.Response;
+                if (response == null) return;
 
-            session.Remove("JWToken");
-            session.Remove("RefreshToken");
+                response.Cookies.Delete("JWToken");
+                response.Cookies.Delete("RefreshToken");
+                
+                _logger.LogInformation("Tokens cleared from cookies");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to clear tokens from cookies");
+            }
         }
 
         public JwtTokenData? ParseToken(string? token) => JwtHelper.ParseToken(token);

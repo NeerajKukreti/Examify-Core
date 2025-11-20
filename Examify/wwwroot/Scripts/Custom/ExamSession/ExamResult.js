@@ -2,7 +2,7 @@
 console.log('ExamResult.js loaded successfully');
 
 // API Configuration
-let RESULT_API_BASE = 'https://localhost:7271/api/Exam';
+let RESULT_API_BASE = window.API_ENDPOINTS.baseUrl+'Exam';
 
 // Load and display exam result
 async function displayExamResult(sessionId) {
@@ -161,22 +161,26 @@ function createQuestionCard(question, questionNumber) {
     const marksAwarded = question.MarksAwarded || 0;
     const marksClass = marksAwarded > 0 ? 'marks-positive' : (marksAwarded < 0 ? 'marks-negative' : 'marks-zero');
     
-    return $(`
-        <div class="question-card ${statusClass}">
-            <div class="question-header">
-                <div>
-                    <strong>Question ${questionNumber}</strong>
-                    <span class="topic-badge">${questionType}</span>
-                </div>
-                <div>
-                    <span class="status-badge ${statusBadge}">${statusText}</span>
-                    <div class="marks-display ${marksClass}">Marks: ${marksAwarded > 0 ? '+' : ''}${marksAwarded}</div>
-                </div>
-            </div>
-            <div class="question-text">${question.QuestionText || 'Question text not available'}</div>
-            ${choicesHtml}
-        </div>
-    `);
+    // Clone template from cshtml
+    const template = document.getElementById('questionCardTemplate');
+    const $card = $(template.content.cloneNode(true)).find('.question-card');
+    
+    // Populate values only
+    $card.addClass(statusClass);
+    $card.find('.question-number').text(`Question ${questionNumber}`);
+    $card.find('.question-type').text(questionType);
+    $card.find('.status-badge').addClass(statusBadge).text(statusText);
+    $card.find('.marks-display').addClass(marksClass).text(`Marks: ${marksAwarded > 0 ? '+' : ''}${marksAwarded}`);
+    $card.find('.question-text').html(question.QuestionText || 'Question text not available');
+    $card.find('.choices-container').html(choicesHtml);
+    
+    // Populate explanation if available
+    if (question.Explanation) {
+        $card.find('.explanation-wrapper').show();
+        $card.find('.explanation-text').html(question.Explanation);
+    }
+    
+    return $card;
 }
 
 // Render performance chart
@@ -327,5 +331,19 @@ $(document).ready(function() {
     // Back to exams button
     $('#backToExamsBtn').on('click', function() {
         window.location.href = '/ExamSession/Selection';
+    });
+    
+    // Toggle explanation
+    $(document).on('click', '.toggle-explanation', function() {
+        const $btn = $(this);
+        const $section = $btn.siblings('.explanation-section');
+        
+        $section.slideToggle(300);
+        
+        if ($section.is(':visible')) {
+            $btn.html('<i class="fas fa-lightbulb me-2"></i>Hide Explanation');
+        } else {
+            $btn.html('<i class="fas fa-lightbulb me-2"></i>Show Explanation');
+        }
     });
 });

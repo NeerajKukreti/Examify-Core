@@ -698,7 +698,7 @@
                     minlength: 10,
                     maxlength: 10,
                     remote: {
-                        url: endPoint + 'api/User/check-username',
+                        url: window.API_ENDPOINTS.baseUrl + 'User/check-username',
                         type: 'GET',
                         data: {
                             userName: function() {
@@ -726,7 +726,7 @@
                     minlength: 10,
                     maxlength: 10,
                     remote: {
-                        url: endPoint + 'api/User/check-username',
+                        url: window.API_ENDPOINTS.baseUrl + 'User/check-username',
                         type: 'GET',
                         data: {
                             userName: function() {
@@ -745,7 +745,7 @@
                 UserName: {
                 required: true,
                 remote: {
-                    url: endPoint + 'api/User/check-username', // make sure endPoint has trailing slash
+                    url: window.API_ENDPOINTS.baseUrl + 'User/check-username', // make sure window.API_ENDPOINTS.baseUrl has trailing slash
                     type: 'GET',
                     data: {
                             userName: function() {

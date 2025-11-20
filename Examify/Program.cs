@@ -2,6 +2,7 @@ using Examify.Services;
 using Examify.Common;
 using Examify.Helpers;
 using Examify.Handlers;
+using Examify.Middleware;
 using Serilog;
  
 
@@ -100,6 +101,7 @@ app.UseSession();
 app.UseRouting();
 
 app.UseAuthentication();
+app.UseJwtCookieValidation(); // Check JWT cookie after authentication
 app.UseAuthorization();
 
 app.MapControllerRoute(

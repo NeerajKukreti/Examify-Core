@@ -3,6 +3,14 @@
     Layout = null;
 }
 
+@inject Microsoft.Extensions.Options.IOptions<Examify.Common.ApiSettings> ApiSettings
+<script>
+    // Global API configuration - DO NOT hardcode URLs
+    window.API_ENDPOINTS = {
+        baseUrl: 'https://localhost:7271/api/'
+    };
+</script>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -163,7 +171,7 @@
         <ol class="instruction-list">
             <li>Click <strong>Start Test</strong> at the bottom of your screen to begin the test.</li>
             <li>The clock has been set at server and count down timer at the top right side of the screen will display remaining time.</li>
-            <li>Click one of the answers — simply click the desired option button.</li>
+            <li>Click one of the answers â€” simply click the desired option button.</li>
             <li>You can change your response anytime by selecting another answer before submitting.</li>
             <li>Click on <strong>Next</strong> to save and move to the next question.</li>
             <li>Click on <strong>Mark for Review</strong> to review your answer later.</li>
@@ -221,7 +229,7 @@
         </div>
     </div>
 
-    <div class="bottom-bar">© Addmen</div>
+    <div class="bottom-bar">Â© Addmen</div>
     </div>
     <div id="examSection" style="display:none;"></div>
 
@@ -233,12 +241,11 @@
 
     <script>
         // Preserve your existing global variables
-        window.currentUserId = @(ViewBag.UserId ?? 1);
-        window.examId = @ViewBag.ExamId;
+        window.currentUserId = '@ViewBag.UserId';
+        window.examId = '@ViewBag.ExamId';
         window.examUrls = {
-            apiBaseUrl: '@Html.Raw(ViewBag.ApiBaseUrl ?? "https://localhost:7271/api/Exam")',
-            startExamUrl: '@Html.Raw(ViewBag.StartExamUrl ?? "/Exam/StartExam")',
-            examResultUrl: '@Html.Raw(ViewBag.ExamResultUrl ?? "/Exam/ExamResult")'
+            startExamUrl: '@ViewBag.StartExamUrl',
+            examResultUrl: '@ViewBag.ExamResultUrl'
         };
     </script>
 </body>

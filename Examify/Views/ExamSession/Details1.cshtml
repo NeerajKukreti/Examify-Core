@@ -1,6 +1,12 @@
 @using DataModel
 @model ExamModel
-
+@inject Microsoft.Extensions.Options.IOptions<Examify.Common.ApiSettings> ApiSettings
+<script>
+    // Global API configuration - DO NOT hardcode URLs
+    window.API_ENDPOINTS = {
+        baseUrl: 'https://localhost:7271/api/'
+    };
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -273,7 +279,7 @@
         window.currentUserId = @(ViewBag.UserId ?? 1);
         window.examId = @ViewBag.ExamId;
         window.examUrls = {
-            apiBaseUrl: '@Html.Raw(ViewBag.ApiBaseUrl ?? "https://localhost:7271/api/Exam")',
+            apiBaseUrl: window.API_ENDPOINTS.baseUrl.replace("/", ""),
             startExamUrl: '@Html.Raw(ViewBag.StartExamUrl ?? "/Exam/StartExam")',
             examResultUrl: '@Html.Raw(ViewBag.ExamResultUrl ?? "/Exam/ExamResult")'
         };

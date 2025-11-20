@@ -244,7 +244,7 @@
                 // Load instruction templates
                 window.loadInstructionTemplates = function() {
                     var instituteId = "@ViewBag.InstituteId";
-                    var endpoint = 'https://localhost:7271/api/Exam/instructions/' + instituteId;
+                    var endpoint = window.API_ENDPOINTS.baseUrl + "Exam/instructions/" + instituteId;
                     $.ajax({
                         url: endpoint,
                         type: 'GET',
@@ -388,7 +388,7 @@
             // Load classes from API (example uses instituteId = 2; replace as needed)
             (function loadClasses() {
                 var instituteId = "@ViewBag.InstituteId"; // TODO: replace with dynamic institute id if available
-                var endpoint = 'https://localhost:7271/api/Class/GetAll/' + instituteId;
+                var endpoint = window.API_ENDPOINTS.baseUrl + "Class/GetAll/" + instituteId;
 
                 $.ajax({
                     url: endpoint,
@@ -566,7 +566,7 @@
         };
 
         $.ajax({
-            url: 'https://localhost:7271/api/Exam/instructions',
+            url: window.API_ENDPOINTS.baseUrl + "Exam/instructions",
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(data),

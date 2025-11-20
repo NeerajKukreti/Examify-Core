@@ -30,6 +30,7 @@ namespace DataModel
         public long QuestionId { get; set; }
         public string QuestionType { get; set; } = string.Empty;
         public string QuestionText { get; set; } = string.Empty;
+        public string Explanation { get; set; } = string.Empty;
         public string TopicName { get; set; } = string.Empty;
         public long? SessionChoiceId { get; set; } 
         public string SelectedChoiceText { get; set; } = string.Empty;

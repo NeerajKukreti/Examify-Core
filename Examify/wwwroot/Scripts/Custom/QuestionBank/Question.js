@@ -1,4 +1,4 @@
-﻿// Global variables for descriptive questions
+// Global variables for descriptive questions
 var descriptiveOptionCount = 1; // Start with 1 (the default one)
 var MAX_DESCRIPTIVE_OPTIONS = 5; // Maximum number of descriptive options allowed
 
@@ -10,8 +10,8 @@ var MAX_PAIRS = 5; // Maximum number of pairs allowed
 var orderItemCount = 1; // Start with 1 (the default one)
 var MAX_ORDER_ITEMS = 5; // Maximum number of order items allowed
 
-var API_BASE_URL_QUESTION = 'https://localhost:7271/api/Question'; // fallback
-var API_BASE_URL_SUBJECT = 'https://localhost:7271/api/Subject'; // fallback
+var API_BASE_URL_QUESTION = window.API_ENDPOINTS.baseUrl + 'Question';
+var API_BASE_URL_SUBJECT = window.API_ENDPOINTS.baseUrl + 'Subject';
 
 // Question type IDs will be set dynamically when types are loaded
 var MCQ_TYPE_ID; 
@@ -378,7 +378,7 @@ $(function () {
     var $template = $('.toolbar1').first();
     var $template2 = $('.toolbar2').first();
     if (!$template.length) {
-        console.error('No .toolbar1 toolbar template found — please add one.');
+        console.error('No .toolbar1 toolbar template found � please add one.');
         return;
     }
     // Remove template from DOM (we'll clone it and insert before each editor)
@@ -389,7 +389,7 @@ $(function () {
         var $editor = $(this);
         var editorId = $editor.attr('id');
         if (!editorId) {
-            console.warn('editor container missing id — skipping', $editor);
+            console.warn('editor container missing id � skipping', $editor);
             return;
         }
         

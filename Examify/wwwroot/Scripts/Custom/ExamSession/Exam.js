@@ -2,7 +2,7 @@
 console.log('Exam.js file loaded successfully');
 
 // API Configuration - will be set from window.examUrls
-var API_BASE_URL = window.API_BASE_URL || 'https://localhost:7271/api/Exam';
+var API_BASE_URL = window.API_ENDPOINTS.baseUrl+'Exam';
 
 var examData = examData || null;
 var allQuestions = allQuestions || [];
@@ -15,22 +15,22 @@ var examId = examId || 0;
 var timeRemaining = timeRemaining || 7200;
 
 // Anti-cheating variables
-let tabSwitchCount = 0;
-let isTabActive = true;
-let fullscreenEnforced = false;
-let timerStarted = false;
-let timerInterval = null;
-let isOnline = navigator.onLine;
+var tabSwitchCount = 0;
+var isTabActive = true;
+var fullscreenEnforced = false;
+var timerStarted = false;
+var timerInterval = null;
+var isOnline = navigator.onLine;
 
-const S = { UNVISITED: 'unvisited', NOT_ANSWERED: 'not-answered', ANSWERED: 'answered', MARKED: 'marked', MARKED_ANSWERED: 'marked-answered' };
+var S = { UNVISITED: 'unvisited', NOT_ANSWERED: 'not-answered', ANSWERED: 'answered', MARKED: 'marked', MARKED_ANSWERED: 'marked-answered' };
 
 async function loadExamData() {
-    
+
     try {
         console.log('Loading exam data for examId:', examId);
         const apiUrl = `${API_BASE_URL}/${examId}/sessionquestions?userId=${window.currentUserId || 1}`;
         console.log('API URL:', apiUrl);
-    
+
         const response = await fetch(apiUrl);
         console.log('API Response status:', response.status);
 
@@ -82,7 +82,7 @@ async function loadExamData() {
         });
 
         timeRemaining = examData.DurationMinutes * 60;
-        
+
         updateSectionTabs();
         renderQuestionGrid();
         showQuestion(0);
@@ -143,7 +143,7 @@ function updateStatusCounts() {
         else if (response.status === S.MARKED) counts.notAnswered++;
         else if (response.status === S.UNVISITED) counts.notVisited++;
         else if (response.status === S.NOT_ANSWERED) counts.notAnswered++;
-        
+
         if (response.status === S.MARKED || response.status === S.MARKED_ANSWERED) {
             counts.marked++;
         }
@@ -153,7 +153,7 @@ function updateStatusCounts() {
     $('#markedCount').text(counts.marked);
     $('#notVisitedCount').text(counts.notVisited);
     $('#notAnsweredCount').text(counts.notAnswered);
-    
+
     updateProgressIndicator(counts.answered);
 }
 
@@ -269,7 +269,7 @@ function showQuestion(globalIndex = 0) {
     else if (uiType === 'ordering' && question.SessionOrders && question.SessionOrders.length > 0) {
         $('#orderingContainer').show();
         const $list = $('#orderingList').empty();
-        let orderIds;
+        var orderIds;
         if (response.OrderedItems && response.OrderedItems.length > 0) {
             orderIds = response.OrderedItems;
         } else if (!response._randomizedOrder) {
@@ -280,7 +280,7 @@ function showQuestion(globalIndex = 0) {
         } else {
             orderIds = response._randomizedOrder;
         }
-        let orderedSessionOrders = orderIds.map(id => question.SessionOrders.find(o => o.CorrectOrder === id)).filter(Boolean);
+        var orderedSessionOrders = orderIds.map(id => question.SessionOrders.find(o => o.CorrectOrder === id)).filter(Boolean);
         orderedSessionOrders.forEach((order, idx) => {
             const $item = $('<li class="list-group-item ordering-item" draggable="true"></li>')
                 .attr('data-order-id', order.SessionOrderId)
@@ -297,7 +297,7 @@ function showQuestion(globalIndex = 0) {
         const rightItems = question.SessionPairs.map(p => p.RightText);
         const shuffledRight = rightItems.sort(() => Math.random() - 0.5);
         question.SessionPairs.forEach((pair, idx) => {
-            let selectedRight = '';
+            var selectedRight = '';
             if (response.PairedItems && response.PairedItems[idx] && response.PairedItems[idx].RightText) {
                 selectedRight = response.PairedItems[idx].RightText;
             }
@@ -305,7 +305,7 @@ function showQuestion(globalIndex = 0) {
             const $leftCol = $('<div class="col-6"></div>');
             const $leftDiv = $('<div class="form-control pair-left" style="background-color: #e9ecef;"></div>').html(pair.LeftText);
             $leftCol.append($leftDiv);
-            
+
             const $rightCol = $('<div class="col-6"></div>');
             const $select = $('<select class="form-control pair-right-select"></select>').attr('data-pair-idx', idx);
             $select.append('<option value="">Select answer</option>');
@@ -315,12 +315,12 @@ function showQuestion(globalIndex = 0) {
                 $select.append($option);
             });
             $rightCol.append($select);
-            
+
             $row.append($leftCol).append($rightCol);
             $pairing.append($row);
         });
         // Save pairing selection immediately
-        $('#pairingList .pair-right-select').on('change', function() {
+        $('#pairingList .pair-right-select').on('change', function () {
             const idx = $(this).data('pair-idx');
             const left = $('#pairingList .pair-left').eq(idx).text();
             const right = $(this).val();
@@ -345,16 +345,16 @@ function saveCurrentResponse() {
         console.warn('No current question to save');
         return;
     }
-    
+
     const question = allQuestions[currentQuestionIndex];
     const response = examResponses[question.SessionQuestionId];
-    
+
     if (!response) {
         console.error('No response object for question:', question.SessionQuestionId);
         return;
     }
     const uiType = getQuestionUiType(question);
-    let answered = false;
+    var answered = false;
     if (uiType === 'objective') {
         response.SessionChoiceIds = [];
         if (question.IsMultiSelect) {
@@ -386,7 +386,7 @@ function saveCurrentResponse() {
     }
     else if (uiType === 'pairing') {
         response.PairedItems = [];
-        let allSelected = true;
+        var allSelected = true;
         $('#pairingList .pair-left').each(function (idx) {
             const left = $(this).text();
             const right = $('#pairingList .pair-right-select').eq(idx).val();
@@ -446,15 +446,15 @@ function startTimer() {
 
 
 
-let summaryFilter = 'all';
-let summarySectionFilter = null;
+var summaryFilter = 'all';
+var summarySectionFilter = null;
 
 // Show summary modal
 function showSummary() {
     saveCurrentResponse();
     summaryFilter = 'all';
     summarySectionFilter = null;
-    
+
     const counts = { answered: 0, marked: 0, notVisited: 0, notAnswered: 0 };
     Object.values(examResponses).forEach(r => {
         if (r.status === S.ANSWERED) counts.answered++;
@@ -462,7 +462,7 @@ function showSummary() {
         else if (r.status === S.MARKED) counts.notAnswered++;
         else if (r.status === S.UNVISITED) counts.notVisited++;
         else if (r.status === S.NOT_ANSWERED) counts.notAnswered++;
-        
+
         if (r.status === S.MARKED || r.status === S.MARKED_ANSWERED) {
             counts.marked++;
         }
@@ -496,7 +496,7 @@ function filterSummarySection(sectionIdx) {
 function filterSummary(filter) {
     summaryFilter = filter;
     $('#summaryStatusTabs .nav-link').removeClass('active');
-    $('#summaryStatusTabs .nav-link').each(function() {
+    $('#summaryStatusTabs .nav-link').each(function () {
         const href = $(this).attr('onclick');
         if (href && href.includes(`'${filter}'`)) {
             $(this).addClass('active');
@@ -507,21 +507,21 @@ function filterSummary(filter) {
 
 function renderSummaryQuestions() {
     const $list = $('#summaryQuestionList').empty();
-    
+
     allQuestions.forEach((q, idx) => {
         const r = examResponses[q.SessionQuestionId];
-        
+
         // Section filter
         if (summarySectionFilter !== null && q.sectionIndex !== summarySectionFilter) return;
-        
+
         // Status filter
         if (summaryFilter === 'answered' && r.status !== S.ANSWERED && r.status !== S.MARKED_ANSWERED) return;
         if (summaryFilter === 'notAnswered' && r.status !== S.NOT_ANSWERED && r.status !== S.MARKED) return;
         if (summaryFilter === 'marked' && r.status !== S.MARKED && r.status !== S.MARKED_ANSWERED) return;
         if (summaryFilter === 'notVisited' && r.status !== S.UNVISITED) return;
-        
-        let statusClass = '', statusText = '', statusLabel = '';
-        
+
+        var statusClass = '', statusText = '', statusLabel = '';
+
         if (r.status === S.MARKED_ANSWERED) {
             statusClass = 'bg-success'; statusText = '✓M'; statusLabel = ' (Marked)';
         } else if (r.status === S.ANSWERED) {
@@ -535,7 +535,7 @@ function renderSummaryQuestions() {
         }
 
         const questionText = (q.QuestionTextEnglish || q.QuestionText || '').replace(/<[^>]*>/g, '').substring(0, 80);
-        
+
         $list.append(`
             <div class="summary-question" onclick="jumpToQuestion(${idx})">
                 <span class="summary-status ${statusClass}">${statusText}</span>
@@ -553,17 +553,17 @@ function jumpToQuestion(index) {
 
 function confirmSubmit() {
     bootstrap.Modal.getInstance(document.getElementById('summaryModal')).hide();
-    
-    const unanswered = Object.values(examResponses).filter(r => 
+
+    const unanswered = Object.values(examResponses).filter(r =>
         r.status === S.NOT_ANSWERED || r.status === S.UNVISITED
     ).length;
-    
+
     if (unanswered > 0) {
         $('#unansweredWarning').text(`⚠️ You have ${unanswered} unanswered question(s).`);
     } else {
         $('#unansweredWarning').text('');
     }
-    
+
     new bootstrap.Modal(document.getElementById('confirmModal')).show();
 }
 
@@ -573,14 +573,14 @@ function submitExam() {
 
 async function finalSubmit() {
     bootstrap.Modal.getInstance(document.getElementById('confirmModal'))?.hide();
-    
+
     // Disable submit buttons
     $('button:contains("Submit")').prop('disabled', true).html('<span class="spinner"></span>Submitting...');
-    
+
     if (typeof disableAntiCheating === 'function') {
         disableAntiCheating();
     }
-    
+
     clearInterval(timerInterval);
     if (allQuestions[currentQuestionIndex]) {
         const timeSpent = Date.now() - questionStartTime;
@@ -662,7 +662,7 @@ async function finalSubmit() {
 
 function showRetryDialog(message, submission) {
     $('button:contains("Submitting")').prop('disabled', false).html('✓ Submit Test');
-    
+
     const retryModal = $(`
         <div class="modal fade" id="retryModal" tabindex="-1">
             <div class="modal-dialog">
@@ -682,7 +682,7 @@ function showRetryDialog(message, submission) {
             </div>
         </div>
     `);
-    
+
     $('body').append(retryModal);
     window.pendingSubmission = submission;
     new bootstrap.Modal(document.getElementById('retryModal')).show();
@@ -691,14 +691,14 @@ function showRetryDialog(message, submission) {
 async function retrySubmission() {
     bootstrap.Modal.getInstance(document.getElementById('retryModal'))?.hide();
     $('#retryModal').remove();
-    
+
     if (!navigator.onLine) {
         showToast('⚠️ Still offline. Please check your connection.', 'danger');
         return;
     }
-    
+
     $('button:contains("Submit")').prop('disabled', true).html('<span class="spinner"></span>Retrying...');
-    
+
     try {
         const response = await fetch(`${API_BASE_URL}/${examId}/submit`, {
             method: 'POST',
@@ -732,12 +732,12 @@ async function forceSubmitExam() {
         disableAntiCheating();
     }
     clearInterval(timerInterval);
-    
+
     if (allQuestions[currentQuestionIndex]) {
         const timeSpent = Date.now() - questionStartTime;
         examResponses[allQuestions[currentQuestionIndex].SessionQuestionId].TimeSpent += timeSpent;
     }
-    
+
     const submission = {
         ExamId: examId,
         UserId: parseInt(window.currentUserId) || 1,
@@ -789,7 +789,7 @@ function openSecureExamWindow(examId) {
         ',resizable=no' +
         ',maximized=yes'
     );
-  
+
     if (newWindow) {
         newWindow.onload = () => {
             try {
@@ -838,14 +838,9 @@ function initializeExam(id) {
     examId = id;
     examStartTime = Date.now();
     console.log('initializeExam function called with ID:', id);
-    
+
     initializeOfflineDetection();
     setupMobileToggle();
-
-    // Update API_BASE_URL from configuration
-    if (window.examUrls?.apiBaseUrl) {
-        API_BASE_URL = window.examUrls.apiBaseUrl;
-    }
 
     // Show fullscreen prompt and disable interface
     setupFullscreenListeners();
@@ -895,12 +890,12 @@ function initializeExam(id) {
         const question = allQuestions[currentQuestionIndex];
         const response = examResponses[question.SessionQuestionId];
         const uiType = getQuestionUiType(question);
-        
+
         $('#optionsForm input[name="q"]').prop('checked', false);
         $('#optionsForm input[name="q_multi"]').prop('checked', false);
         $('#optionsForm .option-item').removeClass('selected');
         $('#subjectiveAnswer').val('');
-        
+
         if (uiType === 'ordering') {
             // Reset to initial randomized order
             const $list = $('#orderingList').empty();
@@ -922,7 +917,7 @@ function initializeExam(id) {
             response.PairedItems = [];
             $('#pairingList .pair-right-select').val('');
         }
-        
+
         saveCurrentResponse();
         renderQuestionGrid();
     });
@@ -947,12 +942,12 @@ function initializeExam(id) {
     });
 
     // Keyboard shortcuts
-    $(document).on('keydown', function(e) {
+    $(document).on('keydown', function (e) {
         // Ignore if typing in input/textarea
         if ($(e.target).is('input, textarea, select')) return;
-        
+
         const key = e.key.toLowerCase();
-        
+
         if (key === 'n') {
             e.preventDefault();
             $('#btnNext').click();
@@ -970,20 +965,20 @@ function initializeExam(id) {
 }
 
 function initializeOfflineDetection() {
-    window.addEventListener('online', function() {
+    window.addEventListener('online', function () {
         isOnline = true;
         $('#offlineIndicator').hide();
         console.log('Connection restored');
         showToast('✅ Internet connection restored!', 'success');
     });
-    
-    window.addEventListener('offline', function() {
+
+    window.addEventListener('offline', function () {
         isOnline = false;
         $('#offlineIndicator').show();
         console.log('Connection lost');
         showToast('⚠️ Internet connection lost! Please reconnect to submit.', 'danger', 5000);
     });
-    
+
     if (!navigator.onLine) {
         $('#offlineIndicator').show();
     }
@@ -996,7 +991,7 @@ function showToast(message, type = 'info', duration = 3000) {
         warning: '#ffc107',
         info: '#17a2b8'
     };
-    
+
     const toast = $(`
         <div style="
             position: fixed;
@@ -1013,11 +1008,11 @@ function showToast(message, type = 'info', duration = 3000) {
             animation: slideIn 0.3s ease;
         ">${message}</div>
     `);
-    
+
     $('body').append(toast);
-    
+
     setTimeout(() => {
-        toast.fadeOut(300, function() { $(this).remove(); });
+        toast.fadeOut(300, function () { $(this).remove(); });
     }, duration);
 }
 
@@ -1125,7 +1120,7 @@ function updateDebugPanel() {
 
     const answeredCount = Object.values(examResponses).filter(r => r.SessionChoiceId !== null).length;
     $('#responsesSaved').text(answeredCount);
-    
+
     // Update marks display based on current question
     if (allQuestions.length > 0 && currentQuestionIndex >= 0 && currentQuestionIndex < allQuestions.length) {
         const currentQuestion = allQuestions[currentQuestionIndex];
@@ -1135,7 +1130,7 @@ function updateDebugPanel() {
         $('#currentMarks').text(`+${marksPerQuestion}`);
         $('#negativeMarks').text(`-${negativeMarks}`);
     }
-   
+
     // Update question timer
     const questionTimeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
     const minutes = Math.floor(questionTimeSpent / 60);
@@ -1148,15 +1143,15 @@ function setupOrderingDragAndDrop($list, response) {
     // Remove any previous delegated handlers
     $list.off('.orderingDrag');
 
-    $list.on('dragstart.orderingDrag', '.ordering-item', function(e) {
+    $list.on('dragstart.orderingDrag', '.ordering-item', function (e) {
         e.originalEvent.dataTransfer.setData('text/plain', $(this).index());
     });
 
-    $list.on('dragover.orderingDrag', '.ordering-item', function(e) {
+    $list.on('dragover.orderingDrag', '.ordering-item', function (e) {
         e.preventDefault();
     });
 
-    $list.on('drop.orderingDrag', '.ordering-item', function(e) {
+    $list.on('drop.orderingDrag', '.ordering-item', function (e) {
         e.preventDefault();
         const fromIdx = parseInt(e.originalEvent.dataTransfer.getData('text/plain'), 10);
         const toIdx = $(this).index();

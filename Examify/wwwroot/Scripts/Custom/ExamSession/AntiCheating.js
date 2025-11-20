@@ -275,7 +275,7 @@ function sendViolationToServer(violation) {
         sessionId: window.examData?.SessionId || null
     };
     
-    const apiUrl = window.examUrls?.apiBaseUrl || 'https://localhost:7271/api/Exam';
+    const apiUrl = window.examUrls?.apiBaseUrl || window.API_ENDPOINTS.baseUrl.replace('/', '');
     
     fetch(`${apiUrl}/violation`, {
         method: 'POST',

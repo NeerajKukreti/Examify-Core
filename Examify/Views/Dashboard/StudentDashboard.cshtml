@@ -1,4 +1,4 @@
-﻿<!--begin::App Content Header-->
+<!--begin::App Content Header-->
 <div class="app-content-header">
     <!--begin::Container-->
     <div class="container-fluid">
@@ -430,7 +430,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     (function() {
-        const apiBaseUrl = '@Html.Raw(ViewBag.ApiBaseUrl ?? "https://localhost:7271/api")';
+        const apiBaseUrl = window.API_ENDPOINTS.baseUrl;
         const userId = @(ViewBag.UserId ?? 1);
 
         async function loadStudentDashboard() {
@@ -452,7 +452,7 @@
                     const recentAvg = recent5.reduce((sum, e) => sum + (e.Percentage || 0), 0) / 5;
                     const previousAvg = previous5.reduce((sum, e) => sum + (e.Percentage || 0), 0) / 5;
                     const change = recentAvg - previousAvg;
-                    const trend = change > 0 ? `↑ ${Math.abs(Math.round(change))}%` : change < 0 ? `↓ ${Math.abs(Math.round(change))}%` : '→';
+                    const trend = change > 0 ? `? ${Math.abs(Math.round(change))}%` : change < 0 ? `? ${Math.abs(Math.round(change))}%` : '?';
                     const color = change > 0 ? '#28a745' : change < 0 ? '#dc3545' : '#6c757d';
                     $('#trendIndicator').html(`<span style="color:${color}">${trend}</span>`);
                 }

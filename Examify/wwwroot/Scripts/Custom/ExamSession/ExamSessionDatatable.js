@@ -13,7 +13,7 @@ $(document).ready(function () {
     
     $('#examTable').DataTable({
         ajax: {
-            url: 'https://localhost:7271/api/student/Exam/list',
+            url: window.API_ENDPOINTS.baseUrl + 'student/Exam/list',
             type: 'GET',
             dataSrc: function (json) {
                 userExams = json.UserExams || [];

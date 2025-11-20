@@ -1,4 +1,4 @@
-﻿@model DataModel.QuestionModel
+@model DataModel.QuestionModel
 @using System.Text.Json
 @{
     ViewBag.Title = "Create/Edit Question";
@@ -883,7 +883,7 @@
     $(function () {
         // Load classes from API
         (function loadClasses() {
-            var endpoint = 'https://localhost:7271/api/Class/GetAll/' + instituteId;
+            var endpoint = window.API_ENDPOINTS.baseUrl + "Class/GetAll/" + instituteId;
 
             $.ajax({
                 url: endpoint,
@@ -926,7 +926,7 @@
         // 4. Adding proper event cleanup to prevent duplicate bindings
         if (window.QuestionForm && typeof window.QuestionForm.initialize === 'function') {
             window.QuestionForm.initialize(window.modelData);
-            console.log('✅ Question form initialized with optimized event handling');
+            console.log('? Question form initialized with optimized event handling');
         } else {
             console.warn('QuestionForm module not loaded. Falling back to legacy initialization.');
             // Fallback for legacy behavior if modules fail to load
@@ -946,7 +946,7 @@
 
             // Dispatch the event on the document
             document.dispatchEvent(event);
-            console.log('📢 questionFormReady event dispatched', {
+            console.log('?? questionFormReady event dispatched', {
                 isNewQuestion: !window.modelData || window.modelData.QuestionId === 0,
                 questionId: window.modelData ? window.modelData.QuestionId : 0
             });
