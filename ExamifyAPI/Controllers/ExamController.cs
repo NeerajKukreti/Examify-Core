@@ -41,7 +41,7 @@ namespace ExamifyAPI.Controllers
             {
                 var exam = await _examService.GetExamByIdAsync(examId);
                 if (exam == null)
-                    return NotFound(new { Success = false, Message = "Exam not found" });
+                    return BadRequest(new { Success = false, Message = "User has already taken the exam" });
                     
                 return Ok(new { Success = true, Data = exam });
             }

@@ -29,11 +29,13 @@ namespace ExamifyAPI.Services
     {
         private readonly IExamRepository _examRepository;
         private readonly IAuthService _authService;
+        private readonly IClassService _classService;
 
-        public ExamService(IExamRepository examRepository, IAuthService authService)
+        public ExamService(IExamRepository examRepository, IAuthService authService, IClassService classService)
         {
             _examRepository = examRepository;
             _authService = authService;
+            _classService = classService;
         }
 
         public async Task<IEnumerable<ExamModel>> GetAllExamsAsync()
@@ -45,7 +47,25 @@ namespace ExamifyAPI.Services
         public async Task<ExamModel> GetExamByIdAsync(int examId)
         {
             var instituteId = _authService.GetCurrentInstituteId();
-            return await Task.FromResult(_examRepository.GetExamById(examId, instituteId));
+            var userId = _authService.GetCurrentUserID();
+            
+            // Check if user has already taken this exam
+            var userExams = await _examRepository.GetUserExamsAsync(new List<long> { userId });
+            if (userExams.Any(ue => ue.ExamId == examId))
+            {
+                return null; // User has already taken the exam
+            }
+            
+            var exam = _examRepository.GetExamById(examId, instituteId);
+            var studentClasses = await _classService.GetStudentClassesAsync(userId);
+            var studentClassIds = studentClasses.Select(sc => sc.ClassId).ToHashSet();
+            
+            if (exam != null && exam.ClassIds.Any(classId => studentClassIds.Contains(classId)))
+            {
+                return await Task.FromResult(exam);
+            }
+            
+            return null;
         }
 
         public async Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null, int? userloggedIn = null)

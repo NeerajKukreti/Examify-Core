@@ -152,21 +152,13 @@ function displayExamStatistics(stats) {
 $(document).ready(function() {
     // Get exam ID from URL or data attribute
     const urlParams = new URLSearchParams(window.location.search);
-    const examId = urlParams.get('id') || $('#examDetails').data('exam-id');
-     
+    const examId = urlParams.get('id') || window.examId || $('#examDetails').data('exam-id');
     
     // Start exam button click handler
     $(document).on('click', '.startExam', function() {
-        const examId = window.examId;
-        if (examId) {
-            startExam(examId);
-        }
-    });
-    
-    // Refresh details button
-    $('#refreshBtn').on('click', function() {
-        if (examId) {
-            loadExamDetails(examId);
+        const btnExamId = $(this).data('examid') || window.examId || examId;
+        if (btnExamId) {
+            startExam(btnExamId);
         }
     });
 });

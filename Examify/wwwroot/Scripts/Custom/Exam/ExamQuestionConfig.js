@@ -244,7 +244,7 @@ var ExamQuestionConfig = (function () {
             html += '<div class="question-card" data-question-id="' + q.questionId + '">' +
                 '<div class="d-flex justify-content-between align-items-start mb-2">' +
                 '<div class="flex-grow-1 question-text">' +
-                '<strong>Q' + (index + 1) + '.</strong> ' + (q.questionEnglish || '').substring(0, 70) + '...' +
+                '<strong style="display:inline-flex;">Q' + (index + 1) + '.</strong> <span style="display:inline-flex;">' + (q.questionEnglish || '').substring(0, 200) + '...</span>' +
                 '<div class="question-meta">Topic: ' + (q.topicName || 'N/A') + '</div>' +
                 '</div>' +
                 '<button type="button" class="btn btn-sm btn-danger btn-remove-question" data-question-id="' + q.questionId + '">' +

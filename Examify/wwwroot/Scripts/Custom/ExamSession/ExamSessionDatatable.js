@@ -1,10 +1,29 @@
-function launchExam(examId) {
+let examWindows = {};
+
+function launchExam(examId, btn) {
+    debugger
+    btn.disabled = true;
+    btn.textContent = 'Launching...';
+    
+    // Check if window already exists and is open
+    if (examWindows[examId] && !examWindows[examId].closed) {
+        examWindows[examId].focus();
+        btn.disabled = false;
+        btn.textContent = 'Launch Exam';
+        return;
+    }
+    
     const features = `popup,width=${screen.availWidth},height=${screen.availHeight},left=0,top=0`;
     const w = window.open('/ExamSession/Details?id=' + examId, '_blank', features);
     if (w) {
+        examWindows[examId] = w;
         w.focus();
+        btn.disabled = false;
+        btn.textContent = 'Launch Exam';
     } else {
         alert('Popup blocked. Please allow popups for this site.');
+        btn.disabled = false;
+        btn.textContent = 'Launch Exam';
     }
 }
 
@@ -17,7 +36,9 @@ $(document).ready(function () {
             type: 'GET',
             dataSrc: function (json) {
                 userExams = json.UserExams || [];
-                return json.Data;
+                // Filter out exams that have already been taken
+                const takenExamIds = userExams.map(ue => ue.ExamId);
+                return json.Data.filter(exam => !takenExamIds.includes(exam.ExamId));
             }
         },
         columns: [
@@ -33,11 +54,7 @@ $(document).ready(function () {
             {
                 data: 'ExamId', width:"115px",
                 render: function (data) {
-                    const userExam = userExams.find(ue => ue.ExamId === data);
-                    if (userExam && userExam.UserExamSessionId) {
-                        return `<a href="/ExamSession/ExamResult?sessionId=${userExam.UserExamSessionId}" target="_blank" class="badge bg-success" style="text-decoration: none;">View Result</a>`;
-                    }
-                    return `<button onclick="launchExam(${data})" class="btn btn-sm btn-primary">Launch Exam</button>`;
+                    return `<button onclick="launchExam(${data}, this)" class="btn btn-sm btn-primary">Launch Exam</button>`;
                 }
             }
         ],

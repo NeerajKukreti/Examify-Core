@@ -36,9 +36,10 @@ public class ExamSessionController : Controller
         var client = _httpClientFactory.CreateClient(ENDPOINTS.ClientName);
         var response = await client.GetAsync($"{ENDPOINTS.ExamById}/{id}");
         
+        var json = await response.Content.ReadAsStringAsync();
+        
         if (response.IsSuccessStatusCode)
         {
-            var json = await response.Content.ReadAsStringAsync();
             var apiResponse = JsonSerializer.Deserialize<ApiResponse<ExamModel>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             var exam = apiResponse?.Data;   
             ViewBag.ExamId = id;
@@ -48,13 +49,11 @@ public class ExamSessionController : Controller
             ViewBag.ExamResultUrl = ENDPOINTS.ExamResultUrl;
             return View(exam);
         }
-        ViewBag.ExamId = id;
-        ViewBag.UserId = User.GetUserId();
-        ViewBag.ApiBaseUrl = ENDPOINTS.BaseUrl + "Exam";
-        ViewBag.StartExamUrl = ENDPOINTS.StartExamUrl;
-        ViewBag.ExamResultUrl = ENDPOINTS.ExamResultUrl;
-
-        return NotFound();
+        
+        // Pass error message to view for alert
+        var errorResponse = JsonSerializer.Deserialize<ApiResponse<object>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        ViewBag.ErrorMessage = errorResponse?.Message ?? "An error occurred";
+        return View("Error");
     }
     
     public IActionResult StartExam(int examId)
