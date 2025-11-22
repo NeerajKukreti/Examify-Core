@@ -9,6 +9,7 @@ namespace ExamifyAPI.Services
     {
         Task<IEnumerable<ExamModel>> GetAllExamsAsync();
         Task<ExamModel> GetExamByIdAsync(int examId);
+        Task<ExamModel> GetSessionExamByIdAsync(int examId);
         Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null, int? userloggedIn = null);
         Task<bool> ChangeStatusAsync(int examId);
         Task<bool> PublishExamAsync(int examId);
@@ -45,6 +46,13 @@ namespace ExamifyAPI.Services
         }
 
         public async Task<ExamModel> GetExamByIdAsync(int examId)
+        {
+            var instituteId = _authService.GetCurrentInstituteId();
+            var exam = _examRepository.GetExamById(examId, instituteId);
+            return exam;
+        }
+
+        public async Task<ExamModel> GetSessionExamByIdAsync(int examId)
         {
             var instituteId = _authService.GetCurrentInstituteId();
             var userId = _authService.GetCurrentUserID();

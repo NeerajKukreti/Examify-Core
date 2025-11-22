@@ -21,6 +21,9 @@
                  
                 {
                     "title": "English Text", "data": "questionEnglish", "width": "700px",
+                    "render": function (data) {
+                        return data && data.length > 200 ? data.substring(0, 200) + '...' : data;
+                    },
                     "createdCell": function (td) {
                         $(td).css('text-align', 'justify');
                     }

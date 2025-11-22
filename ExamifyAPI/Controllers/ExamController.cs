@@ -201,6 +201,24 @@ namespace ExamifyAPI.Controllers
         #endregion
 
         #region Exam Session
+        
+        [HttpGet("Session/{examId:int}")]
+        public async Task<IActionResult> GetSessionExamById(int examId)
+        {
+            try
+            {
+                var exam = await _examService.GetSessionExamByIdAsync(examId);
+                if (exam == null)
+                    return BadRequest(new { Success = false, Message = "User has already taken the exam" });
+
+                return Ok(new { Success = true, Data = exam });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
+            }
+        }
+
         [HttpGet("{examId}/sessionquestions")]
         public IActionResult GetExamSessionQuestions(int userId, int examId)
         {

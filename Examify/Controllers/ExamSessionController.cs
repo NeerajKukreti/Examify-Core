@@ -34,7 +34,7 @@ public class ExamSessionController : Controller
     public async Task<IActionResult> Details(int id)
     {
         var client = _httpClientFactory.CreateClient(ENDPOINTS.ClientName);
-        var response = await client.GetAsync($"{ENDPOINTS.ExamById}/{id}");
+        var response = await client.GetAsync($"{ENDPOINTS.SessionExamId}/{id}");
         
         var json = await response.Content.ReadAsStringAsync();
         

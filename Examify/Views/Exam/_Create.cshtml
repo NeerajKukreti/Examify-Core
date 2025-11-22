@@ -128,7 +128,7 @@
                             <label class="mb-0">Assign to Classes <span class="required">*</span></label>
                             <div class="form-check mb-0">
                                 <input class="form-check-input" type="checkbox" id="selectAllClasses" />
-                                <label class="form-check-label ms-2" for="selectAllClasses">Select All</label>
+                                <label class="form-check-label" for="selectAllClasses">Select All</label>
                             </div>
                         </div>
                         <!-- multi select dropdown (no size/listbox) -->
@@ -220,7 +220,6 @@
 
 <script>
         window.examModelData = @Html.Raw(JsonSerializer.Serialize(Model));
-        
 
         $(function () {
             // Initialize Quill editor for Instructions
@@ -414,6 +413,12 @@
                             var dropdownParent = modal.length ? modal : $(document.body);
                             $select.select2({ data: items, placeholder: 'Select classes', width: '100%', dropdownParent: dropdownParent, closeOnSelect: false, allowClear: true });
 
+                            // Update Select All checkbox when selection changes
+                            $select.on('change', function() {
+                                var selectedCount = $(this).val() ? $(this).val().length : 0;
+                                $('#selectAllClasses').prop('checked', selectedCount === items.length);
+                            });
+
                             // Preselect when editing using ExamDTO.ClassIds (server-populated)
                             if (window.examModelData && Array.isArray(window.examModelData.ClassIds) && window.examModelData.ClassIds.length > 0) {
                                 var vals = window.examModelData.ClassIds.map(function(x){ return String(x); });
@@ -449,6 +454,17 @@
                 $('#instructionManageModal').modal('show');
             });
             
+            // Select All Classes checkbox handler
+            $('#selectAllClasses').on('change', function() {
+                var $select = $('#ClassIds');
+                if ($(this).prop('checked')) {
+                    $select.find('option').prop('selected', true);
+                    $select.trigger('change');
+                } else {
+                    $select.val(null).trigger('change');
+                }
+            });
+
             // Prevent ESC key from closing modals with capture phase
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' || e.keyCode === 27) {
