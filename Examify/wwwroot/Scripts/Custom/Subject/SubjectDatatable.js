@@ -3,7 +3,22 @@ var SubjectTable = function () {
     var Subject = function () {
         table = $('#SubjectTable');
         table.dataTable({
-            "order": [],             
+            "order": [],
+            "createdRow": function (row, data, dataIndex) {
+                 
+                if (data.createdDate && typeof moment !== 'undefined') {
+                    var timeAgo = moment(data.createdDate).fromNow();
+                    var duration = moment.duration(moment().diff(moment(data.createdDate)));
+                    var days = Math.floor(duration.asDays());
+                    var hours = duration.hours();
+                    var minutes = duration.minutes();
+                    var detailedTime = 'Created ';
+                    if (days > 0) detailedTime += days + ' day' + (days !== 1 ? 's' : '') + ', ';
+                    if (hours > 0 || days > 0) detailedTime += hours + ' hour' + (hours !== 1 ? 's' : '') + ', ';
+                    detailedTime += minutes + ' minute' + (minutes !== 1 ? 's' : '') + ' ago';
+                    $(row).attr('title', detailedTime);
+                }
+            },
             "ajax": function (data, callback, settings) {
                 $.ajax({
                     url: loadSubjectUrl,

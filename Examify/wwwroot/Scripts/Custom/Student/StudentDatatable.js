@@ -3,7 +3,7 @@
     var StudentBank = function () {
         table = $('#StudentTable'); // Fixed: matches the HTML table ID
         table.dataTable({
-            "order": [], // This disables the initial sorting
+            "order": [[8, "desc"]], // Order by studentId descending (newest first)
             "createdRow": function (row, data, dataIndex) {
                 // Custom row styling if needed
             },
@@ -19,7 +19,10 @@
             },
             "columns": [
                 {
-                    "title": "Student Name", "data": "studentName" 
+                    "title": "Student Name", "data": "studentName", "orderData": 8
+                },
+                {
+                    "data": "studentId", "visible": false 
                 },
                 {
                     "title": "Father Name", "data": "fatherName",

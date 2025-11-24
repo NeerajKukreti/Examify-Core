@@ -80,7 +80,14 @@ namespace ExamAPI.Services
                 if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(username))
                     return null;
 
-                return GenerateTokens(userId, username, role, int.Parse(instituteId ?? "0"));
+                var user = await _userService.GetUserByUsernameAsync(username);
+                if (user == null)
+                    return null;
+
+                var tokens = GenerateTokens(userId, username, role, int.Parse(instituteId ?? "0"));
+                tokens.InstituteId = user.InstituteId;
+                tokens.FullName = user.FullName;
+                return tokens;
             }
             catch
             {

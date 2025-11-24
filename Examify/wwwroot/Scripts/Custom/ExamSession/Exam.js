@@ -236,7 +236,8 @@ function showQuestion(globalIndex = 0) {
                 $optionItem.append($input).append($label);
                 $form.append($optionItem);
             });
-            $form.off('click', '.option-item').on('click', '.option-item', function () {
+            $form.off('click', '.option-item').on('click', '.option-item', function (e) {
+                if ($(e.target).is('input[type="checkbox"], label')) return;
                 const $this = $(this);
                 const $checkbox = $this.find('input[type="checkbox"]');
                 $this.toggleClass('selected');
@@ -885,42 +886,7 @@ function initializeExam(id) {
         }
     });
 
-    $('#btnClear').on('click', function (e) {
-        e.preventDefault();
-        const question = allQuestions[currentQuestionIndex];
-        const response = examResponses[question.SessionQuestionId];
-        const uiType = getQuestionUiType(question);
 
-        $('#optionsForm input[name="q"]').prop('checked', false);
-        $('#optionsForm input[name="q_multi"]').prop('checked', false);
-        $('#optionsForm .option-item').removeClass('selected');
-        $('#subjectiveAnswer').val('');
-
-        if (uiType === 'ordering') {
-            // Reset to initial randomized order
-            const $list = $('#orderingList').empty();
-            if (response._randomizedOrder) {
-                response._randomizedOrder.forEach(correctOrder => {
-                    const order = question.SessionOrders.find(o => o.CorrectOrder === correctOrder);
-                    if (order) {
-                        const $item = $('<li class="list-group-item ordering-item" draggable="true"></li>')
-                            .attr('data-order-id', order.SessionOrderId)
-                            .attr('data-correct-order', order.CorrectOrder)
-                            .html(order.ItemText);
-                        $list.append($item);
-                    }
-                });
-                setupOrderingDragAndDrop($list, response);
-            }
-            response.OrderedItems = [];
-        } else if (uiType === 'pairing') {
-            response.PairedItems = [];
-            $('#pairingList .pair-right-select').val('');
-        }
-
-        saveCurrentResponse();
-        renderQuestionGrid();
-    });
 
     $('#btnNext').on('click', function (e) {
         e.preventDefault();
@@ -941,27 +907,7 @@ function initializeExam(id) {
         }
     });
 
-    // Keyboard shortcuts
-    $(document).on('keydown', function (e) {
-        // Ignore if typing in input/textarea
-        if ($(e.target).is('input, textarea, select')) return;
 
-        const key = e.key.toLowerCase();
-
-        if (key === 'n') {
-            e.preventDefault();
-            $('#btnNext').click();
-        } else if (key === 'p') {
-            e.preventDefault();
-            $('#btnPrevious').click();
-        } else if (key === 'm') {
-            e.preventDefault();
-            $('#btnReview').click();
-        } else if (key === 'c') {
-            e.preventDefault();
-            $('#btnClear').click();
-        }
-    });
 }
 
 function initializeOfflineDetection() {

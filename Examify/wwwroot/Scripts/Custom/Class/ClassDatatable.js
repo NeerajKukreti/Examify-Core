@@ -4,7 +4,7 @@ var ClassTable = function () {
     var ClassBank = function () {
         table = $('#ClassTable');
         table.dataTable({
-            "order": [],
+            "order": [[0, "desc"]],
             "ajax": function (data, callback, settings) {
                 $.ajax({
                     url: loadClassUrl,
@@ -16,6 +16,9 @@ var ClassTable = function () {
                 });
             },
             "columns": [
+                {
+                    "title": "Class ID", "data": "classId", "visible": false
+                },
                 {
                     "title": "Class Name", "data": "className"
                 },

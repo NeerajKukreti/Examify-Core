@@ -25,12 +25,14 @@ var ExamQuestionConfig = (function () {
                 {
                     "data": "questionId",
                     "orderable": false,
+                    "className": "text-center align-middle",
                     "render": function (data, type, row) {
                         return '<input type="checkbox" class="question-checkbox" data-question-id="' + data + '" />';
                     }
                 },
                 {
                     "data": "questionEnglish",
+                    "className": "align-middle",
                     "render": function (data, type, row) {
                         var text = data || row.questionHindi || '';
                         return text.length > 200 ? text.substring(0, 200) + '...' : text;

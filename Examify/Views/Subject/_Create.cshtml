@@ -87,7 +87,13 @@
 
         <div class="d-flex justify-content-end">
             <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary">
+            @if (Model.SubjectId == 0)
+            {
+                <button type="submit" name="saveAction" value="saveAndNew" class="btn btn-outline-success me-2">
+                    Save & Add New
+                </button>
+            }
+            <button type="submit" name="saveAction" value="save" class="btn btn-primary">
                 @(Model.SubjectId > 0 ? "Update Subject" : "Add Subject")
             </button>
         </div>
@@ -173,7 +179,10 @@
             messages: {
                 SubjectName: { required: "Subject name is required", maxlength: "Subject name cannot exceed 200 characters" }
             },
-            submitHandler: function(form) {
+            submitHandler: function(form, event) {
+                var saveAction = $(event.originalEvent.submitter).val();
+                var isSaveAndNew = saveAction === 'saveAndNew';
+                
                 var formData = $(form).serialize();
                 console.log('📤 Form Data:', formData);
                 
@@ -187,7 +196,6 @@
                     data: formData,
                     success: function(response) {
                         if (response.success) {
-                            $('#subjectModel').modal('hide');
                             if (typeof window.reloadSubjectTable === 'function') {
                                 window.reloadSubjectTable();
                             }
@@ -195,6 +203,17 @@
                                 toastr.success(response.message || 'Subject saved successfully!');
                             } else {
                                 alert(response.message || 'Subject saved successfully!');
+                            }
+                            
+                            if (isSaveAndNew) {
+                                form.reset();
+                                $('#SubjectName').val('');
+                                $('#Description').val('');
+                                $('#topicsContainer').empty();
+                                $(form).validate().resetForm();
+                                $('#SubjectName').focus();
+                            } else {
+                                $('#subjectModel').modal('hide');
                             }
                         } else {
                             if (response.errors) {

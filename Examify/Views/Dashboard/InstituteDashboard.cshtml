@@ -3,7 +3,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-sm-6"><h3 class="mb-0">Institute Dashboard</h3></div>
-             
+
         </div>
     </div>
 </div>
@@ -163,149 +163,148 @@
     </div>
 </div>
 <!--end::App Content-->
-
 @section Scripts {
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-(function() {
-    const apiBaseUrl = window.API_ENDPOINTS.baseUrl;
-    const instituteId = @(ViewBag.InstituteId ?? 1);
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        (function() {
+            const apiBaseUrl = window.API_ENDPOINTS.baseUrl;
+            const instituteId = @(ViewBag.InstituteId ?? 1);
 
-    async function loadDashboard() {
-        try {
-            const [students, questions] = await Promise.all([
-                $.get(`${apiBaseUrl}/Student/${instituteId}/0`),
-                $.get(`${apiBaseUrl}/Question/list`)
-            ]);
-            const studentList = students.Data || [];
+            async function loadDashboard() {
+                try {
+                    const [students, questions] = await Promise.all([
+                        $.get(`${apiBaseUrl}Student/${instituteId}/0`),
+                        $.get(`${apiBaseUrl}Question/list`)
+                    ]);
+                    const studentList = students.Data || [];
+                    
+                    $('#totalStudents').text(students.Count || 0);
+                    $('#totalQuestions').text(questions.length);
 
-            $('#totalStudents').text(students.Count || 0);
-            $('#totalQuestions').text(questions.length);
+                    if (studentList.length === 0) {
+                        $('#totalExams, #totalSubmissions').text(0);
+                        return;
+                    }
 
-            if (studentList.length === 0) {
-                $('#totalExams, #totalSubmissions').text(0);
-                return;
+                    const userIds = studentList.map(s => s.StudentId);
+                    const examResponse = await $.ajax({
+                        url: `${apiBaseUrl}Exam/Users/exams`,
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(userIds)
+                    });
+
+                    const allExams = new Set();
+                    const studentNameMap = {};
+                    studentList.forEach(s => studentNameMap[s.UserId] = s.StudentName);
+                    debugger;
+                    const allAttempts = (examResponse.Data || []).map(e => {
+                        if (e.ExamId) allExams.add(e.ExamId);
+                        return {...e, StudentName: studentNameMap[e.UserId] || 'Unknown'};
+                    });
+                    const submissions = allAttempts.filter(e => e.Status === 'Submit');
+                    const abandoned = allAttempts.filter(e => e.Status === 'Started');
+
+                    $('#totalExams').text(allExams.size);
+                    $('#totalSubmissions').text(submissions.length);
+                    const passed = submissions.filter(s => s.Percentage >= s.CutOffPercentage).length;
+                    const passRate = submissions.length ? ((passed / submissions.length) * 100).toFixed(1) : 0;
+                    $('#passRate').text(passRate + '%');
+                    $('#passCount').text(`${passed} passed / ${submissions.length} total`);
+
+                    const avgScore = submissions.length ? (submissions.reduce((sum, s) => sum + (s.Percentage || 0), 0) / submissions.length).toFixed(1) : 0;
+                    $('#avgScore').text(avgScore + '%');
+
+                    $('#activeExams').text(allExams.size);
+                    $('#inactiveExams').text('0 inactive');
+
+                    const completionRate = allAttempts.length ? ((submissions.length / allAttempts.length) * 100).toFixed(1) : 0;
+                    $('#completionRate').text(completionRate + '%');
+                    $('#abandonedCount').text(`${abandoned.length} abandoned`);
+
+                    const ranges = {'0-20': 0, '21-40': 0, '41-60': 0, '61-80': 0, '81-100': 0};
+                    submissions.forEach(s => {
+                        const score = s.Percentage || 0;
+                        if (score <= 20) ranges['0-20']++;
+                        else if (score <= 40) ranges['21-40']++;
+                        else if (score <= 60) ranges['41-60']++;
+                        else if (score <= 80) ranges['61-80']++;
+                        else ranges['81-100']++;
+                    });
+                    new Chart(document.getElementById('performanceChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(ranges),
+                            datasets: [{
+                                label: 'Students',
+                                data: Object.values(ranges),
+                                backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#198754']
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+
+                    new Chart(document.getElementById('passFailChart'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Pass', 'Fail'],
+                            datasets: [{
+                                data: [passed, submissions.length - passed],
+                                backgroundColor: ['#28a745', '#dc3545']
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false }
+                    });
+
+                    const studentStats = {};
+                    submissions.forEach(s => {
+                        if (!studentStats[s.UserId]) studentStats[s.UserId] = {name: s.StudentName, total: 0, count: 0};
+                        studentStats[s.UserId].total += s.Percentage || 0;
+                        studentStats[s.UserId].count++;
+                    });
+                    const topPerformers = Object.entries(studentStats)
+                        .map(([id, data]) => ({...data, avg: (data.total / data.count).toFixed(1)}))
+                        .sort((a, b) => b.avg - a.avg).slice(0, 5);
+                    const tbody = $('#topPerformersTable tbody').empty();
+                    topPerformers.forEach((p, i) => {
+                        tbody.append(`<tr><td>${i+1}</td><td>${p.name || 'Unknown'}</td><td><span class="badge bg-success">${p.avg}%</span></td><td>${p.count}</td></tr>`);
+                    });
+
+                    const examStats = {};
+                    submissions.forEach(s => {
+                        examStats[s.ExamName] = (examStats[s.ExamName] || 0) + 1;
+                    });
+                    const topExams = Object.entries(examStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
+                    new Chart(document.getElementById('popularExamsChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: topExams.map(e => e[0].substring(0, 25)),
+                            datasets: [{
+                                label: 'Submissions',
+                                data: topExams.map(e => e[1]),
+                                backgroundColor: '#0d6efd'
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
+                    });
+
+                    const tbody2 = $('#recentActivityTable tbody').empty();
+                    const recent = allAttempts.sort((a, b) => new Date(b.SubmitTime || b.StartTime) - new Date(a.SubmitTime || a.StartTime)).slice(0, 15);
+                    recent.forEach(a => {
+                        const result = a.Status === 'Submit'
+                            ? (a.Percentage >= a.CutOffPercentage ? '<span class="badge bg-success">Pass</span>' : '<span class="badge bg-danger">Fail</span>')
+                            : '<span class="badge bg-warning">Abandoned</span>';
+                        const score = a.Status === 'Submit' ? `${a.Percentage}%` : '-';
+                        const date = new Date(a.SubmitTime || a.StartTime).toLocaleString();
+                        tbody2.append(`<tr><td>${a.StudentName || 'Unknown'}</td><td>${a.ExamName}</td><td>${a.ExamType || 'N/A'}</td><td>${score}</td><td>${result}</td><td>${date}</td></tr>`);
+                    });
+                } catch (error) {
+                    console.error('Dashboard error:', error);
+                }
             }
 
-            const userIds = studentList.map(s => s.StudentId);
-            const examResponse = await $.ajax({
-                url: `${apiBaseUrl}/Exam/users/exams`,
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(userIds)
-            });
-
-            const allExams = new Set();
-            const studentNameMap = {};
-            studentList.forEach(s => studentNameMap[s.UserId] = s.StudentName);
-
-            const allAttempts = (examResponse.Data || []).map(e => {
-                if (e.ExamId) allExams.add(e.ExamId);
-                return {...e, StudentName: studentNameMap[e.UserId] || 'Unknown'};
-            });
-            const submissions = allAttempts.filter(e => e.Status === 'Submit');
-            const abandoned = allAttempts.filter(e => e.Status === 'Started');
-
-            $('#totalExams').text(allExams.size);
-            $('#totalSubmissions').text(submissions.length);
-            const passed = submissions.filter(s => s.Percentage >= s.CutOffPercentage).length;
-            const passRate = submissions.length ? ((passed / submissions.length) * 100).toFixed(1) : 0;
-            $('#passRate').text(passRate + '%');
-            $('#passCount').text(`${passed} passed / ${submissions.length} total`);
-
-            const avgScore = submissions.length ? (submissions.reduce((sum, s) => sum + (s.Percentage || 0), 0) / submissions.length).toFixed(1) : 0;
-            $('#avgScore').text(avgScore + '%');
-
-            $('#activeExams').text(allExams.size);
-            $('#inactiveExams').text('0 inactive');
-
-            const completionRate = allAttempts.length ? ((submissions.length / allAttempts.length) * 100).toFixed(1) : 0;
-            $('#completionRate').text(completionRate + '%');
-            $('#abandonedCount').text(`${abandoned.length} abandoned`);
-
-            const ranges = {'0-20': 0, '21-40': 0, '41-60': 0, '61-80': 0, '81-100': 0};
-            submissions.forEach(s => {
-                const score = s.Percentage || 0;
-                if (score <= 20) ranges['0-20']++;
-                else if (score <= 40) ranges['21-40']++;
-                else if (score <= 60) ranges['41-60']++;
-                else if (score <= 80) ranges['61-80']++;
-                else ranges['81-100']++;
-            });
-            new Chart(document.getElementById('performanceChart'), {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(ranges),
-                    datasets: [{
-                        label: 'Students',
-                        data: Object.values(ranges),
-                        backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#198754']
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-
-            new Chart(document.getElementById('passFailChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Pass', 'Fail'],
-                    datasets: [{
-                        data: [passed, submissions.length - passed],
-                        backgroundColor: ['#28a745', '#dc3545']
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-
-            const studentStats = {};
-            submissions.forEach(s => {
-                if (!studentStats[s.UserId]) studentStats[s.UserId] = {name: s.StudentName, total: 0, count: 0};
-                studentStats[s.UserId].total += s.Percentage || 0;
-                studentStats[s.UserId].count++;
-            });
-            const topPerformers = Object.entries(studentStats)
-                .map(([id, data]) => ({...data, avg: (data.total / data.count).toFixed(1)}))
-                .sort((a, b) => b.avg - a.avg).slice(0, 5);
-            const tbody = $('#topPerformersTable tbody').empty();
-            topPerformers.forEach((p, i) => {
-                tbody.append(`<tr><td>${i+1}</td><td>${p.name || 'Unknown'}</td><td><span class="badge bg-success">${p.avg}%</span></td><td>${p.count}</td></tr>`);
-            });
-
-            const examStats = {};
-            submissions.forEach(s => {
-                examStats[s.ExamName] = (examStats[s.ExamName] || 0) + 1;
-            });
-            const topExams = Object.entries(examStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
-            new Chart(document.getElementById('popularExamsChart'), {
-                type: 'bar',
-                data: {
-                    labels: topExams.map(e => e[0].substring(0, 25)),
-                    datasets: [{
-                        label: 'Submissions',
-                        data: topExams.map(e => e[1]),
-                        backgroundColor: '#0d6efd'
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
-            });
-
-            const tbody2 = $('#recentActivityTable tbody').empty();
-            const recent = allAttempts.sort((a, b) => new Date(b.SubmitTime || b.StartTime) - new Date(a.SubmitTime || a.StartTime)).slice(0, 15);
-            recent.forEach(a => {
-                const result = a.Status === 'Submit' 
-                    ? (a.Percentage >= a.CutOffPercentage ? '<span class="badge bg-success">Pass</span>' : '<span class="badge bg-danger">Fail</span>')
-                    : '<span class="badge bg-warning">Abandoned</span>';
-                const score = a.Status === 'Submit' ? `${a.Percentage}%` : '-';
-                const date = new Date(a.SubmitTime || a.StartTime).toLocaleString();
-                tbody2.append(`<tr><td>${a.StudentName || 'Unknown'}</td><td>${a.ExamName}</td><td>${a.ExamType || 'N/A'}</td><td>${score}</td><td>${result}</td><td>${date}</td></tr>`);
-            });
-        } catch (error) {
-            console.error('Dashboard error:', error);
-        }
-    }
-
-    $('#refreshActivity').click(loadDashboard);
-    $(document).ready(loadDashboard);
-})();
-</script>
+            $('#refreshActivity').click(loadDashboard);
+            $(document).ready(loadDashboard);
+        })();
+    </script>
 }

@@ -139,9 +139,10 @@ $(document).ready(function () {
         };
 
         // Clear basic form fields
-        $('#ddlSubject').val('');
+        $('#ddlSubject').val('').trigger('change');
         $('#ddlQuestionType').val('');
-        $('#ddlTopic').val('');
+        $('#ddlTopic').empty().append('<option value="">Select Topic</option>').prop('disabled', true);
+        $('#topicHelperText').text('Please select a subject first').show();
         $('#ddlDifficultyLevel').val('Easy');
         $('#IsMultiSelect').prop('checked', false).prop('disabled', false);
         $('textarea[asp-for="Explanation"]').val('');
@@ -223,6 +224,11 @@ $(document).ready(function () {
         $('.text-danger').empty();
         $('.error-message').remove();
         $('.error').removeClass('error');
+
+        // Clear ClassIds select2
+        if ($('#ClassIds').length) {
+            $('#ClassIds').val(null).trigger('change');
+        }
 
         // Force QuestionForm to recognize this is a new question
         if (window.QuestionForm) {

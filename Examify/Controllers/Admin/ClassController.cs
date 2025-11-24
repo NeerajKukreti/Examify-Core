@@ -25,7 +25,6 @@ namespace Examify.Controllers.Admin
 
         // GET: Admin/Class/LoadClasses
         [HttpGet]
-        [Cached(5, "classes")]
         public async Task<IActionResult> LoadClasses()
         {
             var instituteId = User.GetInstituteId() ?? 3;

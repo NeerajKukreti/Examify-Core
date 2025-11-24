@@ -36,7 +36,6 @@ $(document).ready(function () {
 
     // Load topics when subject changes
     $(document).off('change.questionOptions', '#ddlSubject').on('change.questionOptions', '#ddlSubject', function () {
-        
         var subjectId = $(this).val();
         loadTopics(subjectId);
     });
@@ -151,20 +150,30 @@ function loadQuestionTypes() {
 
 // Update loadTopics to accept a callback
 function loadTopics(subjectId, callback) {
+    var $ddl = $('#ddlTopic');
     
     if (!subjectId) {
-        $('#ddlTopic').empty().append('<option value="">Select Topic</option>');
+        $ddl.empty().append('<option value="">Select Topic</option>').prop('disabled', true);
+        $('#topicHelperText').text('Please select a subject first').show();
         if (callback) callback();
         return;
     }
+    
+    // Show loading state
+    $ddl.empty().append('<option value="">Loading topics...</option>').prop('disabled', true);
+    $('#topicHelperText').hide();
+    
     var apiUrl = API_BASE_URL_SUBJECT +'/'+subjectId + '/topics' ;
     $.get(apiUrl, function (data) {
-        var $ddl = $('#ddlTopic');
         $ddl.empty().append('<option value="">Select Topic</option>');
         $.each(data.Data, function (i, topic) {
             $ddl.append('<option value="' + topic.TopicId + '">' + topic.TopicName + '</option>');
         });
+        $ddl.prop('disabled', false);
         if (callback) callback();
+    }).fail(function() {
+        $ddl.empty().append('<option value="">Error loading topics</option>');
+        $('#topicHelperText').text('Failed to load topics. Please try again.').show();
     });
 }
 
@@ -463,6 +472,67 @@ $(function () {
         $('.error').removeClass('error');
     }
 
+    // Clear only question content, keep configuration
+    function clearQuestionContent() {
+        // Clear Quill editors
+        if (window.__quillEditors) {
+            Object.keys(window.__quillEditors).forEach(function (editorId) {
+                if (window.__quillEditors[editorId]) {
+                    window.__quillEditors[editorId].setContents([]);
+                }
+            });
+        }
+
+        // Clear hidden fields
+        $('#hfQuestionEnglish, #hfQuestionHindi, #hfAdditionalEnglish, #hfAdditionalHindi').val('');
+        $('textarea[asp-for="Explanation"]').val('');
+
+        // Clear MCQ options
+        $('.option-checkbox input[type="checkbox"]').prop('checked', false);
+        $('.option-correct-hidden').val('false');
+        $('.option-choiceid-field').val('');
+        $('#options-wrapper .option-group').each(function () {
+            var editorId = $(this).find('.editor-container').attr('id');
+            if (window.__quillEditors && window.__quillEditors[editorId]) {
+                window.__quillEditors[editorId].setContents([]);
+            }
+            $(this).find('.option-hidden-field').val('');
+        });
+
+        // Clear True/False options
+        $('.tf-option').prop('checked', false);
+        $('.true-false-option .option-correct-hidden').val('false');
+        $('.true-false-option .option-choiceid-field').val('');
+
+        // Clear Descriptive options
+        $('#descriptive-options-wrapper .descriptive-option-group:not(:first)').remove();
+        $('#descriptive-options-wrapper .descriptive-option-group:first .descriptive-input').val('');
+        $('#descriptive-options-wrapper .descriptive-option-group:first .option-hidden-field').val('');
+        $('#descriptive-options-wrapper .descriptive-option-group:first .option-choiceid-field').val('');
+        window.descriptiveOptionCount = 1;
+
+        // Clear Pairing options
+        $('#pairs-wrapper .pair-group:not(:first)').remove();
+        $('#pairs-wrapper .pair-group:first .pair-left-input, #pairs-wrapper .pair-group:first .pair-right-input').val('');
+        $('#pairs-wrapper .pair-group:first .pair-left-hidden, #pairs-wrapper .pair-group:first .pair-right-hidden').val('');
+        $('#pairs-wrapper .pair-group:first .pair-id-hidden').val('');
+        window.pairCount = 1;
+
+        // Clear Ordering options
+        $('#orders-wrapper .order-group:not(:first)').remove();
+        $('#orders-wrapper .order-group:first .order-item-input').val('');
+        $('#orders-wrapper .order-group:first .order-item-hidden').val('');
+        $('#orders-wrapper .order-group:first .order-id-hidden').val('');
+        window.orderItemCount = 1;
+
+        // Clear validation errors
+        $('.text-danger').empty();
+        clearErrors();
+
+        // Scroll to top
+        $('.questionModelBody').scrollTop(0);
+    }
+
     // Helper to show errors
     function showError(selector, message) {
         debugger;
@@ -484,8 +554,8 @@ $(function () {
                 const thisValue = $(this).find('.tf-option').data('option-value');
                 const isSelected = thisValue === selectedValue;
                 
-                // Set correct text value - always maintain proper format
-                const optionText = thisValue === 'true' ? '<p>True</p>' : '<p>False</p>';
+                // Set correct text value
+                const optionText = thisValue === 'true' ? 'True' : 'False';
                 $(this).find('.option-hidden-field').val(optionText);
                 
                 // Set IsCorrect based on whether this is the selected option
@@ -499,9 +569,22 @@ $(function () {
         }
     });
 
+    // Save and Add New button handler
+    $(document).off('click.saveAndAddNew', '#btnSaveAndAddNew').on('click.saveAndAddNew', '#btnSaveAndAddNew', function(e) {
+        e.preventDefault();
+        window.saveAndAddNew = true;
+        $('#questionForm').submit();
+    });
+
     // AJAX submit for question create form
     $(document).off('submit.ajaxCreate', '#questionForm').on('submit.ajaxCreate', '#questionForm', function (e) {
         e.preventDefault(); // Prevent normal form submit
+        
+        // Reset flag if regular submit button was clicked
+        if (!window.saveAndAddNew) {
+            window.saveAndAddNew = false;
+        }
+        
         clearErrors();
         let valid = true;
 
@@ -612,7 +695,7 @@ $(function () {
                 let trueIsSelected = $('.tf-option[data-option-value="true"]').is(':checked');
                 
                 // Add True option
-                formData.append('Options[0].Text', '<p>True</p>');
+                formData.append('Options[0].Text', 'True');
                 formData.append('Options[0].IsCorrect', trueIsSelected ? 'true' : 'false');
                 formData.append('Options[0].ChoiceId', trueChoiceId);
                 
@@ -621,7 +704,7 @@ $(function () {
                 let falseIsSelected = $('.tf-option[data-option-value="false"]').is(':checked');
                 
                 // Add False option
-                formData.append('Options[1].Text', '<p>False</p>');
+                formData.append('Options[1].Text', 'False');
                 formData.append('Options[1].IsCorrect', falseIsSelected ? 'true' : 'false');
                 formData.append('Options[1].ChoiceId', falseChoiceId);
                 
@@ -659,14 +742,11 @@ $(function () {
                     $group.find('.option-error').empty();
                     hasValidOption = true;
                     
-                    // Format the text with paragraph tags
-                    const htmlValue = '<p>' + textareaValue.replace(/\n/g, '</p><p>') + '</p>';
-                    
                     // Get ChoiceId if it exists
                     const choiceId = $group.find('.option-choiceid-field').val() || '';
                     
                     // Add to form data
-                    formData.append(`Options[${i}].Text`, htmlValue);
+                    formData.append(`Options[${i}].Text`, textareaValue);
                     formData.append(`Options[${i}].IsCorrect`, 'true' ); // All descriptive options are "correct"
                     formData.append(`Options[${i}].ChoiceId`, choiceId);
                 }
@@ -718,16 +798,12 @@ $(function () {
                     $group.find('.pair-error').empty();
                     hasValidPair = true;
                     
-                    // Format the text with paragraph tags
-                    const leftHtmlValue = '<p>' + leftValue.replace(/\n/g, '</p><p>') + '</p>';
-                    const rightHtmlValue = '<p>' + rightValue.replace(/\n/g, '</p><p>') + '</p>';
-                    
                     // Get PairId if it exists
                     const pairId = $group.find('.pair-id-hidden').val() || '';
                     
                     // Add to form data
-                    formData.append(`Pairs[${i}].LeftText`, leftHtmlValue);
-                    formData.append(`Pairs[${i}].RightText`, rightHtmlValue);
+                    formData.append(`Pairs[${i}].LeftText`, leftValue);
+                    formData.append(`Pairs[${i}].RightText`, rightValue);
                     formData.append(`Pairs[${i}].PairId`, pairId);
                 }
             });
@@ -772,9 +848,6 @@ $(function () {
                     $group.find('.order-error').empty();
                     hasValidItem = true;
                     
-                    // Format the text with paragraph tags
-                    const htmlValue = '<p>' + itemValue.replace(/\n/g, '</p><p>') + '</p>';
-                    
                     // Get OrderId if it exists
                     const orderId = $group.find('.order-id-hidden').val() || '';
                     
@@ -782,7 +855,7 @@ $(function () {
                     const correctOrder = i + 1;
                     
                     // Add to form data
-                    formData.append(`Orders[${i}].ItemText`, htmlValue);
+                    formData.append(`Orders[${i}].ItemText`, itemValue);
                     formData.append(`Orders[${i}].OrderId`, orderId);
                     formData.append(`Orders[${i}].CorrectOrder`, correctOrder.toString());
                 }
@@ -869,7 +942,16 @@ $(function () {
             }
         }
         
-        if (!valid) return;
+        if (!valid) {
+            // Reset flag on validation failure
+            window.saveAndAddNew = false;
+            // Scroll to first error
+            var $firstError = $('.error-message:visible, .text-danger:not(:empty)').first();
+            if ($firstError.length) {
+                $firstError[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return;
+        }
 
         // Make sure QuestionTypeId is included in form data
         if (!formData.has('QuestionTypeId')) {
@@ -899,11 +981,18 @@ $(function () {
                 toastr.success('Question saved', 'Alert');
 
                 if (response && response.success) {
-                    // Close modal and refresh question list (customize as needed)
-                    $('#questionModel').modal('hide');
-                    QuestionBankTable.reloadTable();
+                    if (window.saveAndAddNew) {
+                        // Keep configuration, clear only question content
+                        clearQuestionContent();
+                        window.saveAndAddNew = false;
+                        QuestionBankTable.reloadTable();
+                    } else {
+                        // Close modal and refresh question list
+                        $('#questionModel').modal('hide');
+                        QuestionBankTable.reloadTable();
+                    }
                 } else {
-                    // Show error (customize as needed)
+                    // Show error
                     console.error("Save failed:", response);
                     alert(response.error || 'Failed to create question.');
                 }

@@ -226,9 +226,16 @@
                 // Load topics for the selected subject
                 if (typeof loadTopics === 'function') {
                     loadTopics(this.modelData.SubjectId, () => {
-                        $('#ddlTopic').val(this.modelData.TopicId);
+                        // Only set topic value if editing (QuestionId > 0)
+                        if (this.modelData.QuestionId > 0 && this.modelData.TopicId) {
+                            $('#ddlTopic').val(this.modelData.TopicId);
+                        }
                     });
                 }
+            } else {
+                // New question - ensure topic is disabled
+                $('#ddlTopic').prop('disabled', true);
+                $('#topicHelperText').show();
             }
         },
         
@@ -275,11 +282,11 @@
         
         // Populate basic form fields
         populateBasicFields: function(modelData) {
-            $('#ddlSubject').val(modelData.SubjectId || '');
-            $('#ddlTopic').val(modelData.TopicId || '');
-            $('#ddlDifficultyLevel').val(modelData.DifficultyLevel || '');
+            if (modelData.SubjectId) $('#ddlSubject').val(modelData.SubjectId);
+            if (modelData.TopicId) $('#ddlTopic').val(modelData.TopicId);
+            if (modelData.DifficultyLevel) $('#ddlDifficultyLevel').val(modelData.DifficultyLevel);
             $('#IsMultiSelect').prop('checked', !!modelData.IsMultiSelect);
-            $('textarea[asp-for="Explanation"]').val(modelData.Explanation || '');
+            if (modelData.Explanation) $('textarea[asp-for="Explanation"]').val(modelData.Explanation);
         },
         
         // Populate Quill editors

@@ -1,5 +1,6 @@
 ﻿using DAL.Repository;
 using DataModel;
+using ExamAPI.Services;
 using Model.DTO;
 
 namespace ExamifyAPI.Services
@@ -20,15 +21,18 @@ namespace ExamifyAPI.Services
     {
         private readonly IClassRepository _classRepository;
         private readonly IBatchRepository _batchRepository;
+        private readonly IAuthService _authService;
 
-        public ClassService(IClassRepository classRepository, IBatchRepository batchRepository)
+        public ClassService(IClassRepository classRepository, IBatchRepository batchRepository, IAuthService authService)
         {
             _classRepository = classRepository;
             _batchRepository = batchRepository;
+            _authService = authService;
         }
 
         public async Task<IEnumerable<ClassModel>> GetAllClassesAsync(int instituteId, int? classId = null)
         {
+            instituteId = _authService.GetCurrentInstituteId();
             return await _classRepository.GetAllClassesAsync(instituteId, classId);
         }
 

@@ -522,9 +522,10 @@
                 <div class="col-md-6 mt-2">
                     <div class="form-group ">
                         <label asp-for="TopicId">Topic <span class="text-danger">*</span></label>
-                        <select asp-for="TopicId" class="form-control select" id="ddlTopic" name="TopicId">
+                        <select asp-for="TopicId" class="form-control select" id="ddlTopic" name="TopicId" disabled>
                             <option value="">Select Topic</option>
                         </select>
+                        <small class="text-muted" id="topicHelperText">Please select a subject first</small>
                         <span asp-validation-for="TopicId" class="text-danger"></span>
                     </div>
                 </div>
@@ -566,7 +567,7 @@
                 </div>
                 <button type="button" class="toggle-btn">+</button>
             </div>
-            <div class="panel-body">
+            <div class="panel-body" style="display: block">
                 <div class="editor-container" id="editor-question-english" data-name="Question english"></div>
                 <span class="text-danger" id="valQuestionEnglish"></span>
             </div>
@@ -629,7 +630,7 @@
                     <div class="true-false-label">
                         <input type="checkbox" class="tf-option" data-option-value="true" /> True
                     </div>
-                    <input type="hidden" class="option-hidden-field" data-option-index="1" name="Options[0].Text" value="<p>True</p>" />
+                    <input type="hidden" class="option-hidden-field" data-option-index="1" name="Options[0].Text" value="True" />
                     <input type="hidden" class="option-choiceid-field" data-option-index="1" name="Options[0].ChoiceId" />
                     <input type="hidden" class="option-correct-hidden" name="Options[0].IsCorrect" value="false" />
                 </div>
@@ -637,7 +638,7 @@
                     <div class="true-false-label">
                         <input type="checkbox" class="tf-option" data-option-value="false" /> False
                     </div>
-                    <input type="hidden" class="option-hidden-field" data-option-index="2" name="Options[1].Text" value="<p>False</p>" />
+                    <input type="hidden" class="option-hidden-field" data-option-index="2" name="Options[1].Text" value="False" />
                     <input type="hidden" class="option-choiceid-field" data-option-index="2" name="Options[1].ChoiceId" />
                     <input type="hidden" class="option-correct-hidden" name="Options[1].IsCorrect" value="false" />
                 </div>
@@ -847,11 +848,17 @@
             </div>
         </div>
         <div class="d-flex justify-content-end">
-            <button type="button" class="btn btn-outline-primary mb-2" id="btnCancel" style="margin-top: 20px; margin-right: 10px;width: 80px;">
+            <button type="button" class="btn btn-outline-secondary mb-2" id="btnCancel" style="margin-top: 20px; margin-right: 10px;width: 80px;">
                 Cancel
             </button>
-            <button class="btn btn-outline-primary mb-2" style="margin-top: 20px; width: 80px;" type="submit">
-                @(Model.QuestionId > 0 ? "Update" : "Add")
+            @if (Model.QuestionId == 0)
+            {
+                <button type="button" class="btn btn-outline-primary mb-2" id="btnSaveAndAddNew" style="margin-top: 20px; margin-right: 10px;">
+                     Save & Add New
+                </button>
+            }
+            <button class="btn btn-primary mb-2" style="margin-top: 20px; width: 80px;" type="submit">
+                @(Model.QuestionId > 0 ? "Update" : "Save")
             </button>
         </div>
 
@@ -871,13 +878,31 @@
 <script>
     var instituteId = "@ViewBag.instituteId";
     // Inject model data for edit mode and initialize the form
-    window.modelData = @Html.Raw(JsonSerializer.Serialize(Model));
-
-    // Ensure required arrays exist
-    if (window.modelData) {
-        window.modelData.Options = window.modelData.Options || [];
-        window.modelData.Pairs = window.modelData.Pairs || [];
-        window.modelData.Orders = window.modelData.Orders || [];
+    @if (Model.QuestionId > 0)
+    {
+        @:window.modelData = @Html.Raw(JsonSerializer.Serialize(Model));
+        @:// Ensure required arrays exist
+        @:if (window.modelData) {
+        @:    window.modelData.Options = window.modelData.Options || [];
+        @:    window.modelData.Pairs = window.modelData.Pairs || [];
+        @:    window.modelData.Orders = window.modelData.Orders || [];
+        @:}
+    }
+    else
+    {
+        @:// New question - initialize with empty data
+        @:window.modelData = {
+        @:    QuestionId: 0,
+        @:    SubjectId: null,
+        @:    QuestionTypeId: null,
+        @:    TopicId: null,
+        @:    DifficultyLevel: 'Easy',
+        @:    IsMultiSelect: false,
+        @:    Options: [],
+        @:    Pairs: [],
+        @:    Orders: [],
+        @:    ClassIds: []
+        @:};
     }
 
     $(function () {
@@ -903,7 +928,28 @@
 
                         var modal = $('#questionModel');
                         var dropdownParent = modal.length ? modal : $(document.body);
-                        $select.select2({ data: items, placeholder: 'Select classes', width: '100%', dropdownParent: dropdownParent, closeOnSelect: false, allowClear: true });
+                        $select.select2({ 
+                            data: items, 
+                            placeholder: 'Select classes', 
+                            width: '100%', 
+                            dropdownParent: dropdownParent, 
+                            closeOnSelect: false, 
+                            allowClear: true,
+                            minimumResultsForSearch: 0,
+                            templateResult: function(item) {
+                                if (!item.id) return item.text;
+                                var selected = $select.val() || [];
+                                if (selected.indexOf(item.id) > -1) {
+                                    return null;
+                                }
+                                return item.text;
+                            }
+                        });
+                        
+                        $select.on('select2:select select2:unselect', function() {
+                            $(this).select2('close');
+                            $(this).select2('open');
+                        });
 
                         // Preselect when editing
                         if (window.modelData && Array.isArray(window.modelData.ClassIds) && window.modelData.ClassIds.length > 0) {
@@ -957,8 +1003,8 @@
     function legacyFormInitialization() {
         console.log('Using legacy form initialization');
 
-        // Basic form setup
-        if (window.modelData) {
+        // Basic form setup - only for edit mode
+        if (window.modelData && window.modelData.QuestionId > 0) {
             $('#ddlSubject').val(window.modelData.SubjectId || '');
             $('#ddlQuestionType').val(window.modelData.QuestionTypeId || '');
             $('#ddlTopic').val(window.modelData.TopicId || '');

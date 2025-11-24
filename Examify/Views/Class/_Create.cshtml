@@ -71,26 +71,54 @@
             margin-right: 8px;
         }
 
-    .batch-item {
-        background: #f8f9fa;
+    .batches-list {
+        max-height: 300px;
+        overflow-y: auto;
         border: 1px solid #dee2e6;
         border-radius: 4px;
-        padding: 15px;
-        margin-bottom: 10px;
-        position: relative;
+        padding: 10px;
+        background: #f8f9fa;
+        min-height: 60px;
     }
 
-    .remove-batch {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        color: #dc3545;
+    .batch-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #007bff;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        margin: 4px;
+        font-size: 14px;
+    }
+
+    .batch-tag.inactive {
+        background: #6c757d;
+        opacity: 0.6;
+    }
+
+    .batch-tag.new {
+        background: #ffa500;
+    }
+
+    .batch-tag input[type="checkbox"] {
         cursor: pointer;
-        font-size: 16px;
+        margin: 0;
     }
 
-    .add-batch-btn {
-        margin-top: 10px;
+    .batch-tag .batch-name {
+        cursor: pointer;
+    }
+
+    .batch-tag .batch-name:hover {
+        text-decoration: underline;
+    }
+
+    .batches-list:empty::before {
+        content: 'No batches added yet';
+        color: #6c757d;
+        font-style: italic;
     }
 </style>
 
@@ -135,70 +163,19 @@
                 Batches
             </div>
             
-            <div id="batchesContainer">
-                @if (Model.Batches != null && Model.Batches.Any())
-                {
-                    for (int i = 0; i < Model.Batches.Count; i++)
-                    {
-                        <div class="batch-item" data-index="@i">
-                            <input type="hidden" name="Batches[@i].BatchId" value="@Model.Batches[i].BatchId" />
-                            <input type="hidden" name="Batches[@i].ClassId" value="@Model.Batches[i].ClassId" />
-
-                            @if (i > 0)
-                            {
-                                <i class="fas fa-times remove-batch"></i>
-                            }
-                            
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <div class="form-group">
-                                        <label>Batch Name <span class="required">*</span></label>
-                                        <input name="Batches[@i].BatchName" value="@Model.Batches[i].BatchName" class="form-control batch-name" placeholder="Enter batch name" required />
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="checkbox">
-                                        <label>
-                                            <input name="Batches[@i].IsActive" type="checkbox" value="true" class="batch-active-checkbox" @(Model.Batches[i].IsActive == true ? "checked" : "") />
-                                            <input name="Batches[@i].IsActive" type="hidden" value="false" />
-                                            Is Active
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                }
-                else
-                {
-                    <div class="batch-item" data-index="0">
-                        <input type="hidden" name="Batches[0].BatchId" value="0" />
-                        <input type="hidden" name="Batches[0].ClassId" value="0" />
-                        
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="form-group">
-                                    <label>Batch Name <span class="required">*</span></label>
-                                    <input name="Batches[0].BatchName" value="" class="form-control batch-name" placeholder="Enter batch name" required />
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="checkbox">
-                                    <label>
-                                        <input name="Batches[0].IsActive" type="checkbox" value="true" class="batch-active-checkbox" checked />
-                                        <input name="Batches[0].IsActive" type="hidden" value="false" />
-                                        Is Active
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
+            <div class="form-group">
+                <label>Batch Names <span class="required">*</span></label>
+                <div class="d-flex gap-2 mb-2">
+                    <input type="text" id="batchInput" class="form-control form-control-sm" placeholder="Enter batch name and press Add" />
+                    <button type="button" class="btn btn-success btn-sm text-nowrap" id="btnAddBatch">
+                        <i class="fas fa-plus"></i> Add
+                    </button>
+                </div>
+            </div>
+            <div class="batches-list" id="batchesContainer">
             </div>
             
-            <button type="button" class="btn btn-outline-primary add-batch-btn" onclick="addBatch()">
-                <i class="fas fa-plus"></i> Add Another Batch
-            </button>
+
         </div>
 
         <!-- Form Actions -->
@@ -206,8 +183,14 @@
             <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">
                 Cancel
             </button>
+            @if (Model.ClassId == 0)
+            {
+                <button type="button" class="btn btn-outline-primary me-2" id="btnSaveAndAddNewClass">
+                    Save & Add New
+                </button>
+            }
             <button type="submit" class="btn btn-primary">
-                @(Model.ClassId > 0 ? "Update Class" : "Add Class")
+                @(Model.ClassId > 0 ? "Update" : "Save")
             </button>
         </div>
     </div>
@@ -221,99 +204,126 @@
     // Inject model data for form handling
     window.classModelData = @Html.Raw(JsonSerializer.Serialize(Model));
 
-    var batchIndex = @(Model.Batches?.Count ?? 1);
+    var batches = [];
 
-    function addBatch() {
-        const container = document.getElementById('batchesContainer');
-        const newBatchHtml = `
-            <div class="batch-item" data-index="${batchIndex}">
-                <input type="hidden" name="Batches[${batchIndex}].BatchId" value="0" />
-                <input type="hidden" name="Batches[${batchIndex}].ClassId" value="0" />
-                
-                <i class="fas fa-times remove-batch"></i>
-                
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="form-group">
-                            <label>Batch Name <span class="required">*</span></label>
-                            <input name="Batches[${batchIndex}].BatchName" value="" class="form-control batch-name" placeholder="Enter batch name" required />
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="checkbox">
-                            <label>
-                                <input name="Batches[${batchIndex}].IsActive" type="checkbox" value="true" class="batch-active-checkbox" checked />
-                                <input name="Batches[${batchIndex}].IsActive" type="hidden" value="false" />
-                                Is Active
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+    function editBatch(span) {
+        var $span = $(span);
+        var currentName = $span.text();
+        var $input = $('<input type="text" class="form-control form-control-sm" style="width: auto; display: inline-block;" />');
+        $input.val(currentName);
+        $span.replaceWith($input);
+        $input.focus().select();
         
-        container.insertAdjacentHTML('beforeend', newBatchHtml);
-        batchIndex++;
-        updateRemoveButtons();
-    }
-
-    function removeBatch(element) {
-        const batchItem = element.closest('.batch-item');
-        batchItem.remove();
-        reindexBatches();
-        updateRemoveButtons();
-    }
-
-    function reindexBatches() {
-        const batchItems = document.querySelectorAll('.batch-item');
-        batchItems.forEach((item, index) => {
-            item.setAttribute('data-index', index);
-            
-            // Update all input names and IDs
-            const inputs = item.querySelectorAll('input');
-            inputs.forEach(input => {
-                const name = input.getAttribute('name');
-                if (name && name.includes('Batches[')) {
-                    const newName = name.replace(/Batches\[\d+\]/, `Batches[${index}]`);
-                    input.setAttribute('name', newName);
-                }
-            });
+        $input.on('blur keypress', function(e) {
+            if (e.type === 'blur' || e.which === 13) {
+                e.preventDefault();
+                var newName = $(this).val().trim();
+                if (!newName) newName = currentName;
+                var $newSpan = $('<span class="batch-name" onclick="editBatch(this)"></span>').text(newName);
+                $(this).replaceWith($newSpan);
+                updateBatchHiddenFields();
+            }
         });
-        batchIndex = batchItems.length;
     }
 
-    function updateRemoveButtons() {
-        const batchItems = document.querySelectorAll('.batch-item');
-        const removeButtons = document.querySelectorAll('.remove-batch');
+    function addBatchTag(batchName, batchId = 0, isActive = true) {
+        if (!batchName.trim()) return;
         
-        // Hide remove button if there's only one batch
-        if (batchItems.length <= 1) {
-            removeButtons.forEach(btn => btn.style.display = 'none');
-        } else {
-            removeButtons.forEach(btn => btn.style.display = 'block');
+        const batch = { name: batchName.trim(), id: batchId, isActive: isActive };
+        batches.push(batch);
+        
+        const isNew = batchId === 0;
+        const inactiveClass = !isActive ? ' inactive' : '';
+        const newClass = isNew ? ' new' : '';
+        const tag = `<span class="batch-tag${newClass}${inactiveClass}" data-batch-id="${batchId}" data-index="${batches.length - 1}">
+            <span class="batch-name" onclick="editBatch(this)">${batch.name}</span>
+            <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleBatchActive(this)" />
+        </span>`;
+        $('#batchesContainer').append(tag);
+        updateBatchHiddenFields();
+    }
+
+    function removeBatchTag(element) {
+        const $tag = $(element).closest('.batch-tag');
+        const batchId = $tag.data('batch-id');
+        batches = batches.filter(b => b.id != batchId || b.name != $tag.text().replace('×', '').trim());
+        $tag.remove();
+        updateBatchHiddenFields();
+    }
+
+    function toggleBatchActive(checkbox) {
+        const $tag = $(checkbox).closest('.batch-tag');
+        const batchId = $tag.data('batch-id');
+        const batchName = $tag.text().replace('×', '').trim();
+        
+        const batch = batches.find(b => b.id == batchId && b.name == batchName);
+        if (batch) {
+            batch.isActive = checkbox.checked;
+            $tag.toggleClass('inactive', !checkbox.checked);
+            updateBatchHiddenFields();
         }
     }
 
-    $(function () {
-        // Initialize remove buttons visibility
-        updateRemoveButtons();
+    function updateBatchHiddenFields() {
+        $('#batchesContainer .batch-tag').each(function(index) {
+            const $tag = $(this);
+            const batchId = $tag.data('batch-id');
+            const batchName = $tag.find('.batch-name').text().trim();
+            const isActive = $tag.find('input[type="checkbox"]').is(':checked');
+            
+            $tag.find('input[type="hidden"]').remove();
+            $tag.append(`
+                <input type="hidden" name="Batches[${index}].BatchId" value="${batchId}" />
+                <input type="hidden" name="Batches[${index}].BatchName" value="${batchName}" />
+                <input type="hidden" name="Batches[${index}].IsActive" value="${isActive}" />
+            `);
+        });
+    }
 
-        // Validate at least one active batch on checkbox change
-        $(document).on('change', '.batch-active-checkbox', function() {
-            const checkedCount = $('.batch-active-checkbox:checked').length;
-            if (checkedCount === 0) {
-                $(this).prop('checked', true);
-                if (typeof toastr !== 'undefined') {
-                    toastr.error('Atleast one active batch is required for a class');
-                } else {
-                    alert('Atleast one active batch is required for a class');
-                }
+    function clearClassForm() {
+        $('input[name="ClassName"]').val('');
+        $('#batchInput').val('');
+        $('#batchesContainer').empty();
+        batches = [];
+        updateBatchHiddenFields();
+        $('.is-invalid').removeClass('is-invalid');
+        $('.error').remove();
+        $('.modal-body').scrollTop(0);
+    }
+
+    $(function () {
+        // Load existing batches
+        @if (Model.Batches != null && Model.Batches.Any())
+        {
+            @foreach (var batch in Model.Batches)
+            {
+                @:addBatchTag('@batch.BatchName', @batch.BatchId, @batch.IsActive.ToString().ToLower());
+            }
+        }
+
+        function addBatch() {
+            const batchName = $('#batchInput').val().trim();
+            if (!batchName) {
+                toastr.error('Please enter a batch name');
+                return;
+            }
+            addBatchTag(batchName);
+            $('#batchInput').val('').focus();
+        }
+
+        $('#btnAddBatch').on('click', addBatch);
+        $('#batchInput').on('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                addBatch();
             }
         });
 
-        // Remove batch on click
-        $(document).on('click', '.remove-batch', function() {
-            removeBatch(this);
+        // Save and Add New button handler
+        $(document).off('click.saveAndAddNewClass', '#btnSaveAndAddNewClass').on('click.saveAndAddNewClass', '#btnSaveAndAddNewClass', function(e) {
+            e.preventDefault();
+            window.saveAndAddNewClass = true;
+            $('#classForm').submit();
         });
 
         // Form validation and submission
@@ -328,44 +338,18 @@
                 }
             },
             submitHandler: function(form) {
-                // Validate that at least one batch exists
-                const batches = document.querySelectorAll('.batch-name');
+                // Reset flag if regular submit button was clicked
+                if (!window.saveAndAddNewClass) {
+                    window.saveAndAddNewClass = false;
+                }
+
+                // Validate at least one batch
                 if (batches.length === 0) {
+                    window.saveAndAddNewClass = false;
                     if (typeof toastr !== 'undefined') {
                         toastr.error('At least one batch is required.');
                     } else {
                         alert('At least one batch is required.');
-                    }
-                    return false;
-                }
-
-                // Validate at least one active batch
-                const activeBatches = document.querySelectorAll('.batch-active-checkbox:checked');
-                if (activeBatches.length === 0) {
-                    if (typeof toastr !== 'undefined') {
-                        toastr.error('Atleast one active batch is required for a class');
-                    } else {
-                        alert('Atleast one active batch is required for a class');
-                    }
-                    return false;
-                }
-
-                // Validate that all batch names are filled
-                let allBatchesValid = true;
-                batches.forEach(batch => {
-                    if (!batch.value.trim()) {
-                        allBatchesValid = false;
-                        $(batch).addClass('is-invalid');
-                    } else {
-                        $(batch).removeClass('is-invalid');
-                    }
-                });
-
-                if (!allBatchesValid) {
-                    if (typeof toastr !== 'undefined') {
-                        toastr.error('Please fill in all batch names.');
-                    } else {
-                        alert('Please fill in all batch names.');
                     }
                     return false;
                 }
@@ -381,18 +365,36 @@
                     data: formData,
                     success: function(response) {
                         if (response.success) {
-                            $('#classModel').modal('hide');
-
-                            // Reload the DataTable
-                            if (typeof window.reloadClassTable === 'function') {
-                                window.reloadClassTable();
-                            }
-
-                            // Show success message
-                            if (typeof toastr !== 'undefined') {
-                                toastr.success(response.message || 'Class saved successfully!');
+                            if (window.saveAndAddNewClass) {
+                                // Clear form but keep it open
+                                clearClassForm();
+                                window.saveAndAddNewClass = false;
+                                
+                                // Reload the DataTable
+                                if (typeof window.reloadClassTable === 'function') {
+                                    window.reloadClassTable();
+                                }
+                                
+                                // Show success message
+                                if (typeof toastr !== 'undefined') {
+                                    toastr.success(response.message || 'Class saved successfully!');
+                                } else {
+                                    alert(response.message || 'Class saved successfully!');
+                                }
                             } else {
-                                alert(response.message || 'Class saved successfully!');
+                                $('#classModel').modal('hide');
+
+                                // Reload the DataTable
+                                if (typeof window.reloadClassTable === 'function') {
+                                    window.reloadClassTable();
+                                }
+
+                                // Show success message
+                                if (typeof toastr !== 'undefined') {
+                                    toastr.success(response.message || 'Class saved successfully!');
+                                } else {
+                                    alert(response.message || 'Class saved successfully!');
+                                }
                             }
                         } else {
                             // Show validation errors

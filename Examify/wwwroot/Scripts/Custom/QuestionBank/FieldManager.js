@@ -115,9 +115,7 @@
         // Data synchronization helpers
         syncTextareaToHidden: function($textarea, $hiddenField) {
             const textValue = $textarea.val().trim();
-            // Wrap in <p> tags for consistency with rich text editors
-            const htmlValue = textValue ? `<p>${textValue.replace(/\n/g, '</p><p>')}</p>` : '';
-            $hiddenField.val(htmlValue);
+            $hiddenField.val(textValue);
         },
         
         syncQuillToHidden: function(quillEditor, $hiddenField) {

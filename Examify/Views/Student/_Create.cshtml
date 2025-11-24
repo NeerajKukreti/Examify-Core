@@ -456,7 +456,13 @@
             <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">
                 Cancel
             </button>
-            <button type="submit" class="btn btn-primary">
+            @if (Model.StudentId == 0)
+            {
+                <button type="submit" name="saveAction" value="saveAndNew" class="btn btn-outline-primary me-2">
+                    Save & Add New
+                </button>
+            }
+            <button type="submit" name="saveAction" value="save" class="btn btn-primary">
                 @(Model.StudentId > 0 ? "Update Student" : "Add Student")
             </button>
         </div>
@@ -800,7 +806,7 @@
                     maxlength: "Pincode must be 6 digits"
                 }
             },
-            submitHandler: function(form) {
+            submitHandler: function(form, event) {
                 // Before submit, ensure simple -> advanced sync so server receives ClassId/BatchId values
                 if (!$('#advancedToggle').is(':checked')) {
                     syncSimpleToAdvanced();
@@ -809,6 +815,10 @@
                 if ($('#advancedToggle').is(':checked')) {
                     $('#SelectedClassId').val($('#ClassId').val());
                 }
+
+                // Determine which button was clicked
+                var saveAction = $(event.originalEvent.submitter).val();
+                var isSaveAndNew = saveAction === 'saveAndNew';
 
                 var formData = $(form).serialize();
                 var url = window.studentModelData.StudentId > 0 ?
@@ -821,8 +831,6 @@
                     data: formData,
                     success: function(response) {
                         if (response.success) {
-                            $('#studentModel').modal('hide'); // Fixed: matches HTML modal ID
-
                             // Reload the DataTable
                             if (typeof window.reloadStudentTable === 'function') {
                                 window.reloadStudentTable();
@@ -833,6 +841,47 @@
                                 toastr.success(response.message || 'Student saved successfully!');
                             } else {
                                 alert(response.message || 'Student saved successfully!');
+                            }
+
+                            if (isSaveAndNew) {
+                                // Reset form for new entry
+                                form.reset();
+                                
+                                // Reset simple form fields
+                                $('#simple_StudentName').val('');
+                                $('#simple_Mobile').val('');
+                                $('#simple_Email').val('');
+                                $('#simple_Password').val('');
+                                
+                                // Reset advanced form fields
+                                $('#StudentName').val('');
+                                $('#FatherName').val('');
+                                $('#DateOfBirth').val('');
+                                $('#Category').val('');
+                                $('#Mobile').val('');
+                                $('#Email').val('');
+                                $('#SecondaryContact').val('');
+                                $('#ParentContact').val('');
+                                $('#Address').val('');
+                                $('#City').val('');
+                                $('#StateId').val('');
+                                $('#Pincode').val('');
+                                $('#UserName').val('');
+                                $('#Password').val('');
+                                
+                                // Keep class and batch selections
+                                // Reset validation
+                                $(form).validate().resetForm();
+                                
+                                // Focus on first field
+                                if ($('#advancedToggle').is(':checked')) {
+                                    $('#StudentName').focus();
+                                } else {
+                                    $('#simple_StudentName').focus();
+                                }
+                            } else {
+                                // Close modal for regular save
+                                $('#studentModel').modal('hide');
                             }
                         } else {
                             // Show validation errors
