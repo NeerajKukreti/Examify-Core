@@ -124,4 +124,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+Log.Information("API configured and starting");
+
 app.Run();
+
+Log.CloseAndFlush();

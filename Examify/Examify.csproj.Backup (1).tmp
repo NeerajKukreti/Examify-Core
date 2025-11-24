@@ -8,16 +8,18 @@
 
   <ItemGroup>
     <Compile Remove="assets\**" />
+    <Compile Remove="wwwroot\PDFUpload\**" />
     <Content Remove="assets\**" />
+    <Content Remove="wwwroot\PDFUpload\**" />
     <EmbeddedResource Remove="assets\**" />
+    <EmbeddedResource Remove="wwwroot\PDFUpload\**" />
     <None Remove="assets\**" />
+    <None Remove="wwwroot\PDFUpload\**" />
   </ItemGroup>
 
-  <ItemGroup> 
-    <None Include="wwwroot\Scripts\Custom\ExamSession\Exam.js" />
+  <ItemGroup>
     <None Include="wwwroot\Scripts\Custom\ExamSession\ExamDatatable.js" />
     <None Include="wwwroot\Scripts\Custom\ExamSession\ExamValidation.js" />
-    <None Include="wwwroot\Scripts\Custom\Exam\ExamDatatable.js" />
     <None Include="wwwroot\Scripts\Custom\global.js" />
     <None Include="wwwroot\Scripts\Custom\Institute\Institute.js" />
     <None Include="wwwroot\Scripts\Custom\Institute\InstituteDatatable.js" />
@@ -48,5 +50,5 @@
     <Folder Include="wwwroot\QuesionUploads\" />
     <Folder Include="wwwroot\theme\plugins\jquery-validation 1.19.5\" />
   </ItemGroup>
- 
+
 </Project>

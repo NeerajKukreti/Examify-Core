@@ -6,10 +6,9 @@ using Examify.Middleware;
 using Serilog;
  
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args); 
 
-LoggerConfigurator.ConfigureLogger(null, 12201, Path.Combine(AppContext.BaseDirectory, "Logs", "MVC-app-.log"));
-
+LoggerConfigurator.ConfigureLogger("http://localhost", 12201, "Logs/MVC-app-.log"); 
 builder.Host.UseSerilog();
 
 // Add services to the container.
@@ -92,7 +91,8 @@ if (!app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseDeveloperExceptionPage();
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
 }
 
 app.UseHttpsRedirection();
@@ -109,4 +109,8 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Dashboard}/{action=Index}/{id?}");
 
+Log.Information("Application configured and starting");
+
 app.Run();
+
+Log.CloseAndFlush();

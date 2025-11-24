@@ -6,9 +6,8 @@ public static class LoggerConfigurator
     public static void ConfigureLogger(string? graylogHost = null, int graylogPort = 12201, string logPath = "Logs/app-.log")
     {
         var loggerConfig = new LoggerConfiguration()
-            .Enrich.FromLogContext()
-            .WriteTo.File(logPath, rollingInterval: RollingInterval.Day);
-
+             .Enrich.FromLogContext()
+             .WriteTo.File(logPath, rollingInterval: RollingInterval.Day);
 
         try
         {
