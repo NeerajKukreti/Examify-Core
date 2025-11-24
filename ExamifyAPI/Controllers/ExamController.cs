@@ -139,6 +139,7 @@ namespace ExamifyAPI.Controllers
         {
             try
             {
+                instituteId = _authService.GetCurrentInstituteId();
                 var questions = await _examService.GetAvailableQuestionsAsync(examId, instituteId);
                 return Ok(new { Success = true, Data = questions });
             }
@@ -358,6 +359,7 @@ namespace ExamifyAPI.Controllers
         {
             try
             {
+                instituteId = _authService.GetCurrentInstituteId();
                 var instructions = await _examService.GetInstructionsAsync(instituteId);
                 return Ok(new { Success = true, Data = instructions });
             }

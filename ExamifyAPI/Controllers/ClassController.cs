@@ -24,6 +24,7 @@ namespace ExamifyApi.Controllers
         {
             try
             {
+                instituteId = _authService.GetCurrentInstituteId();
                 var classes = await _classService.GetAllClassesAsync(instituteId, classId);
                 
                 // Convert ClassModel to ClassDTO for API response

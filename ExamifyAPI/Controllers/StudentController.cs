@@ -20,6 +20,7 @@ public class StudentController : ControllerBase
     [HttpGet("{instituteId:int}/{studentId:int}")]
     public async Task<IActionResult> GetAllStudents(int instituteId, int? studentId = 0)
     {
+        instituteId = _authService.GetCurrentInstituteId();
         var students = await _studentService.GetAllStudentsAsync(instituteId, studentId);
         if (students == null) return NotFound(new { Success = false, Message = "Student not found" });
         return Ok(new { Success = true, Count = students?.Count() ?? 0, Data = students });
