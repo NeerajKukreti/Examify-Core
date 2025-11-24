@@ -22,7 +22,7 @@ namespace Examify.Controllers
             
             ViewBag.UserId = userId;
             ViewBag.InstituteId = instituteId;
-            ViewBag.ApiBaseUrl = _configuration["ApiSettings:BaseUrl"] ?? "https://localhost:7271/api";
+            ViewBag.ApiBaseUrl = _configuration["ExamifyAPI:BaseUrl"] ?? "https://localhost:7271/api/";
 
             return role?.ToLower() switch
             {

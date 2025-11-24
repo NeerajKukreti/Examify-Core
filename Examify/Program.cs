@@ -8,7 +8,7 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-LoggerConfigurator.ConfigureLogger("http://localhost", 12201, "Logs/MVC-app-.log");
+LoggerConfigurator.ConfigureLogger(null, 12201, Path.Combine(AppContext.BaseDirectory, "Logs", "MVC-app-.log"));
 
 builder.Host.UseSerilog();
 
@@ -46,9 +46,10 @@ builder.Services.AddAuthorization();
 builder.Services.AddTransient<AuthTokenHandler>();
 
 // HttpClient for Exam Portal API with token handler
+var apiBaseUrl = builder.Configuration["ExamifyAPI:BaseUrl"] ?? "https://localhost:7271/api/";
 builder.Services.AddHttpClient("ExamifyAPI", client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7271/api/");
+    client.BaseAddress = new Uri(apiBaseUrl);
 })
 .AddHttpMessageHandler<AuthTokenHandler>();
 

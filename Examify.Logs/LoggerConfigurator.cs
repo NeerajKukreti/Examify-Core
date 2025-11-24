@@ -9,13 +9,27 @@ public static class LoggerConfigurator
             .Enrich.FromLogContext()
             .WriteTo.File(logPath, rollingInterval: RollingInterval.Day);
 
+
+        try
+        {
+            var logDir = Path.GetDirectoryName(logPath);
+            if (!string.IsNullOrEmpty(logDir) && !Directory.Exists(logDir))
+            {
+                Directory.CreateDirectory(logDir);
+            }
+            loggerConfig = loggerConfig.WriteTo.File(logPath, rollingInterval: RollingInterval.Day);
+        }
+        catch
+        {
+            // If file logging fails, continue with console only
+        }
+
         if (!string.IsNullOrEmpty(graylogHost))
         {
             loggerConfig = loggerConfig.WriteTo.Graylog(new GraylogSinkOptions
             {
                 HostnameOrAddress = graylogHost,
                 Port = graylogPort
-                // TransportType property removed; use default transport
             });
         }
 

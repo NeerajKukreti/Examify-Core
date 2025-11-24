@@ -1,10 +1,9 @@
 @using DataModel
 @model ExamModel
-@inject Microsoft.Extensions.Options.IOptions<Examify.Common.ApiSettings> ApiSettings
+@inject IConfiguration Configuration
 <script>
-    // Global API configuration - DO NOT hardcode URLs
     window.API_ENDPOINTS = {
-        baseUrl: 'https://localhost:7271/api/'
+        baseUrl: '@(Configuration["ExamifyAPI:BaseUrl"] ?? "https://localhost:7271/api/")'
     };
 </script>
 <!DOCTYPE html>

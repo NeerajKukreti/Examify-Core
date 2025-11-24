@@ -21,12 +21,6 @@
   <ItemGroup>
     <Content Remove="Views\Institute\CreateInstitute.cshtml" />
     <Content Remove="Views\Institute\UpdateInstitute.cshtml" />
-    <Content Remove="wwwroot\Scripts\Custom\ExamSession\Exam.js" />
-    <Content Remove="wwwroot\Scripts\Custom\ExamSession\ExamDatatable.js" />
-    <Content Remove="wwwroot\Scripts\Custom\ExamSession\ExamValidation.js" />
-    <Content Remove="wwwroot\Scripts\Custom\Exam\ExamDatatable.js" />
-    <Content Remove="wwwroot\Scripts\Custom\global.js" />
-    <Content Remove="wwwroot\Scripts\Custom\QuestionBank\Question.js" />
     <Content Remove="wwwroot\Scripts\Custom\Tabs.js" />
     <Content Remove="wwwroot\Scripts\_references.js" />
   </ItemGroup>

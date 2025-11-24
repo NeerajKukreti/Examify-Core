@@ -1,6 +1,13 @@
 ﻿@{
     Layout = null;
 }
+@inject IConfiguration Configuration
+<script>
+    window.API_ENDPOINTS = {
+        baseUrl: '@(Configuration["ExamifyAPI:BaseUrl"] ?? "https://localhost:7271/api/")'
+    };
+</script>
+
 <!doctype html>
 <html lang="en">
 <head>

@@ -408,9 +408,31 @@
         color: #495057;
         min-width: 40px;
     }
+
+    /* Mandatory field asterisks */
+    label .text-danger, .panel-title .text-danger { color: #dc3545 !important; display: inline !important; visibility: visible !important; }
+
+    /* Real-time Validation */
+    .form-control.is-invalid { border-color: #dc3545; }
+    .form-control.is-valid { border-color: #28a745; }
+    .invalid-feedback { display: none; color: #dc3545; font-size: 12px; margin-top: 4px; }
+
+    /* Skeleton Loader */
+    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }
+    @@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .skeleton-field { height: 38px; margin-bottom: 20px; }
+    .skeleton-editor { height: 200px; margin-bottom: 20px; }
 </style>
 
-<form asp-action="Create" method="post" id="questionForm">
+<!-- Skeleton Loader -->
+<div id="skeletonLoader" style="padding: 20px;">
+    <div class="skeleton skeleton-field"></div>
+    <div class="skeleton skeleton-field"></div>
+    <div class="skeleton skeleton-editor"></div>
+    <div class="skeleton skeleton-field"></div>
+</div>
+
+<form asp-action="Create" method="post" id="questionForm" style="display:none;">
 
     <div class="toolbar1" style="display: none">
         <span class="ql-formats">
@@ -871,7 +893,8 @@
 <script src="@Url.Content("~/Scripts/Custom/QuestionBank/QuestionTypeManager.js")"></script>
 <script src="@Url.Content("~/Scripts/Custom/QuestionBank/FieldManager.js")"></script>
 <script src="@Url.Content("~/Scripts/Custom/QuestionBank/QuestionForm.js")"></script>
-<script src="@Url.Content("~/Scripts/Custom/QuestionBank/Question.js")"></script>
+<script src="@Url.Content("~/Scripts/Custom/QuestionBank/Question.js")"></script> 
+<script src="@Url.Content("~/Scripts/Custom/QuestionBank/UnsavedWarning.js")"></script>
 <script src="@Url.Content("~/theme/plugins/jquery-validation 1.19.5/jquery.validate.js")"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
@@ -906,6 +929,24 @@
     }
 
     $(function () {
+        // Show skeleton, hide form initially
+        $('#skeletonLoader').show();
+        $('#questionForm').hide();
+
+        // Hide skeleton after 500ms
+        setTimeout(function() {
+            $('#skeletonLoader').hide();
+            $('#questionForm').show();
+            
+            // Fix: Re-add asterisks if they're empty
+            $('label .text-danger, .panel-title .text-danger').each(function() {
+                if ($(this).html().trim() === '') {
+                    $(this).html('*');
+                }
+            });
+            console.log('Asterisks fixed:', $('label .text-danger, .panel-title .text-danger').length);
+        }, 500);
+
         // Load classes from API
         (function loadClasses() {
             var endpoint = window.API_ENDPOINTS.baseUrl + "Class/GetAll/" + instituteId;

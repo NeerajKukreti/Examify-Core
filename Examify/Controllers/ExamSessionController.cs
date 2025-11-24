@@ -31,51 +31,61 @@ public class ExamSessionController : Controller
         return View();
     }
 
+    [AllowAnonymous]
     public async Task<IActionResult> Details(int id)
     {
-        var client = _httpClientFactory.CreateClient(ENDPOINTS.ClientName);
-        var response = await client.GetAsync($"{ENDPOINTS.SessionExamId}/{id}");
-        
-        var json = await response.Content.ReadAsStringAsync();
-        
-        if (response.IsSuccessStatusCode)
+        try
         {
-            var apiResponse = JsonSerializer.Deserialize<ApiResponse<ExamModel>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            var exam = apiResponse?.Data;   
-            ViewBag.ExamId = id;
-            ViewBag.UserId = User.GetUserId();
-            ViewBag.ApiBaseUrl = ENDPOINTS.BaseUrl + "Exam";
-            ViewBag.StartExamUrl = ENDPOINTS.StartExamUrl;
-            ViewBag.ExamResultUrl = ENDPOINTS.ExamResultUrl;
-            return View(exam);
+            var client = _httpClientFactory.CreateClient("ExamifyAPI");
+            var response = await client.GetAsync($"Exam/Session/{id}");
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                var apiResponse = JsonSerializer.Deserialize<ApiResponse<ExamModel>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var exam = apiResponse?.Data;
+                ViewBag.ExamId = id;
+                ViewBag.UserId = User.GetUserId();
+                ViewBag.ApiBaseUrl = client.BaseAddress + "Exam";
+                ViewBag.StartExamUrl = "/ExamSession/StartExam";
+                ViewBag.ExamResultUrl = "/ExamSession/ExamResult";
+                return View(exam);
+            }
+
+            var errorResponse = JsonSerializer.Deserialize<ApiResponse<object>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            ViewBag.ErrorMessage = errorResponse?.Message ?? "An error occurred";
+            return View("Error");
         }
-        
-        // Pass error message to view for alert
-        var errorResponse = JsonSerializer.Deserialize<ApiResponse<object>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        ViewBag.ErrorMessage = errorResponse?.Message ?? "An error occurred";
-        return View("Error");
+        catch (Exception ex)
+        {
+            ViewBag.ErrorMessage = ex.Message;
+            return Content(ex.Message);
+        }
     }
-    
+
+
     public IActionResult StartExam(int examId)
     {
         ViewBag.ExamId = examId;
         ViewBag.UserId = User.GetUserId();
-        ViewBag.ApiBaseUrl = ENDPOINTS.BaseUrl + "Exam";
-        ViewBag.StartExamUrl = ENDPOINTS.StartExamUrl;
-        ViewBag.ExamResultUrl = ENDPOINTS.ExamResultUrl;
+        var client = _httpClientFactory.CreateClient("ExamifyAPI");
+        ViewBag.ApiBaseUrl = client.BaseAddress + "Exam";
+        ViewBag.StartExamUrl = "/ExamSession/StartExam";
+        ViewBag.ExamResultUrl = "/ExamSession/ExamResult";
         return View();
     }
-    
+
     public IActionResult ExamResult(int sessionId)
     {
         ViewBag.SessionId = sessionId;
         return View();
     }
-    
+
     public IActionResult Test()
     {
         return View();
     }
-    
-    
+
+
 }

@@ -1,11 +1,9 @@
 
 @using Microsoft.AspNetCore.Http
-@inject Microsoft.Extensions.Options.IOptions<Examify.Common.ApiSettings> ApiSettings
+@inject IConfiguration Configuration
 <script>
-    // Global API configuration - DO NOT hardcode URLs
-    window.API_BASE_URL = '@ApiSettings.Value.BaseUrl'.replace('/api/', '');
     window.API_ENDPOINTS = {
-        baseUrl: 'https://localhost:7271/api/'
+        baseUrl: '@(Configuration["ExamifyAPI:BaseUrl"] ?? "https://localhost:7271/api/")'
     };
 </script>
 

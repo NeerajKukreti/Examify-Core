@@ -2,10 +2,6 @@ namespace Examify.Common.constants
 {
     public static class ENDPOINTS
     {
-        // Base API URL and client name
-        public const string BaseUrl = "https://localhost:7271/api/";
-        public const string ClientName = "ExamifyAPI";
-
         // Exam endpoints
         public const string StartExamUrl = "/ExamSession/StartExam";
         public const string ExamResultUrl = "/ExamSession/ExamResult";
@@ -15,7 +11,7 @@ namespace Examify.Common.constants
         public const string SessionExamId = "Exam/Session"; //Api
         public const string ExamQuestions = "Exam/{0}/sessionquestions";
         public const string ExamSubmit = "Exam/{0}/submit";
-        public const string PublishExamUrl = BaseUrl+"Exam/{id}/publish";
+        public static string PublishExamUrl = "Exam/{id}/publish";
 
         // Question endpoints
         public const string QuestionList = "question/list";

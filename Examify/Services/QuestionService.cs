@@ -24,19 +24,19 @@ namespace Examify.Services
 
         public async Task<List<QuestionModel>?> GetAllAsync()
         {
-            var client = _httpClientFactory.CreateClient(ENDPOINTS.ClientName);
+            var client = _httpClientFactory.CreateClient("ExamifyAPI");
             return await client.GetFromJsonAsync<List<QuestionModel>>(ENDPOINTS.QuestionList);
         }
 
         public async Task<QuestionModel?> GetByIdAsync(int id)
         {
-            var client = _httpClientFactory.CreateClient(ENDPOINTS.ClientName);
+            var client = _httpClientFactory.CreateClient("ExamifyAPI");
             return await client.GetFromJsonAsync<QuestionModel>($"{ENDPOINTS.QuestionById}/{id}");
         }
 
         public async Task<bool> CreateAsync(QuestionModel model)
         {
-            var client = _httpClientFactory.CreateClient(ENDPOINTS.ClientName);
+            var client = _httpClientFactory.CreateClient("ExamifyAPI");
 
             // Debug: log the payload
             var json = JsonSerializer.Serialize(model);
@@ -48,14 +48,14 @@ namespace Examify.Services
 
         public async Task<bool> UpdateAsync(QuestionModel model)
         {
-            var client = _httpClientFactory.CreateClient(ENDPOINTS.ClientName);
+            var client = _httpClientFactory.CreateClient("ExamifyAPI");
             var response = await client.PutAsJsonAsync(ENDPOINTS.QuestionUpdate, model);
             return response.IsSuccessStatusCode;
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var client = _httpClientFactory.CreateClient(ENDPOINTS.ClientName);
+            var client = _httpClientFactory.CreateClient("ExamifyAPI");
             var response = await client.DeleteAsync(string.Format(ENDPOINTS.QuestionDelete, id));
             return response.IsSuccessStatusCode;
         }
