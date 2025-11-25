@@ -1,3 +1,4 @@
+
 // Global variables for descriptive questions
 var descriptiveOptionCount = 1; // Start with 1 (the default one)
 var MAX_DESCRIPTIVE_OPTIONS = 5; // Maximum number of descriptive options allowed
@@ -261,11 +262,11 @@ function loadTopics(subjectId, callback) {
             modules: modulesConfig
         });
 
-        q.getModule('toolbar').addHandler('image', function () {
+        var toolbar = q.getModule('toolbar');
+        toolbar.addHandler('image', function () {
             var input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.click();
             input.onchange = async function () {
                 var file = input.files[0];
                 if (!file) return;
@@ -277,9 +278,53 @@ function loadTopics(subjectId, callback) {
                     var range = q.getSelection(true);
                     q.insertEmbed(range.index, 'image', data.url);
                     q.setSelection(range.index + 1);
-                } catch (e) { console.error('Upload failed', e); }
+                    window.uploadedImages.push(data.url.split('/').pop());
+                } catch (e) {
+                    console.error('Upload failed', e);
+                }
             };
+            input.click();
         });
+
+        // Track image deletions and handle pasted base64 images
+        q.on('text-change', function(delta, oldDelta, source) {
+            if (source !== 'user') return;
+            var currentImages = [];
+            q.getContents().ops.forEach(function(op) {
+                if (op.insert && op.insert.image) {
+                    currentImages.push(op.insert.image.split('/').pop());
+                }
+            });
+            oldDelta.ops.forEach(function(op) {
+                if (op.insert && op.insert.image) {
+                    var fileName = op.insert.image.split('/').pop();
+                    if (currentImages.indexOf(fileName) === -1 && window.deletedImages.indexOf(fileName) === -1) {
+                        window.deletedImages.push(fileName);
+                    }
+                }
+            });
+            delta.ops.forEach(function(op) {
+                if (op.insert && op.insert.image && op.insert.image.startsWith('data:')) {
+                    fetch(op.insert.image).then(r => r.blob()).then(blob => {
+                        var formData = new FormData();
+                        formData.append('file', blob, 'paste.png');
+                        fetch('/Question/uploads', { method: 'POST', body: formData })
+                            .then(r => r.json())
+                            .then(data => {
+                                var contents = q.getContents();
+                                contents.ops.forEach(function(o) {
+                                    if (o.insert && o.insert.image === op.insert.image) {
+                                        o.insert.image = data.url;
+                                    }
+                                });
+                                q.setContents(contents);
+                                window.uploadedImages.push(data.url.split('/').pop());
+                            });
+                    });
+                }
+            });
+        });
+
 
         window.__quillEditors = window.__quillEditors || {};
         window.__quillEditors[editorId] = q;
@@ -426,31 +471,67 @@ $(function () {
             modules: modulesConfig
         });
         // Attach image upload handler for THIS editor
-        q.getModule('toolbar').addHandler('image', function () {
+        const toolbar = q.getModule('toolbar');
+        toolbar.addHandler('image', () => {
             const input = document.createElement('input');
-            input.setAttribute('type', 'file');
-            input.setAttribute('accept', 'image/*');
-            input.click();
+            input.type = 'file';
+            input.accept = 'image/*';
             input.onchange = async () => {
                 const file = input.files[0];
-                if (file) {
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    try {
-                        const response = await fetch('/Question/uploads', {
-                            method: 'POST',
-                            body: formData
-                        });
-                        const data = await response.json();
-                        // Use THIS editor instance (q)
-                        const range = q.getSelection(true);
-                        q.insertEmbed(range.index, 'image', data.url);
-                        q.setSelection(range.index + 1);
-                    } catch (err) {
-                        console.error('Upload failed:', err);
-                    }
+                if (!file) return;
+                const formData = new FormData();
+                formData.append('file', file);
+                try {
+                    const response = await fetch('/Question/uploads', { method: 'POST', body: formData });
+                    const data = await response.json();
+                    const range = q.getSelection(true);
+                    q.insertEmbed(range.index, 'image', data.url);
+                    q.setSelection(range.index + 1);
+                    window.uploadedImages.push(data.url.split('/').pop());
+                } catch (err) {
+                    console.error('Upload failed:', err);
                 }
             };
+            input.click();
+        });
+        
+        q.on('text-change', function(delta, oldDelta, source) {
+            if (source !== 'user') return;
+            var currentImages = [];
+            q.getContents().ops.forEach(function(op) {
+                if (op.insert && op.insert.image) {
+                    currentImages.push(op.insert.image.split('/').pop());
+                }
+            });
+            oldDelta.ops.forEach(function(op) {
+                if (op.insert && op.insert.image) {
+                    var fileName = op.insert.image.split('/').pop();
+                    if (currentImages.indexOf(fileName) === -1 && window.deletedImages.indexOf(fileName) === -1) {
+                        window.deletedImages.push(fileName);
+                    }
+                }
+            });
+            delta.ops.forEach(function(op) {
+                if (op.insert && op.insert.image && op.insert.image.startsWith('data:')) {
+                    var range = q.getSelection();
+                    fetch(op.insert.image).then(r => r.blob()).then(blob => {
+                        var formData = new FormData();
+                        formData.append('file', blob, 'paste.png');
+                        fetch('/Question/uploads', { method: 'POST', body: formData })
+                            .then(r => r.json())
+                            .then(data => {
+                                var contents = q.getContents();
+                                contents.ops.forEach(function(o) {
+                                    if (o.insert && o.insert.image === op.insert.image) {
+                                        o.insert.image = data.url;
+                                    }
+                                });
+                                q.setContents(contents);
+                                window.uploadedImages.push(data.url.split('/').pop());
+                            });
+                    });
+                }
+            });
         });
         quillEditors[editorId] = q;
     });
@@ -617,7 +698,8 @@ $(function () {
         // Question English (Quill)
         let qEng = window.__quillEditors && window.__quillEditors['editor-question-english'];
         let qEngText = qEng ? $(qEng.root).text().trim() : '';
-        if (!qEngText) {
+        let qEngHasMedia = qEng ? $(qEng.root).find('img, iframe, video, audio, a[href]').length > 0 : false;
+        if (!qEngText && !qEngHasMedia) {
             showError('#valQuestionEnglish', 'Question English is required');
             valid = false;
         }

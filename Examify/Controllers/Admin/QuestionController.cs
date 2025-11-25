@@ -3,6 +3,7 @@ using Examify.Attributes;
 using Examify.Common.constants;
 using Examify.Services;
 using Examify.Extensions;
+using Examify.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,12 +13,12 @@ namespace Examify.Controllers.Admin
     public class QuestionController : Controller
     {
         private readonly IQuestionService _QuestionService;
-        private readonly IWebHostEnvironment _env;
+        private readonly IFileService _fileService;
 
-        public QuestionController(IQuestionService QuestionService, IWebHostEnvironment env)
+        public QuestionController(IQuestionService QuestionService, IFileService fileService)
         {
             _QuestionService = QuestionService;
-            _env = env;
+            _fileService = fileService;
         }
 
         // GET: Admin/Question
@@ -110,21 +111,49 @@ namespace Examify.Controllers.Admin
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded.");
 
-            var uploadsPath = Path.Combine(_env.WebRootPath, "QuesionUploads");
-            if (!Directory.Exists(uploadsPath))
-                Directory.CreateDirectory(uploadsPath);
-
-            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-            var filePath = Path.Combine(uploadsPath, fileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            try
             {
-                await file.CopyToAsync(stream);
+                var fileName = await _fileService.SaveCompressedImage(file, "QuesionUploads");
+                var fileUrl = $"/{Question.QuestionUploads}/{fileName}";
+                return Ok(new { url = fileUrl });
             }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error processing image: {ex.Message}");
+            }
+        }
 
-            // Return the public URL
-            var fileUrl = $"/{Question.QuestionUploads}/{fileName}";
-            return Ok(new { url = fileUrl });
+        [HttpPost]
+        public IActionResult DeleteUploadedImages([FromBody] List<string> fileNames)
+        {
+            if (fileNames == null || !fileNames.Any())
+                return BadRequest("No files specified.");
+
+            try
+            {
+                _fileService.DeleteFiles(fileNames, "QuesionUploads");
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error deleting images: {ex.Message}");
+            }
+        }
+
+        [HttpPost]
+        public IActionResult Remove([FromBody] dynamic data)
+        {
+            try
+            {
+                string url = data.url;
+                var fileName = url.Split('/').Last();
+                _fileService.DeleteFile(fileName, "QuesionUploads");
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error removing image: {ex.Message}");
+            }
         }
 
 

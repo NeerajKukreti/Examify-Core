@@ -7,7 +7,7 @@
 
 <style>
     label.error {
-        color: brown !important;
+        color: #dc3545 !important;
     }
 
     .no-gutter {
@@ -55,6 +55,7 @@
         cursor: pointer;
         border-bottom: 1px solid #e1e5e9;
         transition: background-color 0.2s;
+        user-select: none;
     }
 
         .panel-header:hover {
@@ -410,18 +411,96 @@
     }
 
     /* Mandatory field asterisks */
-    label .text-danger, .panel-title .text-danger { color: #dc3545 !important; display: inline !important; visibility: visible !important; }
+    label .text-danger, .panel-title .text-danger { 
+        color: #dc3545 !important; 
+        display: inline !important; 
+        visibility: visible !important; 
+        font-weight: 700;
+    }
 
     /* Real-time Validation */
-    .form-control.is-invalid { border-color: #dc3545; }
-    .form-control.is-valid { border-color: #28a745; }
-    .invalid-feedback { display: none; color: #dc3545; font-size: 12px; margin-top: 4px; }
+    .form-control.is-invalid { 
+        border-color: #dc3545; 
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+    }
+    .form-control.is-valid { 
+        border-color: #28a745; 
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15);
+    }
+    .invalid-feedback { 
+        display: none; 
+        color: #dc3545; 
+        font-size: 12px; 
+        margin-top: 4px; 
+        font-weight: 500;
+    }
 
     /* Skeleton Loader */
-    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }
-    @@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .skeleton { 
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); 
+        background-size: 200% 100%; 
+        animation: shimmer 1.5s infinite; 
+        border-radius: 4px; 
+    }
+    @@keyframes shimmer { 
+        0% { background-position: 200% 0; } 
+        100% { background-position: -200% 0; } 
+    }
     .skeleton-field { height: 38px; margin-bottom: 20px; }
     .skeleton-editor { height: 200px; margin-bottom: 20px; }
+
+    /* Focus indicators for accessibility */
+    .form-control:focus, .select2-container--default .select2-selection--multiple:focus {
+        outline: 2px solid #007bff;
+        outline-offset: 2px;
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .option-controls {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .col-md-10, .col-md-2 {
+            width: 100%;
+            padding: 0;
+        }
+        .section-title {
+            font-size: 14px;
+        }
+        .panel-header .panel-title {
+            font-size: 13px;
+        }
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .loading-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
 </style>
 
 <!-- Skeleton Loader -->
@@ -899,6 +978,7 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
+    debugger;
     var instituteId = "@ViewBag.instituteId";
     // Inject model data for edit mode and initialize the form
     @if (Model.QuestionId > 0)
@@ -927,6 +1007,67 @@
         @:    ClassIds: []
         @:};
     }
+
+    // Initialize tracking arrays
+    window.existingImages = [];
+    window.uploadedImages = [];
+    window.deletedImages = [];
+    if (window.modelData && window.modelData.QuestionId > 0) {
+        var extractImages = function(html) {
+            if (!html) return [];
+            var div = document.createElement('div');
+            div.innerHTML = html;
+            var imgs = div.querySelectorAll('img');
+            return Array.from(imgs).map(function(img) { return img.src.split('/').pop(); });
+        };
+        window.existingImages = window.existingImages.concat(
+            extractImages(window.modelData.QuestionEnglish),
+            extractImages(window.modelData.QuestionHindi),
+            extractImages(window.modelData.AdditionalTextEnglish),
+            extractImages(window.modelData.AdditionalTextHindi)
+        );
+        if (window.modelData.Options) {
+            window.modelData.Options.forEach(function(opt) {
+                window.existingImages = window.existingImages.concat(extractImages(opt.Text));
+            });
+        }
+    }
+
+    // Cancel button - delete only newly uploaded images
+    $(document).on('click', '#btnCancel, .btn-close', function() {
+        if (window.uploadedImages && window.uploadedImages.length > 0) {
+            var newImages = window.uploadedImages.filter(function(img) {
+                return window.existingImages.indexOf(img) === -1;
+            });
+            if (newImages.length > 0) {
+                $.ajax({
+                    url: '/Question/DeleteUploadedImages',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(newImages),
+                    success: function() {
+                        console.log('Deleted ' + newImages.length + ' orphaned images');
+                    }
+                });
+            }
+        }
+    });
+
+    // Delete removed images on submit
+    $('#questionForm').on('submit', function() {
+        debugger;
+        if (window.deletedImages.length > 0) {
+            $.ajax({
+                url: '/Question/DeleteUploadedImages',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(window.deletedImages),
+                async: false
+            });
+        }
+        window.uploadedImages = [];
+        window.deletedImages = [];
+    });
 
     $(function () {
         // Show skeleton, hide form initially
