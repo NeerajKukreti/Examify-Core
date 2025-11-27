@@ -978,7 +978,6 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-    debugger;
     var instituteId = "@ViewBag.instituteId";
     // Inject model data for edit mode and initialize the form
     @if (Model.QuestionId > 0)
@@ -1055,7 +1054,6 @@
 
     // Delete removed images on submit
     $('#questionForm').on('submit', function() {
-        debugger;
         if (window.deletedImages.length > 0) {
             $.ajax({
                 url: '/Question/DeleteUploadedImages',
@@ -1070,25 +1068,20 @@
     });
 
     $(function () {
-        // Show skeleton, hide form initially
-        $('#skeletonLoader').show();
-        $('#questionForm').hide();
+        var loadingTasks = { classes: false, form: false };
+        
+        function hideSkeletonWhenReady() {
+            if (loadingTasks.classes && loadingTasks.form) {
+                $('#skeletonLoader').hide();
+                $('#questionForm').show();
+                $('label .text-danger, .panel-title .text-danger').each(function() {
+                    if ($(this).html().trim() === '') {
+                        $(this).html('*');
+                    }
+                });
+            }
+        }
 
-        // Hide skeleton after 500ms
-        setTimeout(function() {
-            $('#skeletonLoader').hide();
-            $('#questionForm').show();
-            
-            // Fix: Re-add asterisks if they're empty
-            $('label .text-danger, .panel-title .text-danger').each(function() {
-                if ($(this).html().trim() === '') {
-                    $(this).html('*');
-                }
-            });
-            console.log('Asterisks fixed:', $('label .text-danger, .panel-title .text-danger').length);
-        }, 500);
-
-        // Load classes from API
         (function loadClasses() {
             var endpoint = window.API_ENDPOINTS.baseUrl + "Class/GetAll/" + instituteId;
 
@@ -1139,53 +1132,40 @@
                             $select.val(vals).trigger('change');
                         }
                     }
+                    loadingTasks.classes = true;
+                    hideSkeletonWhenReady();
                 },
                 error: function() {
                     console.error('Error loading classes');
+                    loadingTasks.classes = true;
+                    hideSkeletonWhenReady();
                 }
             });
         })();
 
-        // OPTIMIZED: Initialize the question form using the centralized QuestionForm module
-        // This approach eliminates duplicate change event calls by:
-        // 1. Using a single initialization point
-        // 2. Implementing debouncing for change events
-        // 3. Using direct method calls instead of triggering events
-        // 4. Adding proper event cleanup to prevent duplicate bindings
         if (window.QuestionForm && typeof window.QuestionForm.initialize === 'function') {
             window.QuestionForm.initialize(window.modelData);
-            console.log('? Question form initialized with optimized event handling');
+            loadingTasks.form = true;
+            hideSkeletonWhenReady();
         } else {
             console.warn('QuestionForm module not loaded. Falling back to legacy initialization.');
-            // Fallback for legacy behavior if modules fail to load
             legacyFormInitialization();
+            loadingTasks.form = true;
+            hideSkeletonWhenReady();
         }
 
-        // IMPORTANT: Trigger custom event to inform parent page that initialization is complete
-        // This allows QuestionDatatable.js to run cleanup for new questions
         setTimeout(function() {
-            // Create and dispatch custom event
             var event = new CustomEvent('questionFormReady', {
                 detail: {
                     isNewQuestion: !window.modelData || window.modelData.QuestionId === 0,
                     modelData: window.modelData
                 }
             });
-
-            // Dispatch the event on the document
             document.dispatchEvent(event);
-            console.log('?? questionFormReady event dispatched', {
-                isNewQuestion: !window.modelData || window.modelData.QuestionId === 0,
-                questionId: window.modelData ? window.modelData.QuestionId : 0
-            });
-        }, 100); // Small delay to ensure everything is ready
+        }, 100);
     });
 
-    // Legacy fallback function (simplified version of old initialization)
     function legacyFormInitialization() {
-        console.log('Using legacy form initialization');
-
-        // Basic form setup - only for edit mode
         if (window.modelData && window.modelData.QuestionId > 0) {
             $('#ddlSubject').val(window.modelData.SubjectId || '');
             $('#ddlQuestionType').val(window.modelData.QuestionTypeId || '');
@@ -1195,7 +1175,6 @@
             $('textarea[asp-for="Explanation"]').val(window.modelData.Explanation || '');
         }
 
-        // Basic event handlers
         $(document).on('change', '#ddlSubject', function() {
             var subjectId = $(this).val();
             if (typeof loadTopics === 'function') {

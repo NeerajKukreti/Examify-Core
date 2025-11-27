@@ -8,6 +8,7 @@ var ExamQuestionConfig = (function () {
         initAvailableQuestionsTable();
         loadExistingQuestions();
         bindEvents();
+        updateSummary();
     }
 
     function initAvailableQuestionsTable() {
@@ -44,8 +45,22 @@ var ExamQuestionConfig = (function () {
                 { "data": "difficultyLevel" }
             ],
             "pageLength": 10,
+            "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+            "info": true,
+            "paging": true,
+            "dom": '<"d-flex justify-content-between align-items-center mb-2"<"d-flex gap-2"li><"ms-auto"p>>rt',
             "language": {
-                "emptyTable": "No questions available"
+                "emptyTable": "No questions available",
+                "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+                "infoEmpty": "Showing 0 to 0 of 0 entries",
+                "infoFiltered": "(filtered from _MAX_ total entries)",
+                "lengthMenu": "Show _MENU_ entries"
+            },
+            "drawCallback": function() {
+                updateCheckboxStates();
+            },
+            "initComplete": function() {
+                updateUnselectedCount();
             }
         });
     }
@@ -98,10 +113,34 @@ var ExamQuestionConfig = (function () {
         var type = $('#filterType').val();
         var difficulty = $('#filterDifficulty').val();
 
-        availableTable.column(2).search(subject).draw();
-        availableTable.column(3).search(topic).draw();
-        availableTable.column(4).search(type).draw();
-        availableTable.column(5).search(difficulty).draw();
+        availableTable.column(2).search(subject);
+        availableTable.column(3).search(topic);
+        availableTable.column(4).search(type);
+        availableTable.column(5).search(difficulty);
+        availableTable.draw();
+    }
+
+    function toggleUnselectedFilter() {
+        $.fn.dataTable.ext.search = [];
+        
+        if ($('#toggleUnselectedOnly').is(':checked')) {
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                var row = availableTable.row(dataIndex);
+                if (!row || !row.data()) return true;
+                var questionId = row.data().questionId;
+                return !selectedQuestions.some(q => q.questionId === questionId);
+            });
+        }
+        
+        availableTable.draw();
+        updateUnselectedCount();
+    }
+
+    function updateUnselectedCount() {
+        if (!availableTable) return;
+        var totalQuestions = availableTable.data().count();
+        var unselectedCount = totalQuestions - selectedQuestions.length;
+        $('#unselectedCount').text(unselectedCount);
     }
 
     function loadExistingQuestions() {
@@ -123,12 +162,19 @@ var ExamQuestionConfig = (function () {
                     });
                     sortOrderCounter = selectedQuestions.length + 1;
                     renderSelectedQuestions();
+                    updateCheckboxStates();
                 }
+                updateUnselectedCount();
             }
         });
     }
 
     function bindEvents() {
+        $('#btnSelectFiltered').on('click', selectFilteredQuestions);
+        $('#btnClearSelection').on('click', clearAllSelections);
+        $('#btnResetFilters').on('click', resetFilters);
+        $('#toggleUnselectedOnly').on('change', toggleUnselectedFilter);
+
         $('#filterSubject').on('change', function() {
             var subjectId = $(this).find('option:selected').data('subject-id');
             if (subjectId) {
@@ -199,12 +245,66 @@ var ExamQuestionConfig = (function () {
                 renderSelectedQuestions();
             }
         });
+
+        $(document).on('click', '.btn-expand', function() {
+            var $text = $(this).siblings('.question-text');
+            $text.toggleClass('collapsed');
+            $(this).html($text.hasClass('collapsed') ? '<i class="fas fa-chevron-down"></i>' : '<i class="fas fa-chevron-up"></i>');
+        });
     }
 
-    function addQuestion(rowData) {
+    function selectFilteredQuestions() {
+        var addedCount = 0;
+        availableTable.rows({ search: 'applied' }).every(function() {
+            var rowData = this.data();
+            var $checkbox = $(this.node()).find('.question-checkbox');
+            if (!$checkbox.is(':checked') && !$checkbox.is(':disabled')) {
+                $checkbox.prop('checked', true);
+                addQuestion(rowData, true);
+                addedCount++;
+            }
+        });
+        
+        if (addedCount > 0) {
+            toastr.success(addedCount + ' question(s) added successfully');
+        } else {
+            toastr.info('No new questions to add');
+        }
+    }
+
+    function clearAllSelections() {
+        if (selectedQuestions.length === 0) {
+            toastr.info('No questions selected to clear');
+            return;
+        }
+        
+        if (!confirm('Are you sure you want to clear all ' + selectedQuestions.length + ' selected question(s)? This action cannot be undone.')) {
+            return;
+        }
+        
+        selectedQuestions = [];
+        renderSelectedQuestions();
+        updateCheckboxStates();
+        updateUnselectedCount();
+        toastr.success('All selections cleared');
+    }
+
+    function resetFilters() {
+        $('#filterSubject').val('');
+        $('#filterTopic').val('');
+        $('#filterType').val('');
+        $('#filterDifficulty').val('');
+        $('#toggleUnselectedOnly').prop('checked', false);
+        $.fn.dataTable.ext.search = [];
+        applyFilters();
+    }
+
+    function addQuestion(rowData, silent) {
         var exists = selectedQuestions.some(q => q.questionId === rowData.questionId);
         if (exists) {
-            toastr.warning('Question already added');
+            if (!silent) {
+                toastr.warning('Question already added');
+            }
             return;
         }
 
@@ -221,20 +321,80 @@ var ExamQuestionConfig = (function () {
         });
 
         renderSelectedQuestions();
+        updateCheckboxStates();
+        updateUnselectedCount();
+        
+        if (!silent) {
+            toastr.success('Question added successfully');
+        }
     }
 
     function removeQuestion(questionId) {
-        selectedQuestions = selectedQuestions.filter(q => q.questionId !== questionId);
-        renderSelectedQuestions();
+        var $card = $('.question-card[data-question-id="' + questionId + '"]');
+        $card.fadeOut(300, function() {
+            selectedQuestions = selectedQuestions.filter(q => q.questionId !== questionId);
+            renderSelectedQuestions();
+            updateCheckboxStates();
+            updateUnselectedCount();
+            toastr.info('Question removed');
+        });
     }
 
     function uncheckQuestion(questionId) {
-        $('.question-checkbox[data-question-id="' + questionId + '"]').prop('checked', false);
+        var $checkbox = $('.question-checkbox[data-question-id="' + questionId + '"]');
+        $checkbox.prop('checked', false).prop('disabled', false);
+    }
+
+    function updateCheckboxStates() {
+        if (!availableTable) return;
+        
+        availableTable.rows().every(function() {
+            var rowData = this.data();
+            var $checkbox = $(this.node()).find('.question-checkbox');
+            var isSelected = selectedQuestions.some(q => q.questionId === rowData.questionId);
+            
+            if (isSelected) {
+                $checkbox.prop('checked', true).prop('disabled', true);
+            } else {
+                $checkbox.prop('checked', false).prop('disabled', false);
+            }
+        });
+    }
+
+    function updateSummary() {
+        var totalQuestions = selectedQuestions.length;
+        var totalMarks = selectedQuestions.reduce((sum, q) => sum + (q.marks || 0), 0);
+        var avgMarks = totalQuestions > 0 ? (totalMarks / totalQuestions).toFixed(2) : 0;
+        
+        $('#summaryTotalQuestions').text(totalQuestions);
+        $('#summaryTotalMarks').text(totalMarks.toFixed(2));
+        $('#summaryAvgMarks').text(avgMarks);
+        
+        // Get difficulty breakdown from available table
+        var easyCount = 0, mediumCount = 0, hardCount = 0;
+        selectedQuestions.forEach(function(q) {
+            if (availableTable) {
+                availableTable.rows().every(function() {
+                    var rowData = this.data();
+                    if (rowData.questionId === q.questionId) {
+                        var difficulty = rowData.difficultyLevel;
+                        if (difficulty === 'Easy') easyCount++;
+                        else if (difficulty === 'Medium') mediumCount++;
+                        else if (difficulty === 'Hard') hardCount++;
+                    }
+                });
+            }
+        });
+        
+        $('#summaryEasy').text(easyCount);
+        $('#summaryMedium').text(mediumCount);
+        $('#summaryHard').text(hardCount);
     }
 
     function renderSelectedQuestions() {
         var $panel = $('#selectedQuestionsPanel');
         $('#selectedCount').text(selectedQuestions.length);
+        updateSummary();
 
         if (selectedQuestions.length === 0) {
             $panel.html('<p class="text-muted text-center">No questions selected yet</p>');
@@ -243,10 +403,17 @@ var ExamQuestionConfig = (function () {
 
         var html = '';
         selectedQuestions.forEach(function (q, index) {
+            var questionText = q.questionEnglish || '';
+            var needsExpand = questionText.length > 500;
+            
             html += '<div class="question-card" data-question-id="' + q.questionId + '">' +
                 '<div class="d-flex justify-content-between align-items-start mb-2">' +
-                '<div class="flex-grow-1 question-text">' +
-                '<strong style="display:inline-flex;">Q' + (index + 1) + '.</strong> <span style="display:inline-flex;">' + (q.questionEnglish || '').substring(0, 200) + '...</span>' +
+                '<div class="flex-grow-1">' +
+                '<div class="d-flex align-items-start">' +
+                '<strong style="min-width: 30px;">Q' + (index + 1) + '.</strong>' +
+                '<div class="question-text' + (needsExpand ? ' collapsed' : '') + '" style="flex: 1;">' + questionText + '</div>' +
+                (needsExpand ? '<button type="button" class="btn btn-sm btn-outline-secondary btn-expand ms-2" style="flex-shrink: 0;"><i class="fas fa-chevron-down"></i></button>' : '') +
+                '</div>' +
                 '<div class="question-meta">Topic: ' + (q.topicName || 'N/A') + '</div>' +
                 '</div>' +
                 '<button type="button" class="btn btn-sm btn-danger btn-remove-question" data-question-id="' + q.questionId + '">' +
@@ -297,12 +464,15 @@ var ExamQuestionConfig = (function () {
             })
         };
 
+        $('#ajaxLoader').addClass('show');
+
         $.ajax({
             url: saveExamQuestionsUrl,
             type: "POST",
             contentType: "application/json",
             data: JSON.stringify(config),
             success: function (response) {
+                $('#ajaxLoader').removeClass('show');
                 if (response.success) {
                     toastr.success(response.message || 'Configuration saved successfully!');
                     setTimeout(function () {
@@ -313,6 +483,7 @@ var ExamQuestionConfig = (function () {
                 }
             },
             error: function () {
+                $('#ajaxLoader').removeClass('show');
                 toastr.error('An error occurred while saving');
             }
         });
@@ -333,9 +504,27 @@ $(document).ready(function () {
         } else {
             $('#scrollToTop').fadeOut();
         }
+        
+        // Show sticky save button when scrolled down
+        if ($(this).scrollTop() > 300) {
+            $('#stickyActionBar').addClass('show');
+        } else {
+            $('#stickyActionBar').removeClass('show');
+        }
     });
 
     $('#scrollToTop').click(function() {
         $('html, body').animate({ scrollTop: 0 }, 600);
+    });
+    
+    // Sticky save button click
+    $('#btnStickyConfig').click(function() {
+        $('#btnSaveConfiguration').click();
+    });
+    
+    // Summary card collapse toggle
+    $('#summaryToggle').click(function() {
+        $('#summaryContent').slideToggle(300);
+        $('#summaryIcon').toggleClass('fa-chevron-up fa-chevron-down');
     });
 });

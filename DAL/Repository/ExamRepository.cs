@@ -491,8 +491,8 @@ namespace DAL.Repository
                 LEFT JOIN SubjectTopic t ON q.TopicId = t.TopicId
                 LEFT JOIN Subject s ON t.SubjectId = s.SubjectId and s.InstituteId = @InstituteId 
                 LEFT JOIN QuestionType qt ON q.QuestionTypeId = qt.QuestionTypeId
-                WHERE q.IsDeleted = 0
-                  AND q.QuestionId NOT IN (SELECT QuestionId FROM ExamQuestion WHERE ExamId = @ExamId)
+                WHERE q.IsDeleted = 0  
+                 --AND q.QuestionId NOT IN (SELECT QuestionId FROM ExamQuestion WHERE ExamId = @ExamId)
                 ORDER BY s.SubjectName, t.TopicName";
 
             return await connection.QueryAsync<AvailableQuestionDTO>(sql, new { ExamId = examId, InstituteId = instituteId });
