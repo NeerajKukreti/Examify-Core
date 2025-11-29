@@ -164,7 +164,8 @@ $(document).ready(function () {
         
         if (confirm('Are you sure you want to ' + action + ' this exam?')) {
             $.ajax({
-                url: PublishExamUrl.replace("{id}", examId),
+                url: window.API_ENDPOINTS.baseUrl + 'Exam/'+examId+'/publish',
+                //url: PublishExamUrl.replace("{id}", examId),
                 type: 'POST',
                 success: function (response) {
                     if (response.Success) {
