@@ -1,4 +1,4 @@
-@model DataModel.QuestionModel
+﻿@model DataModel.QuestionModel
 @using System.Text.Json
 @{
     ViewBag.Title = "Create/Edit Question";
@@ -666,7 +666,7 @@
                 <div class="panel-title">
                     Question English <span class="text-danger">*</span>
                 </div>
-                <button type="button" class="toggle-btn">+</button>
+                <button type="button" class="toggle-btn">−</button>
             </div>
             <div class="panel-body" style="display: block">
                 <div class="editor-container" id="editor-question-english" data-name="Question english"></div>
@@ -711,12 +711,16 @@
         </div>
 
         <!-- Explanation Section -->
-        <div class="form-section">
-            <div class="section-title">
-                Explanation
+        <div class="editor-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    Explanation
+                </div>
+                <button type="button" class="toggle-btn">+</button>
             </div>
-            <div class="form-group textarea-container">
-                <textarea asp-for="Explanation" class="form-control" placeholder="Question explanation..."></textarea>
+            <div class="panel-body">
+                <div class="editor-container" id="editor-explanation" data-name="Explanation"></div>
+                <input type="hidden" name="Explanation" id="hfExplanation" />
             </div>
         </div>
 
@@ -1023,7 +1027,8 @@
             extractImages(window.modelData.QuestionEnglish),
             extractImages(window.modelData.QuestionHindi),
             extractImages(window.modelData.AdditionalTextEnglish),
-            extractImages(window.modelData.AdditionalTextHindi)
+            extractImages(window.modelData.AdditionalTextHindi),
+            extractImages(window.modelData.Explanation)
         );
         if (window.modelData.Options) {
             window.modelData.Options.forEach(function(opt) {

@@ -51,7 +51,10 @@ function initializeMultiSelectBehavior() {
         var isMultiSelect = $(this).is(':checked');
 
         if (!isMultiSelect) {
-            $('.option-checkbox').find('input').prop('checked', true);
+            // Uncheck all option checkboxes when multi-select is disabled
+            $('.option-checkbox').find('input').prop('checked', false);
+            // Update hidden fields
+            $('.option-correct-hidden').val('false');
         }
     });
 
@@ -565,8 +568,7 @@ $(function () {
         }
 
         // Clear hidden fields
-        $('#hfQuestionEnglish, #hfQuestionHindi, #hfAdditionalEnglish, #hfAdditionalHindi').val('');
-        $('textarea[asp-for="Explanation"]').val('');
+        $('#hfQuestionEnglish, #hfQuestionHindi, #hfAdditionalEnglish, #hfAdditionalHindi, #hfExplanation').val('');
 
         // Clear MCQ options
         $('.option-checkbox input[type="checkbox"]').prop('checked', false);
@@ -722,6 +724,11 @@ $(function () {
         let qAddHindi = window.__quillEditors && window.__quillEditors['editor-additional-hindi'];
         if (qAddHindi && window.FieldManager) {
             window.FieldManager.syncQuillToHidden(qAddHindi, $('#hfAdditionalHindi'));
+        }
+        // Explanation
+        let qExplanation = window.__quillEditors && window.__quillEditors['editor-explanation'];
+        if (qExplanation && window.FieldManager) {
+            window.FieldManager.syncQuillToHidden(qExplanation, $('#hfExplanation'));
         }
 
         // Get the question type - use let instead of const so we can modify it if needed

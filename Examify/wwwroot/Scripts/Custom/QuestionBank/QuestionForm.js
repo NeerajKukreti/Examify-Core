@@ -162,7 +162,8 @@
         },
         
         // Handle panel toggle
-        handlePanelToggle: function(e) {
+        handlePanelToggle: function (e) {
+            debugger;
             const $btn = $(this).find('.toggle-btn');
             const $panelBody = $btn.closest('.editor-panel').find('.panel-body');
             
@@ -286,7 +287,6 @@
             if (modelData.TopicId) $('#ddlTopic').val(modelData.TopicId);
             if (modelData.DifficultyLevel) $('#ddlDifficultyLevel').val(modelData.DifficultyLevel);
             $('#IsMultiSelect').prop('checked', !!modelData.IsMultiSelect);
-            if (modelData.Explanation) $('textarea[asp-for="Explanation"]').val(modelData.Explanation);
         },
         
         // Populate Quill editors
@@ -297,7 +297,8 @@
                 'editor-question-english': modelData.QuestionEnglish,
                 'editor-question-hindi': modelData.QuestionHindi,
                 'editor-additional-english': modelData.AdditionalTextEnglish,
-                'editor-additional-hindi': modelData.AdditionalTextHindi
+                'editor-additional-hindi': modelData.AdditionalTextHindi,
+                'editor-explanation': modelData.Explanation
             };
             
             Object.keys(editorMappings).forEach(editorId => {
