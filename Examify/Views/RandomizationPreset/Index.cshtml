@@ -1,0 +1,97 @@
+@{
+    ViewBag.Title = "Randomization Presets";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="@Url.Content("~/theme/plugins/datatables-2.3.4/css/datatables.bootstrap5.min.css")" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+    .preset-card { border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 10px; }
+    .preset-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .detail-item { background: #f8f9fa; padding: 8px; border-radius: 4px; margin-bottom: 5px; font-size: 13px; }
+</style>
+
+<div class="app-content-header" style="padding:8px 0px 0px 7px !important">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="mb-0">Randomization Presets</h4>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-end">
+                    <li class="breadcrumb-item"><a href="/Dashboard">Home</a></li>
+                    <li class="breadcrumb-item active">Presets</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="app-content">
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <button class="btn btn-primary" id="btnNewPreset">
+                    <i class="fas fa-plus"></i> New Preset
+                </button>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped" id="presetsTable">
+                    <thead>
+                        <tr>
+                            <th>Preset Name</th>
+                            <th>Description</th>
+                            <th>Rules</th>
+                            <th>Created</th>
+                            <th width="150">Actions</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="presetModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">New Preset</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="presetId" value="0">
+                <div class="mb-3">
+                    <label>Preset Name</label>
+                    <input type="text" class="form-control" id="presetName" required>
+                </div>
+                <div class="mb-3">
+                    <label>Description</label>
+                    <textarea class="form-control" id="presetDescription" rows="2"></textarea>
+                </div>
+                <hr>
+                <h6>Rules <button type="button" class="btn btn-sm btn-success" id="btnAddRule"><i class="fas fa-plus"></i></button></h6>
+                <div id="rulesContainer"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSavePreset">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="@Url.Content("~/theme/plugins/datatables-2.3.4/js/datatables.js")"></script>
+    <script src="@Url.Content("~/theme/plugins/datatables-2.3.4/js/datatables.bootstrap5.min.js")"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="@Url.Content("~/Scripts/Custom/Exam/RandomizationPreset.js")"></script>
+}
+
+<script>
+    var instituteId = @ViewBag.InstituteId;
+</script>

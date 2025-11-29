@@ -21,7 +21,8 @@ namespace DAL.Repository
         private readonly IConfiguration _config;
         public SubjectRepository(IConfiguration config) => _config = config;
 
-        private IDbConnection CreateConnection() => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+        private IDbConnection CreateConnection() => 
+            new SqlConnection(_config.GetConnectionString("DefaultConnection"));
 
         public async Task<IEnumerable<SubjectModel>> GetAllSubjectsAsync(int instituteId, int? subjectId = null)
         {

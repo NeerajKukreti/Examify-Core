@@ -7,8 +7,21 @@ var ExamQuestionConfig = (function () {
     function init() {
         initAvailableQuestionsTable();
         loadExistingQuestions();
+        loadPresets();
         bindEvents();
         updateSummary();
+    }
+
+    function loadPresets() {
+        $.get('/RandomizationPreset/GetAll', function(res) {
+            if (res.data) {
+                var options = '<option value="">-- Choose Preset --</option>';
+                res.data.forEach(function(p) {
+                    options += '<option value="' + p.presetId + '">' + p.presetName + '</option>';
+                });
+                $('#presetSelector').html(options);
+            }
+        });
     }
 
     function initAvailableQuestionsTable() {
@@ -526,5 +539,65 @@ $(document).ready(function () {
     $('#summaryToggle').click(function() {
         $('#summaryContent').slideToggle(300);
         $('#summaryIcon').toggleClass('fa-chevron-up fa-chevron-down');
+    });
+
+    // Preset integration
+    $('#btnPreviewPreset').click(function() {
+        var presetId = $('#presetSelector').val();
+        if (!presetId) {
+            toastr.warning('Select a preset first');
+            return;
+        }
+        $.get('/RandomizationPreset/Preview?presetId=' + presetId, function(res) {
+            if (res.success) {
+                var html = '<div class="alert alert-info mt-2"><strong>Preview:</strong> Will add ' + res.data.totalQuestions + ' questions<ul class="mb-0 mt-2">';
+                res.data.details.forEach(function(d) {
+                    var status = d.hasEnough ? '✓' : '⚠';
+                    html += '<li>' + status + ' ' + (d.topicName || d.subjectName || 'All') + 
+                            (d.difficultyLevel ? ' (' + d.difficultyLevel + ')' : '') + 
+                            ': ' + d.requestedCount + ' requested, ' + d.availableCount + ' available</li>';
+                });
+                html += '</ul></div>';
+                $('#presetPreview').html(html).show();
+            }
+        });
+    });
+
+    $('#btnExecutePreset').click(function() {
+        var presetId = $('#presetSelector').val();
+        if (!presetId) {
+            toastr.warning('Select a preset first');
+            return;
+        }
+        if (!confirm('Execute this preset? Questions will be added to the exam.')) return;
+
+        $('#ajaxLoader').addClass('show');
+        $.ajax({
+            url: '/RandomizationPreset/Execute',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                examId: examId,
+                presetId: parseInt(presetId),
+                defaultMarks: parseFloat($('#globalMarks').val()) || 1.0,
+                defaultNegativeMarks: parseFloat($('#globalNegativeMarks').val()) || 0.0
+            }),
+            success: function(res) {
+                $('#ajaxLoader').removeClass('show');
+                if (res.success) {
+                    toastr.success(res.message);
+                    $('#presetSelector').val('');
+                    $('#presetPreview').hide();
+                    loadExistingQuestions();
+                    availableTable.ajax.reload();
+                } else {
+                    toastr.error(res.message);
+                }
+            },
+            error: function() {
+                $('#ajaxLoader').removeClass('show');
+                toastr.error('Failed to execute preset');
+            }
+        });
     });
 });

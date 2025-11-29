@@ -74,6 +74,7 @@ builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IBatchService, BatchService>();
+builder.Services.AddScoped<IRandomizationPresetService, RandomizationPresetService>();
 
 // Add caching services
 builder.Services.AddMemoryCache();

@@ -241,7 +241,7 @@
                         </div>
 
                         <div class="bulk-actions d-flex gap-2 align-items-center">
-                            <button type="button" class="btn btn-sm btn-primary" id="   ">
+                            <button type="button" class="btn btn-sm btn-primary" id="btnSelectFiltered">
                                 <i class="fas fa-check-double"></i> Select All Visible Questions
                             </button>
                             <button type="button" class="btn btn-sm btn-warning" id="btnClearSelection">
@@ -309,6 +309,23 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Preset Section -->
+                        <div class="mb-3 p-3 bg-info bg-opacity-10 rounded">
+                            <h6>🎲 Quick Add via Preset</h6>
+                            <div class="d-flex gap-2 align-items-end">
+                                <div class="flex-grow-1">
+                                    <label>Select Preset</label>
+                                    <select class="form-select" id="presetSelector">
+                                        <option value="">-- Choose Preset --</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary" id="btnPreviewPreset">Preview</button>
+                                <button class="btn btn-success" id="btnExecutePreset">Execute</button>
+                                <a href="/RandomizationPreset" class="btn btn-outline-secondary">Manage Presets</a>
+                            </div>
+                            <div id="presetPreview" class="mt-2" style="display:none;"></div>
                         </div>
 
                         <!-- Global Settings (visible when Advanced OFF) -->

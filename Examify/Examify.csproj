@@ -43,6 +43,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Examify.Logs\Examify.Logs.csproj" />
     <ProjectReference Include="..\Model\Model.csproj" />
+    <ProjectReference Include="..\DAL\DAL.csproj" />
   </ItemGroup>
 
   <ItemGroup>
