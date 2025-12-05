@@ -99,11 +99,11 @@ i) ii) iii) iv)
 (अ) (ब) (स) (द)
 
 RULES:
-- Preserve the EXACT text and numbering format.
-- If options appear on separate lines without labels, treat EACH line as one option.
-- NEVER infer missing options.
-- NEVER renumber options.
-- RETURN options in the order they appear vertically.
+- REMOVE numbering labels such as (1), 1., (A), A), i), (अ) ONLY when they appear at the beginning of an option.
+- Preserve the text after the numbering exactly.
+- Return options in the same vertical order.
+- If options appear on separate lines without labels, treat each line as one option.
+- Return options top-to-bottom exactly as printed.
 
 === STEP 2: DIAGRAM DETECTION (CRITICAL) ===
 Scan the ENTIRE image and detect ALL diagrams present.
