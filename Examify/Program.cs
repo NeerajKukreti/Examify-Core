@@ -61,6 +61,21 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
+
+// OCR Services
+builder.Services.AddHttpClient<Examify.Services.OCR.GeminiOcrService>().ConfigureHttpClient(client =>
+{
+    client.Timeout = TimeSpan.FromMinutes(5);
+});
+builder.Services.AddHttpClient<Examify.Services.OCR.GeminiModelService>().ConfigureHttpClient(client =>
+{
+    client.Timeout = TimeSpan.FromMinutes(5);
+});
+builder.Services.AddSingleton<Examify.Services.OCR.DiagramDetectionService>();
+builder.Services.AddSingleton<Examify.Services.OCR.GeminiJsonParserService>();
+builder.Services.AddSingleton<Examify.Services.OCR.PdfToImageService>();
+builder.Services.AddScoped<Examify.Services.OCR.IQuestionExtractorService, Examify.Services.OCR.QuestionExtractorService>();
+
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IExamService, ExamService>();
 builder.Services.AddScoped<IInstituteLoginService, InstituteLoginService>();

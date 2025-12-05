@@ -1,16 +1,14 @@
-
+<!doctype html>
 @using Microsoft.AspNetCore.Http
 @inject IConfiguration Configuration
-<script>
-    window.API_ENDPOINTS = {
-        baseUrl: '@(Configuration["ExamifyAPI:BaseUrl"] ?? "https://localhost:7271/api/")'
-    };
-</script>
-
-<!doctype html>
 <html lang="en">
 <!--begin::Head-->
 <head>
+    <script>
+        window.API_ENDPOINTS = {
+            baseUrl: '@(Configuration["ExamifyAPI:BaseUrl"] ?? "https://localhost:7271/api/")'
+        };
+    </script>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>ExamVaults | Dashboard</title>
 
@@ -106,8 +104,6 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
-   
-
     @{
         var accessTokenValue = Context.Request.Cookies["JWToken"];
         var refreshTokenValue = Context.Request.Cookies["RefreshToken"];
@@ -149,6 +145,40 @@
             }
 
             var originalAjax = $.ajax;
+            // Intercept fetch API
+            var originalFetch = window.fetch;
+            window.fetch = function(url, options) {
+                options = options || {};
+                var isApiCall = (typeof url === 'string' && (url.includes('/api/') || url.includes(window.API_ENDPOINTS.baseUrl) || url.startsWith('api/'))) ||
+                               (url instanceof Request && (url.url.includes('/api/') || url.url.includes(window.API_ENDPOINTS.baseUrl) || url.url.startsWith('api/')));
+                
+                if (accessToken && isApiCall) {
+                    options.headers = options.headers || {};
+                    if (!options.headers['Authorization']) {
+                        options.headers['Authorization'] = 'Bearer ' + accessToken;
+                    }
+                }
+                
+                return originalFetch(url, options).then(function(response) {
+                    if (response.status === 401 && refreshToken && !isRefreshing) {
+                        isRefreshing = true;
+                        return refreshAccessToken()
+                            .then(function() {
+                                options.headers['Authorization'] = 'Bearer ' + accessToken;
+                                return originalFetch(url, options);
+                            })
+                            .catch(function() {
+                                window.location.href = '/Auth/Logout';
+                                throw response;
+                            })
+                            .finally(function() {
+                                isRefreshing = false;
+                            });
+                    }
+                    return response;
+                });
+            };
+
             $.ajax = function(settings) {
                 // Add Authorization header to all API calls
                 if (accessToken && settings.url) {

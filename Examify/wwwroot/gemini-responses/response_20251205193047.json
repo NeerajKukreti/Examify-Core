@@ -1,0 +1,90 @@
+{
+  "questions": [
+    {
+      "question_number": 11,
+      "question_text": "Poise is the unit of पोइज किसकी इकाई है।",
+      "options": [
+        "(1) Pressure (1) दाब",
+        "(2) Friction (2) घर्षण",
+        "(3) Surface tension (3) पृष्ठतनाव",
+        "(4) Viscosity (4) श्यानता"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 12,
+      "question_text": "A 50 kg girl wearing high heel shoes balances on a single heel. The heel is circular with a diameter 1.0 cm. What is the pressure exerted by the heel on the horizontal floor ?\nऊँची एड़ी के जूते पहने 50 kg संहति की कोई बालिका अपने शरीर को 1.0 cm व्यास की एक ही वृत्ताकार एड़ी पर संतुलित किये हुए है। क्षैतिज फर्श पर एड़ी द्वारा आरोपित दाब ज्ञात कीजिए।",
+      "options": [
+        "(1) $8.2 \\times 10^6 Pa$",
+        "(3) $6.2 \\times 10^6 Pa$",
+        "(2) $12 \\times 10^6 Pa$",
+        "(4) $15 \\times 10^6 Pa$"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 13,
+      "question_text": "In a test experiment on a model aeroplane in a wind tunnel, the flow speeds on the upper and lower surfaces of the wing are $70 \\, m \\, s^{-1}$ and $63 \\, m \\, s^{-1}$ respectively. What is the lift on the wing if its area is $2.5 \\, m^2$? Take the density of air to be $1.3 \\, kg \\, m^{-3}$.\nकिसी आदर्श वायुयान के परीक्षण प्रयोग में वायु-सुरंग के भीतर पंखों के ऊपर और नीचे के पृष्ठों पर वायु-प्रवाह की गतियाँ क्रमशः $70 \\, m/s$ तथा $63 \\, m/s$ हैं। यदि पंख का क्षेत्रफल $2.5 \\, m^2$ है, तो उस पर आरोपित उत्थापक बल परिकलित कीजिए। वायु का घनत्व $1.3 \\, kg \\, m^{-3}$ लीजिए।",
+      "options": [
+        "(1) $2.5 \\times 10^3 N$",
+        "(3) $3 \\times 10^3 N$",
+        "(2) $1.5 \\times 10^3 N$",
+        "(4) $4.5 \\times 10^3 N$"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 14,
+      "question_text": "A wire is stretched by hanging a weight from its end and develops a longitudinal strain $\\sigma$, Y being the Young's modulus, elastic potential energy of the wire per unit volume can be expressed as :\nएक तार को किसी भार के द्वारा खींचा जाता है और रेखीय विकृति $\\sigma$ है यदि Y यंगप्रत्यास्थता गुणांक हो तो तार के एकांक आयतन में प्रत्यास्थ स्थितिज ऊर्जा होगी :",
+      "options": [
+        "(1) $\\frac{Y\\sigma}{2}$",
+        "(2) $\\frac{Y\\sigma^2}{2}$",
+        "(3) $\\frac{3Y\\sigma^2}{2}$",
+        "(4) $\\frac{Y\\sigma^2}{4}$"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 15,
+      "question_text": "Match column I and column II.\nकॉलम I और कॉलम II का मिलान कीजिए।\nColumn-I\n(A) Stoke's law\nस्टोक का नियम\n(B) Turbulence\nप्रक्षुब्ध प्रवाह\n(C) Bernoulli's principle\nबरनौली का सिद्धान्त\n(D) Pascal's law\nपास्कल का नियम\nColumn-II\n(1) Pressure energy\nदाब ऊर्जा\n(2) Hydraulic lift\nद्रवचालित उत्थापक\n(3) Viscous drag\nश्यानकर्षण\n(4) Above a certain critical speed\nएक निश्चित सीमान्त वेग से ऊपर",
+      "options": [
+        "(1) (A) → (3) ; (B) → (4) ; (C) → (1) ; (D) → (2)",
+        "(2) (A) → (1) ; (B) → (2) ; (C) → (3) ; (D) → (4)",
+        "(3) (A) → (2) ; (B) → (1) ; (C) → (2) ; (D) → (3)",
+        "(4) (A) → (3) ; (B) → (4) ; (C) → (2) ; (D) → (1)"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 16,
+      "question_text": "Two vessels A and B of different shapes have the same base area and are filled with water up to the same height h (see figure). The force exerted by water on the base is $F_A$ for vessel A and $F_B$ for vessel B. The respective weights of the water filled in vessels are $W_A$ and $W_B$. Then\nभिन्न भिन्न आकार के दो बर्तन A और B के आधार का क्षेत्रफल बराबर है। दोनों में h ऊँचाई तक पानी भरा है। A की तली पर पानी द्वारा $F_A$ बल लगाया जाता है तथा B की तली पर पानी द्वारा $F_B$ बल लगाया जाता है। यदि बर्तनों में भरे पानी का भार क्रमशः $W_A$ और $W_B$ है तो -",
+      "options": [
+        "(1) $F_A > F_B$ ; $W_A > W_B$",
+        "(2) $F_A = F_B$ ; $W_A > W_B$",
+        "(3) $F_A = F_B$ ; $W_A < W_B$",
+        "(4) $F_A > F_B$ ; $W_A = W_B$"
+      ],
+      "diagrams": [
+        {
+          "question_number": 16,
+          "description": "A diagram shows two vessels, A and B, filled with water to a height h. Vessel A is a frustum, wider at the top than the bottom. Vessel B is a cylinder with vertical sides. Both have the same base area.",
+          "x_percent": 75.0,
+          "y_percent": 57.5,
+          "width_percent": 20.0,
+          "height_percent": 12.0
+        }
+      ]
+    },
+    {
+      "question_number": 17,
+      "question_text": "A fixed cylindrical vessel is filled with water up to height H. A hole is bored in the wall at a depth h from the free surface of water. For maximum horizontal range h is equal to :\nएक जड़वत बेलनाकार बर्तन पानी से H ऊँचाई तक भरा हुआ है। पानी की मुक्त सतह से h गहराई पर एक छेद किया गया है। अधिकतम क्षैतिज परास के लिए h का मान होगा -",
+      "options": [
+        "(1) H",
+        "(3) H/2",
+        "(2) 3H/4",
+        "(4) H/4"
+      ],
+      "diagrams": []
+    }
+  ]
+}

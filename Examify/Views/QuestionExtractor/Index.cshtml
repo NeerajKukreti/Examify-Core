@@ -1,0 +1,45 @@
+@{
+    ViewData["Title"] = "PDF OCR";
+}
+
+<div class="text-center">
+    <h1 class="display-4">PDF OCR with Gemini Vision</h1>
+    <p>Upload a PDF with math/science content</p>
+</div>
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="mb-3">
+                <input type="file" class="form-control" id="pdfFile" accept=".pdf" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Extract Text</button>
+        </form>
+        <div id="result" class="mt-4"></div>
+    </div>
+</div>
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('file', document.getElementById('pdfFile').files[0]);
+    
+    document.getElementById('result').innerHTML = '<div class="spinner-border"></div> Processing...';
+    
+    try {
+        const response = await fetch('/QuestionExtractor/UploadPdf', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        document.getElementById('result').innerHTML = 
+            '<div class="alert alert-success"><h5>' + data.message + '</h5>' + 
+            data.images.map((img, i) => `<div><a href="${img}" target="_blank">Page ${i+1}</a> <img src="${img}" style="max-width:200px;margin:10px"/></div>`).join('') + 
+            '</div>';
+    } catch (error) {
+        document.getElementById('result').innerHTML = 
+            '<div class="alert alert-danger">Error: ' + error.message + '</div>';
+    }
+});
+</script>

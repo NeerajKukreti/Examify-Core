@@ -1,0 +1,112 @@
+@{
+    ViewData["Title"] = "Image OCR";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+.math-content {
+    font-size: 16px;
+    line-height: 2;
+    white-space: pre-wrap;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+.math-content .katex { font-size: 1.1em; }
+</style>
+
+<div class="text-center">
+    <h1 class="display-4">Image OCR with Gemini 2.5 Pro</h1>
+    <p>Upload an image with math/science content</p>
+</div>
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label>Subject</label>
+                <select id="subjectId" class="form-control" required></select>
+            </div>
+            <div class="mb-3">
+                <label>Topic</label>
+                <select id="topicId" class="form-control" required></select>
+            </div>
+            <div class="mb-3">
+                <input type="file" class="form-control" id="imageFile" accept="image/*" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Extract Text</button>
+        </form>
+        <div id="result" class="mt-4"></div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#subjectId, #topicId').select2({ placeholder: 'Select...', allowClear: true });
+    
+    fetch(window.API_ENDPOINTS.baseUrl + 'Subject/2/0')
+        .then(r => r.json())
+        .then(d => {
+            $('#subjectId').append('<option></option>');
+            if (d.Success && d.Data) {
+                d.Data.forEach(s => $('#subjectId').append(`<option value="${s.SubjectId}">${s.SubjectName}</option>`));
+            }
+        });
+    
+    $('#subjectId').on('change', function() {
+        const subjectId = $(this).val();
+        $('#topicId').empty().append('<option></option>');
+        if (subjectId) {
+            fetch(window.API_ENDPOINTS.baseUrl + `Subject/${subjectId}/topics`)
+                .then(r => r.json())
+                .then(d => {
+                    if (d.Success && d.Data) {
+                        d.Data.forEach(t => $('#topicId').append(`<option value="${t.TopicId}">${t.TopicName}</option>`));
+                    }
+                });
+        }
+    });
+});
+
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('file', document.getElementById('imageFile').files[0]);
+    formData.append('topicId', document.getElementById('topicId').value);
+    
+    document.getElementById('result').innerHTML = '<div class="spinner-border"></div> Processing...';
+    
+    try {
+        const response = await fetch('/QuestionExtractor/UploadImage', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        document.getElementById('result').innerHTML = 
+            '<div class="alert alert-success"><h5>Extracted Questions:</h5><div class="math-content">' + 
+            JSON.stringify(data.questions, null, 2) + '</div></div>';
+        
+        if (window.renderMathInElement) {
+            renderMathInElement(document.querySelector('.math-content'), {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ],
+                throwOnError: false
+            });
+        }
+    } catch (error) {
+        document.getElementById('result').innerHTML = 
+            '<div class="alert alert-danger">Error: ' + error.message + '</div>';
+    }
+});
+</script>
+}

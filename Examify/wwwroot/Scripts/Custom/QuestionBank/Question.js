@@ -291,6 +291,18 @@ function loadTopics(subjectId, callback) {
 
         // Track image deletions and handle pasted base64 images
         q.on('text-change', function(delta, oldDelta, source) {
+            // Auto-convert $...$ to formula
+            if (source === 'user') {
+                var text = q.getText();
+                var match = /\$([^\$\n]+?)\$/.exec(text);
+                if (match) {
+                    var index = match.index;
+                    q.deleteText(index, match[0].length, 'silent');
+                    q.insertEmbed(index, 'formula', match[1], 'silent');
+                    q.setSelection(index + 1);
+                    return;
+                }
+            }
             if (source !== 'user') return;
             var currentImages = [];
             q.getContents().ops.forEach(function(op) {
@@ -475,6 +487,22 @@ $(function () {
         });
         // Attach image upload handler for THIS editor
         const toolbar = q.getModule('toolbar');
+        
+        // Auto-convert $...$ to formula on text change
+        q.on('text-change', function(delta, oldDelta, source) {
+            if (source === 'user') {
+                var text = q.getText();
+                var match = /\$([^\$\n]+?)\$/.exec(text);
+                if (match) {
+                    var index = match.index;
+                    q.deleteText(index, match[0].length, 'silent');
+                    q.insertEmbed(index, 'formula', match[1], 'silent');
+                    q.setSelection(index + 1);
+                    return;
+                }
+            }
+        });
+        
         toolbar.addHandler('image', () => {
             const input = document.createElement('input');
             input.type = 'file';

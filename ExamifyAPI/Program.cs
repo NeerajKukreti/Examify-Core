@@ -91,6 +91,7 @@ builder.Services.AddScoped<IStateRepository, StateRepository>();
 builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
 builder.Services.AddScoped<IClassRepository, ClassRepository>();
 builder.Services.AddScoped<IBatchRepository, BatchRepository>();
+builder.Services.AddScoped<IQuestionExtractorRepository, QuestionExtractorRepository>();
 
 // Service registrations
 builder.Services.AddScoped<IUserService, UserService>();
@@ -103,6 +104,7 @@ builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IStateService, StateService>();
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IBatchService, BatchService>();
+builder.Services.AddScoped<IQuestionExtractorService, QuestionExtractorService>();
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
