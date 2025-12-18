@@ -44,12 +44,13 @@ public class GeminiJsonParserService
             {
                 QuestionNumber = questionNumber,
                 QuestionText = questionText,
-                Options = new List<string>()
+                Options = new List<OcrOption>()
             };
 
+            int optNum = 1;
             foreach (var opt in options.EnumerateArray())
             {
-                question.Options.Add(opt.GetString() ?? "");
+                question.Options.Add(new OcrOption { OptionNumber = optNum++, OptionText = opt.GetString() ?? "" });
             }
 
             if (questionObj.TryGetProperty("diagrams", out var diagramsArray))
@@ -80,8 +81,15 @@ public class OcrQuestion
 {
     public int QuestionNumber { get; set; }
     public string QuestionText { get; set; } = string.Empty;
-    public List<string> Options { get; set; } = new();
+    public List<OcrOption> Options { get; set; } = new();
     public List<OcrDiagram>? Diagrams { get; set; }
+}
+
+public class OcrOption
+{
+    public int OptionNumber { get; set; }
+    public string OptionText { get; set; } = string.Empty;
+    public string? OptionImageUrl { get; set; }
 }
 
 public class OcrDiagram

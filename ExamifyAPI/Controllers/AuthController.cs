@@ -54,6 +54,7 @@ public class AuthController : ControllerBase
         var hash = BCrypt.Net.BCrypt.HashPassword(password);
         return Ok(new { Hash = hash });
     }
+
 }
 
 public class RefreshTokenRequest

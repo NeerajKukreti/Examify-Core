@@ -1,9 +1,11 @@
 using DataModel;
 using ExamifyAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExamifyAPI.Controllers
 {
+    
     [Route("api/[controller]")]
     [ApiController]
     public class QuestionExtractorController : ControllerBase

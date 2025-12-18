@@ -255,9 +255,6 @@ function loadTopics(subjectId, callback) {
         }
 
         var modulesConfig = { toolbar: '#' + toolbarId };
-        if (Quill.imports['modules/imageResize']) {
-            modulesConfig.imageResize = { modules: ['Resize', 'DisplaySize', 'Toolbar'], preserveRatio: false };
-        }
 
         var q = new Quill('#' + editorId, {
             theme: 'snow',
@@ -358,7 +355,7 @@ function loadTopics(subjectId, callback) {
             '  <div class="option-label">Option ' + idx + '</div>',
             '  <div class="row">',
             '    <div class="col-md-10">',
-            '      <div class="editor-container" style="height: 50px !important" id="' + editorId + '" data-name="Option ' + idx + '"></div>',
+            '      <div class="editor-container" id="' + editorId + '" data-name="Option ' + idx + '"></div>',
             '       <input type="hidden" class="option-hidden-field" data-option-index="'+idx+'" />',
             '       <input type="hidden" class="option-choiceid-field" data-option-index="'+idx+'" />',
             '       <input type="hidden" class="option-correct-hidden" value="false" />',
@@ -430,19 +427,6 @@ $(function () {
     }
     // Map for editor instances
     var quillEditors = window.__quillEditors = {};
-    // Robustly detect resize module and register it (if present)
-    var resizeCandidate = (window.ImageResize && window.ImageResize.default) || window.ImageResize || window.QuillImageResizeModule || window.QuillImageResize || null;
-    try {
-        if (resizeCandidate) {
-            Quill.register('modules/imageResize', resizeCandidate);
-            console.log('imageResize registered');
-        } else {
-            console.log('imageResize not found; CSS fallback will apply.');
-        }
-    } catch (e) {
-        console.warn('imageResize registration failed:', e);
-        resizeCandidate = null;
-    }
     // Find the toolbar template (first .toolbar1)
     var $template = $('.toolbar1').first();
     var $template2 = $('.toolbar2').first();
@@ -476,9 +460,6 @@ $(function () {
         $clone.insertBefore($editor);
         // build modules config
         var modulesConfig = { toolbar: '#' + toolbarId };
-        if (resizeCandidate) {
-            modulesConfig.imageResize = { modules: ['Resize', 'DisplaySize', 'Toolbar'], preserveRatio: false };
-        }
         // init Quill for this editor
         var q = new Quill('#' + editorId, {
             theme: 'snow',
@@ -566,13 +547,6 @@ $(function () {
         });
         quillEditors[editorId] = q;
     });
-    // OPTIONAL: use CSS fallback so images are resizable if JS module missing
-    if (!resizeCandidate) {
-        $('<style>')
-            .prop('type', 'text/css')
-            .html('.ql-editor img { resize: both; overflow: auto; max-width:100%; height:auto; }')
-            .appendTo('head');
-    }
     console.log('Initialized editors:', Object.keys(quillEditors));
 });
 

@@ -1,11 +1,14 @@
 ﻿using ExamAPI.Services;
 using ExamifyAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Model.DTO;
 
 namespace ExamifyApi.Controllers
 {
+    
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class ClassController : ControllerBase
     {

@@ -39,10 +39,30 @@
         }
 
     .ql-editor img {
-        resize: both;
-        overflow: auto;
         max-width: 100%;
-        max-height: 500px;
+    }
+
+    /* Resizable Quill editors */
+    #options-wrapper .editor-container {
+        resize: vertical;
+        overflow: auto;
+        min-height: 80px;
+        height: 80px;
+    }
+
+    #options-wrapper .ql-editor {
+        min-height: 60px;
+        height: 100%;
+    }
+
+    #options-wrapper .option-group .row {
+        display: flex;
+        align-items: flex-start;
+    }
+
+    #options-wrapper .col-md-10 {
+        flex: 1;
+        max-width: none;
     }
 
     .editor-panel {
@@ -772,7 +792,7 @@
                     <div class="option-label">Option 1</div>
                     <div class="row">
                         <div class="col-md-10">
-                            <div class="editor-container" style="height: 50px !important" id="editor-option1" data-name="Option 1"></div>
+                            <div class="editor-container" id="editor-option1" data-name="Option 1"></div>
                             <input type="hidden" class="option-hidden-field" data-option-index="1" name="Options[0].Text" />
                             <input type="hidden" class="option-choiceid-field" data-option-index="1" name="Options[0].ChoiceId" />
                             <input type="hidden" class="option-correct-hidden" name="Options[0].IsCorrect" value="false" />
@@ -792,7 +812,7 @@
                     <div class="option-label">Option 2</div>
                     <div class="row">
                         <div class="col-md-10">
-                            <div class="editor-container" style="height: 50px !important" id="editor-option2" data-name="Option 2"></div>
+                            <div class="editor-container" id="editor-option2" data-name="Option 2"></div>
                             <input type="hidden" class="option-hidden-field" data-option-index="2" name="Options[1].Text" />
                             <input type="hidden" class="option-choiceid-field" data-option-index="2" name="Options[1].ChoiceId" />
                             <input type="hidden" class="option-correct-hidden" name="Options[1].IsCorrect" value="false" />
@@ -812,7 +832,7 @@
                     <div class="option-label">Option 3</div>
                     <div class="row">
                         <div class="col-md-10">
-                            <div class="editor-container" style="height: 50px !important" id="editor-option3" data-name="Option 3"></div>
+                            <div class="editor-container" id="editor-option3" data-name="Option 3"></div>
                             <input type="hidden" class="option-hidden-field" data-option-index="3" name="Options[2].Text" />
                             <input type="hidden" class="option-choiceid-field" data-option-index="3" name="Options[2].ChoiceId" />
                             <input type="hidden" class="option-correct-hidden" name="Options[2].IsCorrect" value="false" />
@@ -832,7 +852,7 @@
                     <div class="option-label">Option 4</div>
                     <div class="row">
                         <div class="col-md-10">
-                            <div class="editor-container" style="height: 50px !important" id="editor-option4" data-name="Option 4"></div>
+                            <div class="editor-container" id="editor-option4" data-name="Option 4"></div>
                             <input type="hidden" class="option-hidden-field" data-option-index="4" name="Options[3].Text" />
                             <input type="hidden" class="option-choiceid-field" data-option-index="4" name="Options[3].ChoiceId" />
                             <input type="hidden" class="option-correct-hidden" name="Options[3].IsCorrect" value="false" />

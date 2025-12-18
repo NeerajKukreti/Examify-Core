@@ -80,15 +80,19 @@ public class DiagramDetectionService
 
             if (isValidSize && hasGoodArea && notAtEdge && isCompact && !isTextArea)
             {
+                // Add 50px padding to left to include text labels
+                int paddedX = Math.Max(0, x - 80);
+                int paddedWidth = w + (x - paddedX);
+
                 diagrams.Add(new DiagramBounds
                 {
-                    X = x,
+                    X = paddedX,
                     Y = y,
-                    Width = w,
+                    Width = paddedWidth,
                     Height = h,
-                    XPercent = (double)x / imageWidth * 100,
+                    XPercent = (double)paddedX / imageWidth * 100,
                     YPercent = (double)y / imageHeight * 100,
-                    WidthPercent = (double)w / imageWidth * 100,
+                    WidthPercent = (double)paddedWidth / imageWidth * 100,
                     HeightPercent = (double)h / imageHeight * 100
                 });
             }
@@ -109,4 +113,3 @@ public class DiagramBounds
     public double WidthPercent { get; set; }
     public double HeightPercent { get; set; }
 }
-

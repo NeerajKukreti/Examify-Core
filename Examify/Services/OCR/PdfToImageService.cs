@@ -22,6 +22,12 @@ public class PdfToImageService
         for (int i = 0; i < docReader.GetPageCount(); i++)
         {
             using var pageReader = docReader.GetPageReader(i);
+            var text = pageReader.GetText();
+            
+            // Skip empty pages (only footer or whitespace)
+            if (string.IsNullOrWhiteSpace(text) || text.Trim().Length < 50)
+                continue;
+            
             var rawBytes = pageReader.GetImage();
             var width = pageReader.GetPageWidth();
             var height = pageReader.GetPageHeight();

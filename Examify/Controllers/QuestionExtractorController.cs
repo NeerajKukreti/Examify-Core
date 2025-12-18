@@ -1,10 +1,12 @@
-using Microsoft.AspNetCore.Mvc;
 using Examify.Services.OCR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
 namespace Examify.Controllers
 {
+    [Authorize]
     public class QuestionExtractorController : Controller
     {
         private readonly ILogger<QuestionExtractorController> _logger;
@@ -42,7 +44,7 @@ namespace Examify.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> UploadImage(IFormFile file, [FromForm] int topicId)
+        public async Task<IActionResult> UploadImage(IFormFile file, [FromForm] int topicId, [FromForm] List<int> classIds)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded");
@@ -52,9 +54,7 @@ namespace Examify.Controllers
             var imageBytes = ms.ToArray();
 
             var result = await _geminiOcr.ExtractFromImageAsync(imageBytes, file.ContentType);
-
-            try
-            {
+ 
                 var jsonParser = HttpContext.RequestServices.GetRequiredService<GeminiJsonParserService>();
                 var (questions, _) = jsonParser.ParseJsonResponse(result);
 
@@ -109,9 +109,20 @@ namespace Examify.Controllers
                         
                         foreach (var question in questionsWithDiagrams)
                         {
-                            _logger.LogInformation($"Processing Q{question.QuestionNumber}: Gemini says {question.Diagrams.Count} diagram(s)");
+                            // Separate question diagrams from option diagrams
+                            var questionDiagrams = question.Diagrams
+                                .Where(d => !d.Description.Contains("Option", StringComparison.OrdinalIgnoreCase))
+                                .ToList();
                             
-                            var geminiYPositions = question.Diagrams.Select(d => d.YPercent).OrderBy(y => y).ToList();
+                            if (questionDiagrams.Count == 0)
+                            {
+                                _logger.LogInformation($"Q{question.QuestionNumber}: Only has option diagrams, skipping question-level processing");
+                                continue;
+                            }
+                            
+                            _logger.LogInformation($"Processing Q{question.QuestionNumber}: {questionDiagrams.Count} question diagram(s)");
+                            
+                            var geminiYPositions = questionDiagrams.Select(d => d.YPercent).OrderBy(y => y).ToList();
                             _logger.LogInformation($"  Gemini Y-positions: {string.Join(", ", geminiYPositions.Select(y => $"{y:F1}%"))}");
                             
                             bool geminiCoordsValid = geminiYPositions.All(y => y >= 0 && y <= 100);
@@ -144,29 +155,12 @@ namespace Examify.Controllers
                                     }
                                 }
                             }
-                            else if (geminiCoordsValid && questionsWithDiagrams.Count == 1)
-                            {
-                                // Single question: assign ALL OpenCV detections
-                                _logger.LogInformation($"  Single question with diagrams, assigning all {detectedDiagrams.Count} OpenCV detections");
-                                for (int i = 0; i < detectedDiagrams.Count; i++)
-                                {
-                                    var diagram = detectedDiagrams[i];
-                                    _logger.LogInformation($"  Diagram {diagramsForThisQuestion}: Using OpenCV[{i}] at Y={diagram.YPercent:F1}%");
-                                    using var cropped = originalImage.Clone(ctx => ctx.Crop(new Rectangle(diagram.X, diagram.Y, diagram.Width, diagram.Height)));
-                                    var fileName = $"q{question.QuestionNumber}_d{diagramsForThisQuestion}_{timestamp}.png";
-                                    await cropped.SaveAsPngAsync(Path.Combine(diagramFolder, fileName));
-                                    
-                                    question.QuestionText += $" <img src='/QuesionUploads/{fileName}' alt='Diagram {diagramsForThisQuestion + 1}' style='max-width:400px;display:block;margin:10px 0;'/>";
-                                    _logger.LogInformation($"  Saved as {fileName}");
-                                    usedDiagrams.Add(i);
-                                    diagramsForThisQuestion++;
-                                }
-                            }
                             else
                             {
+                                // Gemini coords invalid OR single question: use sequential assignment
                                 _logger.LogWarning($"  Gemini coordinates invalid, using sequential assignment");
                                 
-                                int diagramsToAssign = questionsWithDiagrams.Count == 1 ? detectedDiagrams.Count : question.Diagrams.Count;
+                                int diagramsToAssign = questionsWithDiagrams.Count == 1 ? detectedDiagrams.Count : questionDiagrams.Count;
                                 
                                 for (int i = 0; i < diagramsToAssign && usedDiagrams.Count < detectedDiagrams.Count; i++)
                                 {
@@ -183,9 +177,93 @@ namespace Examify.Controllers
                                     diagramsForThisQuestion++;
                                 }
                             }
+
                             _logger.LogInformation($"  Q{question.QuestionNumber} got {diagramsForThisQuestion} diagram(s)");
                         }
                         _logger.LogInformation($"Diagram mapping complete: used {usedDiagrams.Count} of {detectedDiagrams.Count} OpenCV diagrams");
+                        
+                        // Process option diagrams for ALL questions
+                        _logger.LogInformation("=== Processing Option Diagrams ===");
+                        foreach (var question in questions)
+                        {
+                            if (question.Diagrams == null || question.Diagrams.Count == 0) continue;
+                            
+                            var optionDiagrams = question.Diagrams
+                                .Where(d => d.Description.Contains("Option", StringComparison.OrdinalIgnoreCase))
+                                .ToList();
+                            
+                            if (optionDiagrams.Count > 0)
+                            {
+                                _logger.LogInformation($"Q{question.QuestionNumber} has {optionDiagrams.Count} option diagram(s)");
+                                
+                                var maxOptNum = optionDiagrams
+                                    .Select(d => System.Text.RegularExpressions.Regex.Match(d.Description, @"option\s+([0-9]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                                    .Where(m => m.Success)
+                                    .Select(m => int.Parse(m.Groups[1].Value))
+                                    .DefaultIfEmpty(0)
+                                    .Max();
+                                
+                                while (question.Options.Count < maxOptNum)
+                                {
+                                    question.Options.Add(new OcrOption { OptionNumber = question.Options.Count + 1, OptionText = "" });
+                                }
+                                
+                                bool optionCoordsValid = optionDiagrams.All(d => d.YPercent >= 0 && d.YPercent <= 100);
+                                
+                                if (!optionCoordsValid)
+                                {
+                                    _logger.LogWarning($"  Option diagram coordinates invalid, using sequential assignment");
+                                    var sortedOptions = optionDiagrams
+                                        .Select(d => new { Diag = d, Match = System.Text.RegularExpressions.Regex.Match(d.Description, @"option\s+([0-9]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase) })
+                                        .Where(x => x.Match.Success)
+                                        .OrderBy(x => int.Parse(x.Match.Groups[1].Value))
+                                        .ToList();
+                                    
+                                    for (int i = 0; i < sortedOptions.Count && usedDiagrams.Count < detectedDiagrams.Count; i++)
+                                    {
+                                        var nextIndex = Enumerable.Range(0, detectedDiagrams.Count).First(idx => !usedDiagrams.Contains(idx));
+                                        var diagram = detectedDiagrams[nextIndex];
+                                        var optNum = int.Parse(sortedOptions[i].Match.Groups[1].Value);
+                                        
+                                        using var cropped = originalImage.Clone(ctx => ctx.Crop(new Rectangle(diagram.X, diagram.Y, diagram.Width, diagram.Height)));
+                                        var fileName = $"q{question.QuestionNumber}_opt{optNum}_{timestamp}.png";
+                                        await cropped.SaveAsPngAsync(Path.Combine(diagramFolder, fileName));
+                                        
+                                        question.Options[optNum - 1].OptionImageUrl = $"/QuesionUploads/{fileName}";
+                                        _logger.LogInformation($"  Option {optNum}: {fileName} (OpenCV[{nextIndex}])");
+                                        usedDiagrams.Add(nextIndex);
+                                    }
+                                }
+                                else
+                                {
+                                    foreach (var optDiag in optionDiagrams)
+                                    {
+                                        _logger.LogInformation($"  Processing: {optDiag.Description}");
+                                        var match = System.Text.RegularExpressions.Regex.Match(optDiag.Description, @"option\s+([0-9]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                                        if (match.Success && int.TryParse(match.Groups[1].Value, out int optNum))
+                                        {
+                                            var closestDiagram = detectedDiagrams
+                                                .Select((d, idx) => new { Diagram = d, Index = idx, Distance = Math.Abs(d.YPercent - optDiag.YPercent) })
+                                                .Where(x => !usedDiagrams.Contains(x.Index) && x.Distance < 20)
+                                                .OrderBy(x => x.Distance)
+                                                .FirstOrDefault();
+                                            
+                                            if (closestDiagram != null)
+                                            {
+                                                var diagram = closestDiagram.Diagram;
+                                                using var cropped = originalImage.Clone(ctx => ctx.Crop(new Rectangle(diagram.X, diagram.Y, diagram.Width, diagram.Height)));
+                                                var fileName = $"q{question.QuestionNumber}_opt{optNum}_{timestamp}.png";
+                                                await cropped.SaveAsPngAsync(Path.Combine(diagramFolder, fileName));
+                                                
+                                                question.Options[optNum - 1].OptionImageUrl = $"/QuesionUploads/{fileName}";
+                                                _logger.LogInformation($"  Option {optNum}: {fileName}");
+                                                usedDiagrams.Add(closestDiagram.Index);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 else
@@ -198,11 +276,14 @@ namespace Examify.Controllers
                 {
                     QuestionEnglish = q.QuestionText,
                     TopicId = topicId,
+                    ClassIds = classIds,
                     QuestionTypeId = 1,
                     DifficultyLevel = "Medium",
                     Options = q.Options.Select(opt => new DataModel.OptionModel
                     {
-                        Text = opt,
+                        Text = string.IsNullOrEmpty(opt.OptionImageUrl) 
+                            ? opt.OptionText 
+                            : $"{opt.OptionText}<img src='{opt.OptionImageUrl}' style='max-width:200px;display:block;margin:5px 0;'/>",
                         IsCorrect = false
                     }).ToList()
                 }).ToList();
@@ -220,13 +301,8 @@ namespace Examify.Controllers
 
                 return Ok(new { Questions = questions, DiagramCount = detectedDiagrams.Count, SavedQuestionIds = savedIds });
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error parsing JSON response");
-                return BadRequest("Error parsing JSON response");
-            }
-        }
-
+             
+        
         [HttpPost]
         public IActionResult UploadPdf(IFormFile file)
         {
@@ -236,19 +312,14 @@ namespace Examify.Controllers
             using var stream = file.OpenReadStream();
             var images = _pdfToImage.ConvertPdfToImages(stream);
 
-            var outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "PDFUpload", "images");
-            Directory.CreateDirectory(outputFolder);
-
-            var savedFiles = new List<string>();
+            var imageData = new List<object>();
             for (int i = 0; i < images.Count; i++)
             {
                 var fileName = $"page_{i + 1}_{DateTime.Now:yyyyMMddHHmmss}.png";
-                var filePath = Path.Combine(outputFolder, fileName);
-                System.IO.File.WriteAllBytes(filePath, images[i]);
-                savedFiles.Add($"/PDFUpload/images/{fileName}");
+                imageData.Add(new { FileName = fileName, Data = Convert.ToBase64String(images[i]) });
             }
 
-            return Ok(new { Message = $"Saved {images.Count} images", Images = savedFiles });
+            return Ok(new { Message = $"Converted {images.Count} images", Images = imageData });
         }
     }
 }

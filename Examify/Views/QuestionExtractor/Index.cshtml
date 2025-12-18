@@ -3,8 +3,8 @@
 }
 
 <div class="text-center">
-    <h1 class="display-4">PDF OCR with Gemini Vision</h1>
-    <p>Upload a PDF with math/science content</p>
+    <h1 class="display-4">Scan PDF Questions</h1>
+    <p>Upload a PDF with question content</p>
 </div>
 
 <div class="row justify-content-center mt-4">
@@ -14,6 +14,7 @@
                 <input type="file" class="form-control" id="pdfFile" accept=".pdf" required />
             </div>
             <button type="submit" class="btn btn-primary">Extract Text</button>
+            <a href="@Url.Action("ImageUpload", "QuestionExtractor")" target="_blank" class="btn btn-link">Image Upload</a>
         </form>
         <div id="result" class="mt-4"></div>
     </div>
@@ -33,11 +34,20 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             body: formData
         });
         const data = await response.json();
+        
+        if (data.images && data.images.length > 0) {
+            data.images.forEach(img => {
+                const link = document.createElement('a');
+                link.href = 'data:image/png;base64,' + img.data;
+                link.download = img.fileName;
+                link.click();
+            });
+        }
+        
         document.getElementById('result').innerHTML = 
-            '<div class="alert alert-success"><h5>' + data.message + '</h5>' + 
-            data.images.map((img, i) => `<div><a href="${img}" target="_blank">Page ${i+1}</a> <img src="${img}" style="max-width:200px;margin:10px"/></div>`).join('') + 
-            '</div>';
+            '<div class="alert alert-success">' + data.message + '</div>';
     } catch (error) {
+        console.error(error);
         document.getElementById('result').innerHTML = 
             '<div class="alert alert-danger">Error: ' + error.message + '</div>';
     }
