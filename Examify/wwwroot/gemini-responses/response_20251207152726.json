@@ -1,0 +1,73 @@
+{
+  "questions": [
+    {
+      "question_number": 1,
+      "question_text": "The following four wires of length L and radius r are made of the same material. Which of these will have the largest extension when the same tension is applied :\nनिम्नलिखित चार तारों में जो कि समान पदार्थ के बने है और उनकी लम्बाई L तथा त्रिज्या R है यदि इनमें समान तनाव आरोपित किया जाता है तो अधिक खिंचाव किसमें होगा:\n(1) L = 50 cm, r = 0.25 mm (3) L = 200 cm, r = 1 mm\n(2) L = 100 cm, r = 0.5 mm (4) L = 300 cm, r = 1.5 mm",
+      "options": [],
+      "diagrams": []
+    },
+    {
+      "question_number": 2,
+      "question_text": "Which one of the following is the Young's modulus (in N/m²) for the wire having the stress-strain curve shown in figure :\nदिये गये प्रतिबल-विकृति ग्राफ में निम्नलिखित में कौन तार का यंग प्रत्यास्थता गुणांक होगा :\n(1) $24 \\times 10^{11}$\n(2) $8.0 \\times 10^{11}$\n(3) $10 \\times 10^{11}$\n(4) $2.0 \\times 10^{11}$",
+      "options": [],
+      "diagrams": [
+        {
+          "question_number": 2,
+          "description": "A stress-strain curve for a wire. The y-axis represents Stress in units of 10^7 N/m^2, with values from 0 to 10. The x-axis represents Strain in units of 10^-4, with values from 0 to 8. The curve starts at the origin and increases, passing through the point where stress is 8 x 10^7 N/m^2 and strain is 4 x 10^-4.",
+          "x_percent": 330.65,
+          "y_percent": 422.46,
+          "width_percent": 154.03,
+          "height_percent": 150.51
+        }
+      ]
+    },
+    {
+      "question_number": 3,
+      "question_text": "A liquid is flowing in a horizontal uniform capillary tube under a constant pressure difference P. The value of pressure for which the rate of flow of the liquid is doubled when the radius and length both are doubled is\nएक तरल एक स्थिर दबाव अंतर P के तहत एक क्षैतिज समान केशिका ट्यूब में बह रहा है। दबाव का वह मान जिसके लिए तरल के प्रवाह की दर दुगुनी हो जाती है जब त्रिज्या और लंबाई दोनों दुगुनी हो जाती है :\n(1) P\n(2) 3P/4\n(3) P/2\n(4) P/4",
+      "options": [],
+      "diagrams": []
+    },
+    {
+      "question_number": 4,
+      "question_text": "A wire can sustain the weight of 20 kg before breaking. If the wire is cut into two equal parts, each part can sustain a weight of :\nतार को टुटने से पहले 20 kg भार लटकाया जा सकता है यदि तार को दो समान भागों में काट दें तो प्रत्येक भाग में कितना भार लटकाया जा सकता है :\n(1) 10 kg\n(2) 20 kg\n(3) 40 kg\n(4) 80 kg.",
+      "options": [],
+      "diagrams": []
+    },
+    {
+      "question_number": 5,
+      "question_text": "Dimensional formula for modulus of elasticity is :\nप्रत्यास्थता गुणांक का विमीय सूत्र होगा :\n(1) $[MLT^{-2}]$\n(2) $[ML^{-1}T^{-2}]$\n(3) $[ML^{-2}T^{-1}]$\n(4) $[ML^{-2}T^{-2}]$",
+      "options": [],
+      "diagrams": []
+    },
+    {
+      "question_number": 6,
+      "question_text": "An elongation of 0.1% in a wire of cross-sectional area $10^{-6}$ m² causes a tension of 100 N. The Young's modulus is :\n$10^{-6}$ m² क्षेत्रफल के तार में 100 N तनाव के कारण वह 0.1% खिंच जाता है। यंग प्रत्यास्थता गुणांक होगा :\n(1) $10^{12}$ N/m²\n(2) $10^{11}$ N/m²\n(3) $10^{10}$ N/m²\n(4) $10^2$ N/m².",
+      "options": [],
+      "diagrams": []
+    },
+    {
+      "question_number": 7,
+      "question_text": "A rubber ball is taken to a 100m deep lake and its volume changes by 0.1%. The bulk modulus of rubber is nearly :\nएक रबड़ की गेंद को 100 मी गहरी झील में लेते है इसका आयतन 0.1% परिवर्तित हो जातो है। रबर का बल्क प्रत्यास्थता गुणांक लगभग होगा :\n(1) $1 \\times 10^6$ N/m²\n(2) $1 \\times 10^8$ N/m²\n(3) $1 \\times 10^7$ N/m²\n(4) $1 \\times 10^9$ N/m².",
+      "options": [],
+      "diagrams": []
+    },
+    {
+      "question_number": 8,
+      "question_text": "Length of an elastic string is 'a' metre when the tension is 4 Newton and 'b' metre when the tension is 5 newton. Length in metre when the tension is 9 newton is :\nएक प्रत्यास्थ डोरी की लम्बाई 'a' मी है जब तनाव 4 N हो और 'b' metre जब 5 N हो। जब तनाव 9 N होगा तब लम्बाई मीटर में होगी :\n(1) 4a - 5b\n(2) 5b - 4a\n(3) 9b - 9a\n(4) a + b.",
+      "options": [],
+      "diagrams": []
+    },
+    {
+      "question_number": 9,
+      "question_text": "If the length of a wire decrease by 1% on loading a 2 kg weight on it. Then the linear strain in wire will be:\nयदि किसी तार पर 2 किग्रा का भार लटकाकर इसकी लम्बाई 1% घटा दी जाए तब तार में रेखीय विकृति होगी :\n(1) 0.001\n(2) 0.1\n(3) 0.01\n(4) 1",
+      "options": [],
+      "diagrams": []
+    },
+    {
+      "question_number": 10,
+      "question_text": "The density of the atmosphere at sea level is 1.29 kg/m³. Assume that it does not change with altitude. Then how high would the atmosphere extend?\nसमुद्र तल पर वायुमण्डल का घनत्व 1.29 kg/m³ है। यह मानते हुए कि ऊँचाई के साथ घनत्व में कोई परिवर्तन नही होता, ज्ञात कीजिए कि वायुमण्डल का विस्तार कितनी ऊँचाई तक है।\n(1) 18 km\n(2) 80 km\n(3) 90 km\n(4) 8 km",
+      "options": [],
+      "diagrams": []
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "questions": [
+    {
+      "question_number": 27,
+      "question_text": "27. The component of vector $\\vec{A} = 2\\hat{i} + 3\\hat{j}$ along the direction of $(\\hat{i} - \\hat{j})$ is:\n$(\\hat{i} - \\hat{j})$ की दिशा के साथ सदिश $\\vec{A} = 2\\hat{i} + 3\\hat{j}$ का घटक है:",
+      "options": [
+        "$\\frac{1}{\\sqrt{2}}$",
+        "$-\\frac{1}{\\sqrt{2}}$",
+        "$\\frac{1}{2}$",
+        "$-\\frac{1}{2}$"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 28,
+      "question_text": "28. If a vector $\\vec{A}$ makes an angles $\\alpha, \\beta$ and $\\gamma$ respectively with the x, y and z axis respectively. Then $\\sin^2 \\alpha + \\sin^2 \\beta + \\sin^2 \\gamma$ is equal to:\nयदि एक सदिश $\\vec{A}$, x, y और z अक्षों के साथ क्रमशः $\\alpha, \\beta$ और $\\gamma$ कोण बनाता है, तो $\\sin^2 \\alpha + \\sin^2 \\beta + \\sin^2 \\gamma$ बराबर है:",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 29,
+      "question_text": "29. Two vector $\\vec{A}$ and $\\vec{B}$ inclined at an angle $\\theta$ have a resultant $\\vec{R}$ which makes an angle $\\alpha$ with $\\vec{A}$ and angle $\\beta$ with $\\vec{B}$. Let the magnitudes of the vectors $\\vec{A}, \\vec{B}$ and $\\vec{R}$ be represented by A, B and R respectively. Which of the following relations is not correct ?\nदो सदिश $\\vec{A}$ और $\\vec{B}$ कोण $\\theta$ पर झुके हुए हैं, जिनका परिणामी $\\vec{R}$ है जो $\\vec{A}$ के साथ $\\alpha$ कोण और $\\vec{B}$ के साथ $\\beta$ कोण बनाता है। मान लीजिए कि सदिश $\\vec{A}, \\vec{B}$ और $\\vec{R}$ के परिमाण क्रमशः A, B और R द्वारा दर्शाए जाते हैं। निम्नलिखित में से कौन सा संबंध सही नहीं है?",
+      "options": [
+        "$\\frac{R}{\\sin(\\alpha + \\beta)} = \\frac{A}{\\sin\\alpha} = \\frac{B}{\\sin\\beta}$",
+        "$R\\sin\\alpha = B\\sin(\\alpha + \\beta)$",
+        "$A\\sin\\alpha = B\\sin\\beta$",
+        "$R\\sin\\beta = A\\sin(\\alpha + \\beta)$"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 30,
+      "question_text": "30. Vectors $\\vec{A}$ and $\\vec{B}$ include an angle $\\theta$ between them. If $(\\vec{A} + \\vec{B})$ and $(\\vec{A} - \\vec{B})$ respectively subtend angles $\\alpha$ and $\\beta$ with $\\vec{A}$, then $(\\tan\\alpha + \\tan\\beta)$ is:\nसदिश $\\vec{A}$ और $\\vec{B}$ के बीच एक कोण $\\theta$ है। यदि $(\\vec{A} + \\vec{B})$ और $(\\vec{A} - \\vec{B})$ क्रमशः $\\vec{A}$ पर कोण $\\alpha$ और $\\beta$ अंतरित करते हैं, तो $(\\tan\\alpha + \\tan\\beta)$ का मान है:",
+      "options": [
+        "$\\frac{AB\\sin\\theta}{A^2 + B^2\\cos^2\\theta}$",
+        "$\\frac{2AB\\sin\\theta}{A^2 - B^2\\cos^2\\theta}$",
+        "$\\frac{A^2\\sin^2\\theta}{A^2 + B^2\\cos^2\\theta}$",
+        "$\\frac{B^2\\sin^2\\theta}{A^2 - B^2\\cos^2\\theta}$"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 31,
+      "question_text": "31. A unit vector in the direction of resultant vector of $\\vec{A} = -2\\hat{i} + 3\\hat{j} + \\hat{k}$ and $\\vec{B} = \\hat{i} + 2\\hat{j} - 4\\hat{k}$ is:\n$\\vec{A} = -2\\hat{i} + 3\\hat{j} + \\hat{k}$ और $\\vec{B} = \\hat{i} + 2\\hat{j} - 4\\hat{k}$ के परिणामी सदिश की दिशा में एक इकाई सदिश है:",
+      "options": [
+        "$\\frac{-2\\hat{i} + 3\\hat{j} + \\hat{k}}{\\sqrt{35}}$",
+        "$\\frac{\\hat{i} + 2\\hat{j} - 4\\hat{k}}{\\sqrt{35}}$",
+        "$\\frac{-\\hat{i} + 5\\hat{j} - 3\\hat{k}}{\\sqrt{35}}$",
+        "$\\frac{-3\\hat{i} + \\hat{j} + 5\\hat{k}}{\\sqrt{35}}$"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 32,
+      "question_text": "32. Out of the following the resultant of which cannot be 4 N?\nनिम्नलिखित में से किसका परिणाम 4 N नहीं हो सकता है?",
+      "options": [
+        "2 N and 2 N",
+        "2 N and 4 N",
+        "2 N and 6 N",
+        "2 N and 8 N"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 33,
+      "question_text": "33. The components of the sum of two vectors $2\\hat{i} + 3\\hat{j}$ and $2\\hat{j} + 3\\hat{k}$ along x and y directions respectively are:\nx और y दिशाओं के साथ दो सदिशों $2\\hat{i} + 3\\hat{j}$ और $2\\hat{j} + 3\\hat{k}$ के योग के घटक क्रमशः हैं:",
+      "options": [
+        "2 and 5",
+        "4 and 6",
+        "2 and 6",
+        "4 and 3"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 34,
+      "question_text": "34. If $\\vec{a} + \\vec{b} = \\vec{c}$ and a + b = c, then the angle included between $\\vec{a}$ and $\\vec{b}$ is:\nयदि $\\vec{a} + \\vec{b} = \\vec{c}$ और a + b = c, तो $\\vec{a}$ और $\\vec{b}$ के बीच का कोण है:",
+      "options": [
+        "$90^\\circ$",
+        "$180^\\circ$",
+        "$120^\\circ$",
+        "zero"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 35,
+      "question_text": "35. Three forces of magnitude 6 N, 6 N and $\\sqrt{72}$ N act at corner of cube along three sides as shown in figure. Resultant of these forces is:\nचित्र में दर्शाए अनुसार, घन के कोने पर तीन भुजाओं के अनुदिश 6 N, 6 N और $\\sqrt{72}$ N परिमाण के तीन बल कार्य करते हैं। इन बलों का परिणामी मान है:",
+      "options": [
+        "12 N angle OB",
+        "18 N along OA",
+        "18 N along OC",
+        "12 N along OE"
+      ],
+      "diagrams": [
+        {
+          "question_number": 35,
+          "description": "A diagram of a cube with three force vectors acting from its corners.",
+          "x_percent": 75.55,
+          "y_percent": 70.1,
+          "width_percent": 21.38,
+          "height_percent": 16.34
+        }
+      ]
+    }
+  ]
+}

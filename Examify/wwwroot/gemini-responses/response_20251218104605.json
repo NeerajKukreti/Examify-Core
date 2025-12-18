@@ -1,0 +1,132 @@
+{
+  "questions": [
+    {
+      "question_number": 18,
+      "question_text": "Two water pipes P and Q having diameters 2 x 10⁻² m and 4 x 10⁻² m, respectively, are joined in series with the main supply line of water. The velocity of water flowing in pipe P is\nदो पाइप P और Q जिनके व्यास 2 x 10⁻² तथा 4 x 10⁻² m है दोनों को श्रेणी क्रम में पानी की सप्लाई से जोड़ दिया जाता हैं पाइप P से बहने वाले पानी का वेग होगा ।",
+      "options": [
+        "4 times that of Q",
+        "2 times that of Q",
+        "1/2 times that of Q",
+        "1/4 rimes that of Q"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 19,
+      "question_text": "The height of water level in a tank is H. The range of water stream coming out of a hole at depth H/3 from upper water level will be :\nटंकी में पानी का तल की ऊँचाई H है। सतह से H/3 गहराई पर निकले जल की परास होगी:",
+      "options": [
+        "$\\frac{\\sqrt{8}}{3}H$",
+        "$\\frac{8}{\\sqrt{3}}H$",
+        "$\\sqrt{\\frac{8}{\\sqrt{3}}}H$",
+        "$\\sqrt{\\frac{8}{3}}H$"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 20,
+      "question_text": "In the figure shown an ideal liquid is flowing through the tube which is of uniform area of cross-section. The liquid has velocities vA and vB, and pressure PA and PB at points A and B respectively. Then :\nचित्रानुसार एक एकसमान पृष्ठ क्षेत्रफल की नली में एक आदर्श द्रव बह रहा है बिंदु A और B पर क्रमशः वेग vA और vB तथा दाब PA और PB है तब -",
+      "options": [
+        "$P_B = P_A$",
+        "$v_B = v_A$",
+        "$P_B < P_A$",
+        "$v_B > v_A$"
+      ],
+      "diagrams": [
+        {
+          "question_number": 20,
+          "description": "A diagram showing a fluid flowing through a bent pipe of uniform cross-section. The fluid enters from the left, goes through a 90-degree bend downwards, and then continues horizontally to the right.",
+          "x_percent": 26.53,
+          "y_percent": 46.0,
+          "width_percent": 20.0,
+          "height_percent": 5.0
+        }
+      ]
+    },
+    {
+      "question_number": 21,
+      "question_text": "Two substances of densities $p_1$ and $p_2$ are mixed in equal volume and the relative density of mixture is 4. When they are mixed in equal masses, the relative density of the mixture is 3. The values of $p_1$ and $p_2$ are\nघनत्व $p_1$ और $p_2$ के दो पदार्थ समान मात्रा (Volume) में मिश्रित होते हैं और मिश्रण का सापेक्ष घनत्व 4 है। जब उन्हें समान द्रव्यमान में मिलाया जाता है, तो मिश्रण का सापेक्ष घनत्व 3 होता है $p_1$ और $p_2$ का मान हैं ?",
+      "options": [
+        "$p_1 = 6$ and $p_2 = 2$",
+        "$p_1 = 3$ and $p_2 = 5$",
+        "$p_1 = 12$ and $p_2 = 4$",
+        "None of these"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 22,
+      "question_text": "What is ratio of surface energy of 1 small drop and 1 large drop, if 1000 small drops are combined to form 1 large drop\nएक छोटी बूँद और 1 बड़ी बूँद की सतह ऊर्जा का अनुपात क्या है, यदि 1000 छोटी बूँदें मिलकर एक बड़ी बूँद बनाती हैं :",
+      "options": [
+        "100 : 1",
+        "1000 : 1",
+        "10 : 1",
+        "1 : 100"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 23,
+      "question_text": "A soap bubble in vacuum has a radius of 3 cm and another soap bubble in vacuum has a radius of 4 cm. If the two bubbles coalesce under isothermal condition, then the radius of the new bubble is\nनिर्वात में एक साबुन के बुलबुले की त्रिज्या 3 सेमी है और निर्वात में एक अन्य साबुन के बुलबुले की त्रिज्या 4 सेमी है यदि दोनो बुलबुले समतापीय स्थिति में एकत्रित होते हैं तो नये बुलबुले की त्रिज्या होती है",
+      "options": [
+        "2.3 cm",
+        "4.5 cm",
+        "5 cm",
+        "7 cm"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 24,
+      "question_text": "Two capillaries made of same material but of different radii are dipped in a liquid. The rise of liquid in one capillary is 2.2 cm and that in the other is 6.6 cm. The ratio of their radii is\nएक ही पदार्थ से बनी लेकिन अलग-2 त्रिज्या की दो केशिकाओं को एक तरल में डुबोया जाता है। एक केशिका में द्रव का उत्थान 2.2 सेमी तथा दूसरे में 6.6 सेमी है। उनकी त्रिज्या का अनुपात है :",
+      "options": [
+        "9 : 1",
+        "1 : 9",
+        "3 : 1",
+        "1 : 3"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 25,
+      "question_text": "A capillary tube when immersed vertically in liquid records a rise of 3 cm. If the tube is immersed in the liquid at an angle of 60° with the vertical. The length of the liquid column along the tube is\nएक केशिका ट्यूब को जब तरल में लंबवत डुबाया जाता है तो 3 सेमी की वृद्धि दर्ज की जाती है यदि ट्यूब को ऊर्ध्वाधर से 60° के कोण पर तरल में डुबोया जाता है। ट्यूब के अनुदिश द्रव स्तंभ की लम्बाई है :",
+      "options": [
+        "9 cm",
+        "6 cm",
+        "3 cm",
+        "2 cm"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 26,
+      "question_text": "An iceberg of density 900 kg/m³ is floating in water of density 1000 kg/m³. The percentage of volume of ice-cube outside the water is\n900 किग्रा/मी³ घनत्व वाला एक हिमखंड 1000 किग्रा/मी³ घनत्व वाले पानी में तैर रहा है। पानी के बाहर बर्फ के टुकड़े के आयतन का प्रतिशत है।",
+      "options": [
+        "20%",
+        "35%",
+        "10%",
+        "25%"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 27,
+      "question_text": "An incompressible liquid flows through a horizontal tube as shown in the following fig. Then the velocity v of the fluid is\nएक असंपीड्य तरल एक क्षैतिज ट्यूब के माध्यम से बहता है जैसा कि निम्नलिखित चित्र में दिखाया गया है। तब द्रव का वेग v है",
+      "options": [
+        "3.0 m/s",
+        "1.5 m/s",
+        "1.0 m/s",
+        "2.25 m/s"
+      ],
+      "diagrams": [
+        {
+          "question_number": 27,
+          "description": "A diagram showing a horizontal tube through which a fluid flows. The tube splits into two branches. The main tube has cross-sectional area A and fluid velocity v1. The upper branch has cross-sectional area A and fluid velocity v2. The lower branch has cross-sectional area 1.5A and fluid velocity v.",
+          "x_percent": 65.0,
+          "y_percent": 65.5,
+          "width_percent": 30.0,
+          "height_percent": 8.5
+        }
+      ]
+    }
+  ]
+}

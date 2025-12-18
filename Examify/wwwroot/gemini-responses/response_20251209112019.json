@@ -1,0 +1,121 @@
+{
+  "questions": [
+    {
+      "question_number": 19,
+      "question_text": "To find the distance d over which a signal can be seen clearly in foggy conditions, a railway engineer uses dimensional analysis and assumes that the distance depends on the mass density ρ of the fog, intensity (power/area) S of the light from the signal and its frequency f. The engineer finds that d is proportional to S^(1/n). The value of n is:\nकोहरे में सिग्नल को स्पष्ट रूप से देखने के लिए दूरी d ज्ञात करने के लिए, एक रेलवे इंजीनियर विमीय विश्लेषण का उपयोग करता है और यह मानता है कि दूरी कोहरे के द्रव्यमान घनत्व ρ, सिग्नल से आने वाले प्रकाश की तीव्रता (शक्ति/क्षेत्रफल) S और उसकी आवृत्ति f पर निर्भर करती है। इंजीनियर पाता है कि d, S^(1/n) के समानुपाती है। n का मान है:",
+      "options": [
+        "4",
+        "2",
+        "3",
+        "1"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 20,
+      "question_text": "Velocity (v) and acceleration (a) in two systems of units 1 and 2 are related as v₂ = (n/m²)v₁ and a₂ = a₁/(mn) respectively. Here m and n are constants. The relations for distance and time in two systems respectively are:\nइकाई 1 और 2 की दो प्रणालियों में वेग (v) और त्वरण (a) क्रमशः v₂ = (n/m²)v₁ और a₂ = a₁/(mn) से संबंधित हैं। यहाँ m और n स्थिरांक हैं। दोनों प्रणालियों में दूरी और समय के संबंध क्रमशः इस प्रकार हैं:",
+      "options": [
+        "n³/m³ L₁ = L₂ and n²/m T₁ = T₂",
+        "L₁ = n⁴/m² L₂ and T₁ = n²/m T₂",
+        "L₁ = n²/m L₂ and T₁ = n⁴/m² T₂",
+        "n²/m L₁ = L₂ and n⁴/m² T₁ = T₂"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 21,
+      "question_text": "The equation of stationary wave is y = 2a sin(2πnt/λ) cos(2πx/λ)\nWhich of the following is not correct?\nस्थिर तरंग का समीकरण है y = 2a sin(2πnt/λ) cos(2πx/λ)\nनिम्नलिखित में से कौन सा सही नहीं है?",
+      "options": [
+        "The dimensions of n is [LT⁻¹]",
+        "The dimensions of x is [L]",
+        "The dimensions of n/λ is [L]",
+        "The dimensions of λ is [T]"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 22,
+      "question_text": "If Ā is a vector of magnitude 5 units due east. What is the magnitude and direction of a vector -5Ā ?\nयदि Ā पूर्व की ओर 5 इकाई परिमाण का एक सदिश है, तो सदिश -5Ā का परिमाण और दिशा क्या है?",
+      "options": [
+        "5 units due east",
+        "25 units due west",
+        "5 units due west",
+        "25 units due east"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 23,
+      "question_text": "Which of the following is not a property of a null vector?\nनिम्नलिखित में से कौन सा शून्य सदिश का गुण नहीं है?",
+      "options": [
+        "Ā + Ō = Ā",
+        "λŌ = Ō, where λ is a scalar",
+        "0Ā = Ā",
+        "Ā - Ā = Ō"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 24,
+      "question_text": "Two vectors Ā and B̄ inclined at an angle θ have a resultant R̄ which makes an angle α with Ā. If the directions of Ā and B̄ are interchanged, the resultant will have the same:\nदो सदिश Ā और B̄, जो कोण θ पर झुके हैं, का परिणामी R̄, α के साथ कोण Ā बनाता है। यदि Ā और B̄ की दिशाएँ परस्पर बदल दी जाएँ, तो परिणामी मान समान होगा:",
+      "options": [
+        "direction",
+        "magnitude",
+        "direction as well as magnitude",
+        "either direction or magnitude"
+      ],
+      "diagrams": []
+    },
+    {
+      "question_number": 25,
+      "question_text": "Which of the following figures represents the force of 10 N in a direction of 30° east of north?\nनिम्नलिखित में से कौन सी आकृति उत्तर से 30° पूर्व दिशा में 10 N के बल को दर्शाती है?",
+      "options": [
+        "",
+        "",
+        "",
+        ""
+      ],
+      "diagrams": [
+        {
+          "description": "Diagram for option 1, showing a vector pointing west.",
+          "x_percent": 541,
+          "y_percent": 495,
+          "width_percent": 145,
+          "height_percent": 89
+        },
+        {
+          "description": "Diagram for option 2, showing a vector 30 degrees east of north.",
+          "x_percent": 751,
+          "y_percent": 495,
+          "width_percent": 145,
+          "height_percent": 89
+        },
+        {
+          "description": "Diagram for option 3, showing a vector 30 degrees north of west.",
+          "x_percent": 541,
+          "y_percent": 606,
+          "width_percent": 145,
+          "height_percent": 89
+        },
+        {
+          "description": "Diagram for option 4, showing a vector 30 degrees west of south.",
+          "x_percent": 751,
+          "y_percent": 606,
+          "width_percent": 145,
+          "height_percent": 89
+        }
+      ]
+    },
+    {
+      "question_number": 26,
+      "question_text": "Which of the following pairs of vectors are parallel?\nनिम्नलिखित में से कौन से सदिश युग्म समांतर हैं?",
+      "options": [
+        "Ā = î - 2ĵ; B̄ = î - 5ĵ",
+        "Ā = î - 10ĵ; B̄ = 2î - 5ĵ",
+        "Ā = î - 5ĵ; B̄ = î - 10ĵ",
+        "Ā = î - 5ĵ; B̄ = 2î - 10ĵ"
+      ],
+      "diagrams": []
+    }
+  ]
+}
