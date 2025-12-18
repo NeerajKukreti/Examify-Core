@@ -254,7 +254,12 @@ function loadTopics(subjectId, callback) {
             console.error('No toolbar template found for dynamic option editor');
         }
 
-        var modulesConfig = { toolbar: '#' + toolbarId };
+        var modulesConfig = { 
+            toolbar: '#' + toolbarId,
+            imageResize: {
+                displaySize: true
+            }
+        };
 
         var q = new Quill('#' + editorId, {
             theme: 'snow',
@@ -425,6 +430,12 @@ $(function () {
         console.error('Quill is not loaded. Include quill.js before this script.');
         return;
     }
+    
+    // Register ImageResize module
+    if (typeof ImageResize !== 'undefined') {
+        Quill.register('modules/imageResize', ImageResize.default);
+    }
+    
     // Map for editor instances
     var quillEditors = window.__quillEditors = {};
     // Find the toolbar template (first .toolbar1)
@@ -459,7 +470,12 @@ $(function () {
         $clone.css('display', ''); // Remove display: none
         $clone.insertBefore($editor);
         // build modules config
-        var modulesConfig = { toolbar: '#' + toolbarId };
+        var modulesConfig = { 
+            toolbar: '#' + toolbarId,
+            imageResize: {
+                displaySize: true
+            }
+        };
         // init Quill for this editor
         var q = new Quill('#' + editorId, {
             theme: 'snow',

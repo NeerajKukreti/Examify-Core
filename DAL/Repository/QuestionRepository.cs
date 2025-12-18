@@ -33,8 +33,28 @@ namespace DAL.Repository
         public async Task<List<QuestionModel>> GetAllQuestionsAsync(int instituteId)
         {
             using var connection = CreateConnection();
-            var result = await connection.QueryAsync<QuestionModel>("_sp_GetAllQuestions", new { InstituteId = instituteId }, commandType: CommandType.StoredProcedure);
-            return result.ToList();
+            using var multi = await connection.QueryMultipleAsync(
+                "_sp_GetAllQuestions", new { InstituteId = instituteId }, commandType: CommandType.StoredProcedure);
+
+            var questions = (await multi.ReadAsync<QuestionModel>()).ToList();
+            var choiceRows = (await multi.ReadAsync()).ToList();
+
+            foreach (var question in questions)
+            {
+                if (question.TypeName is "MCQ" or "True/False" or "Descriptive")
+                {
+                    question.Options = choiceRows
+                        .Where(opt => opt.QuestionId == question.QuestionId)
+                        .Select(opt => new OptionModel
+                        {
+                            ChoiceId = opt.ChoiceId,
+                            Text = (string)opt.ChoiceTextEnglish,
+                            IsCorrect = (bool)opt.IsCorrect
+                        }).ToList();
+                }
+            }
+
+            return questions;
         }
 
         public async Task<QuestionModel?> GetQuestionAsync(int id, int instituteId)

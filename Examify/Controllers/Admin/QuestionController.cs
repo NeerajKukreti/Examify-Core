@@ -30,9 +30,25 @@ namespace Examify.Controllers.Admin
 
         // GET: Admin/Question/LoadQuestion
         [HttpGet]
-        public async Task<IActionResult> LoadQuestion()
+        public async Task<IActionResult> LoadQuestion(string filter = "verified")
         {
             var questions = await _QuestionService.GetAllAsync();
+            
+            if (questions != null && filter != "all")
+            {
+                questions = questions.Where(q => 
+                {
+                    // Only check MCQ (1) and True/False (2) question types
+                    if (q.QuestionTypeId == 1 || q.QuestionTypeId == 2)
+                    {
+                        bool hasCheckedOption = q.Options?.Any(o => o.IsCorrect == true) ?? false;
+                        return filter == "verified" ? hasCheckedOption : !hasCheckedOption;
+                    }
+                    // For other question types, include in verified by default
+                    return filter == "verified";
+                }).ToList();
+            }
+            
             return Json(new { data = questions });
         }
 

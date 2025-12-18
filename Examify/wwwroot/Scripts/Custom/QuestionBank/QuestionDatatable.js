@@ -1,5 +1,6 @@
 ﻿var QuestionBankTable = function () {
     var table;
+    var currentFilter = 'verified';
     var QuestionBank = function () {
         table = $('#QuestionBankTable');
         table.dataTable({
@@ -9,7 +10,7 @@
             },
             "ajax": function (data, callback, settings) {
                 $.ajax({
-                    url: loadQuestionBankUrl,
+                    url: loadQuestionBankUrl + '?filter=' + currentFilter,
                     type: "GET",
                     dataType: "json",
                     success: function (response) {
@@ -53,12 +54,26 @@
         },
         reloadTable: function () {
             table.DataTable().ajax.reload(null, false);
+        },
+        setFilter: function (filter) {
+            currentFilter = filter;
+            this.reloadTable();
         }
     };
 }();
 
 $(document).ready(function () {
     QuestionBankTable.init();
+
+    // Filter button handlers
+    $('#filterVerified, #filterUnverified, #filterAll').on('click', function () {
+        var filter = $(this).data('filter');
+        QuestionBankTable.setFilter(filter);
+        
+        // Update active state
+        $('#filterVerified, #filterUnverified, #filterAll').removeClass('active');
+        $(this).addClass('active');
+    });
 
     // Listen for the custom event from _Create.cshtml
     $(document).on('questionFormReady', function(event) {

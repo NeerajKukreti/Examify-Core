@@ -214,7 +214,16 @@ function showQuestion(globalIndex = 0) {
     } else {
         $('#topicText').text(topicName);
     }
-    $('#questionText').html(question.QuestionTextEnglish || question.QuestionText || '');
+    let questionHtml = question.QuestionTextEnglish || question.QuestionText || '';
+    const $qText = $('#questionText');
+    $qText.html(questionHtml);
+    
+    // Separate paragraphs with line breaks
+    $qText.find('p').each(function(i) {
+        if (i > 0) $(this).css('margin-top', '15px');
+    });
+    
+    renderLatex($qText[0]);
     const $form = $('#optionsForm').empty();
     $('#orderingContainer').hide();
     $('#pairingContainer').hide();
@@ -235,6 +244,7 @@ function showQuestion(globalIndex = 0) {
                 const $label = $(`<label for="opt${index}"></label>`).html(choiceText);
                 $optionItem.append($input).append($label);
                 $form.append($optionItem);
+                renderLatex($label[0]);
             });
             $form.off('click', '.option-item').on('click', '.option-item', function (e) {
                 if ($(e.target).is('input[type="checkbox"], label')) return;
@@ -256,6 +266,7 @@ function showQuestion(globalIndex = 0) {
                 const $label = $(`<label for="opt${index}"></label>`).html(choiceText);
                 $optionItem.append($label);
                 $form.append($optionItem);
+                renderLatex($label[0]);
             });
             $form.off('click', '.option-item').on('click', '.option-item', function () {
                 const $this = $(this);
@@ -1082,6 +1093,31 @@ function updateDebugPanel() {
     const minutes = Math.floor(questionTimeSpent / 60);
     const seconds = questionTimeSpent % 60;
     $('#questionTime').text(`Time ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+}
+
+// Render LaTeX formulas using KaTeX
+function renderLatex(element) {
+    if (!element || typeof katex === 'undefined') return;
+    
+    const latexPattern = /\$([^$]+)\$/g;
+    let content = element.innerHTML;
+    
+    // Decode HTML entities first
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = content;
+    content = textarea.value;
+    
+    if (latexPattern.test(content)) {
+        content = content.replace(latexPattern, function(match, latex) {
+            try {
+                return katex.renderToString(latex, { throwOnError: false });
+            } catch (e) {
+                console.error('KaTeX error:', e);
+                return match;
+            }
+        });
+        element.innerHTML = content;
+    }
 }
 
 // Helper to rebind drag events after DOM update

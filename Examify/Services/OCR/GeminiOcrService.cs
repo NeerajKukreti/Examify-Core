@@ -87,6 +87,15 @@ Transcribe text EXACTLY as printed:
 - Arrows: →, ⇌, ↦
 - NO simplification, NO interpretation
 
+MULTI-LANGUAGE SEPARATOR RULE (MANDATORY):
+- If a question or option contains text in more than one language,
+  you MUST insert a line break tag <br/> between each language block.
+- Preserve the original text exactly.
+- Do NOT translate.
+- Do NOT merge languages.
+- Do NOT add extra text.
+- Use ONLY <br/> (not <br>, not newline).
+
 ----------------------------------------
 OPTION EXTRACTION RULE (IMPORTANT)
 ----------------------------------------
