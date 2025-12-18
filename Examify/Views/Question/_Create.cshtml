@@ -7,12 +7,32 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
 <style>
-    .ql-editor .katex { font-size: inherit; }
-    .ql-editor .katex-display { margin: 0.5em 0; }
+    /* KaTeX formula styling in Quill editors */
+    .ql-editor .katex { 
+        font-size: 1.1em; 
+        display: inline-block;
+        vertical-align: middle;
+    }
+    .ql-editor .katex-display { 
+        margin: 0.5em 0; 
+        display: block;
+    }
+    .ql-editor .ql-formula {
+        display: inline-block;
+        vertical-align: middle;
+        margin: 0 2px;
+        font-size: 1.1em;
+    }
+    /* Larger formulas in option editors */
+    #options-wrapper .ql-editor .katex,
+    #options-wrapper .ql-editor .ql-formula {
+        font-size: 1.2em;
+    }
     .katex .mord { display: inline; }
     .katex .mfrac { display: inline-block; vertical-align: middle; }
     .katex .vlist-t { display: inline-table; }
     .katex .sqrt { display: inline-block; }
+    .katex .base { display: inline-block; }
     
     label.error {
         color: #dc3545 !important;

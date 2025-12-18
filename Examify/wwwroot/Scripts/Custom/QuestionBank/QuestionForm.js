@@ -306,8 +306,72 @@
                 const content = editorMappings[editorId];
                 if (editor && content) {
                     editor.root.innerHTML = content;
+                    // Small delay to let Quill process the HTML
+                    setTimeout(() => {
+                        // Convert any $...$ text to formulas
+                        this.convertDollarSignsToFormulas(editor);
+                        // Re-render KaTeX formulas after setting HTML
+                        this.renderKatexInEditor(editor);
+                    }, 100);
                 }
             });
+        },
+        
+        // Render KaTeX formulas in a Quill editor
+        renderKatexInEditor: function(editor) {
+            if (!editor || !editor.root) return;
+            if (typeof katex === 'undefined') {
+                console.warn('KaTeX library not loaded');
+                return;
+            }
+            
+            $(editor.root).find('.ql-formula').each(function() {
+                const formula = $(this).attr('data-value');
+                if (formula) {
+                    try {
+                        katex.render(formula, this, { 
+                            throwOnError: false,
+                            displayMode: false
+                        });
+                    } catch (e) {
+                        console.error('KaTeX render error:', e, 'Formula:', formula);
+                    }
+                }
+            });
+        },
+        
+        // Convert $...$ text to Quill formula embeds
+        convertDollarSignsToFormulas: function(editor) {
+            if (!editor || !editor.root) return;
+            
+            try {
+                const text = editor.getText();
+                const regex = /\$([^\$\n]+?)\$/g;
+                let match;
+                const replacements = [];
+                
+                // Find all matches
+                while ((match = regex.exec(text)) !== null) {
+                    replacements.push({
+                        index: match.index,
+                        length: match[0].length,
+                        formula: match[1].trim()
+                    });
+                }
+                
+                // Replace in reverse order to maintain indices
+                for (let i = replacements.length - 1; i >= 0; i--) {
+                    const r = replacements[i];
+                    try {
+                        editor.deleteText(r.index, r.length, 'silent');
+                        editor.insertEmbed(r.index, 'formula', r.formula, 'silent');
+                    } catch (e) {
+                        console.error('Error inserting formula:', r.formula, e);
+                    }
+                }
+            } catch (e) {
+                console.error('Error converting dollar signs to formulas:', e);
+            }
         },
         
         // Populate True/False question data
@@ -385,7 +449,19 @@
                 if (opt && i < maxAllowedOptions) {
                     const editorId = $(this).find('.editor-container').attr('id');
                     if (window.__quillEditors && window.__quillEditors[editorId]) {
-                        window.__quillEditors[editorId].root.innerHTML = opt.Text || '';
+                        const editor = window.__quillEditors[editorId];
+                        editor.root.innerHTML = opt.Text || '';
+                        // Small delay to let Quill process the HTML
+                        setTimeout(() => {
+                            // Convert any $...$ text to formulas
+                            if (window.QuestionForm && typeof window.QuestionForm.convertDollarSignsToFormulas === 'function') {
+                                window.QuestionForm.convertDollarSignsToFormulas(editor);
+                            }
+                            // Re-render KaTeX formulas
+                            if (window.QuestionForm && typeof window.QuestionForm.renderKatexInEditor === 'function') {
+                                window.QuestionForm.renderKatexInEditor(editor);
+                            }
+                        }, 100);
                     }
                     $(this).find('.option-hidden-field').val(opt.Text || '');
                     $(this).find('input[type="checkbox"]').prop('checked', !!opt.IsCorrect);
