@@ -303,18 +303,55 @@
             
             Object.keys(editorMappings).forEach(editorId => {
                 const editor = window.__quillEditors[editorId];
-                const content = editorMappings[editorId];
+                let content = editorMappings[editorId];
                 if (editor && content) {
+                    // Decode HTML entities
+                    const textarea = document.createElement('textarea');
+                    textarea.innerHTML = content;
+                    content = textarea.value;
+                    if (content.includes('&lt;') || content.includes('&gt;') || content.includes('&#39;')) {
+                        textarea.innerHTML = content;
+                        content = textarea.value;
+                    }
+                    
+                    // Convert $...$ to <span class="ql-formula"> in HTML before loading
+                    content = content.replace(/\$([^\$\n]+?)\$/g, '<span class="ql-formula" data-value="$1"></span>');
+                    
+                    // Split by <br> or <br/> and wrap each part in <p> tags
+                    const parts = content.split(/<br\s*\/?>/i);
+                    content = parts.map(part => part.trim() ? '<p>' + part.trim() + '</p>' : '').join('');
+                    
+                    // Decode one more time to handle any remaining entities
+                    textarea.innerHTML = content;
+                    content = textarea.value;
+                    
                     editor.root.innerHTML = content;
                     // Small delay to let Quill process the HTML
                     setTimeout(() => {
-                        // Convert any $...$ text to formulas
-                        this.convertDollarSignsToFormulas(editor);
-                        // Re-render KaTeX formulas after setting HTML
+                        // Re-render KaTeX formulas
                         this.renderKatexInEditor(editor);
                     }, 100);
                 }
             });
+        },
+        
+        // Clean dollar signs that are outside formula spans
+        cleanDollarSigns: function(html) {
+            if (!html) return html;
+            
+            console.log('Before cleaning:', html.substring(0, 300));
+            
+            // If there are ql-formula spans, remove any standalone $ characters
+            if (html.includes('ql-formula')) {
+                // Remove $ that appear right after </span> (closing formula tag)
+                html = html.replace(/(<span class="ql-formula"[^>]*>.*?<\/span>)\$/g, '$1');
+                // Remove $ that appear right before <span class="ql-formula"
+                html = html.replace(/\$(<span class="ql-formula")/g, '$1');
+            }
+            
+            console.log('After cleaning:', html.substring(0, 300));
+            
+            return html;
         },
         
         // Render KaTeX formulas in a Quill editor
@@ -343,6 +380,12 @@
         // Convert $...$ text to Quill formula embeds
         convertDollarSignsToFormulas: function(editor) {
             if (!editor || !editor.root) return;
+            
+            // Check if formulas already exist in the HTML
+            const existingFormulas = $(editor.root).find('.ql-formula');
+            if (existingFormulas.length > 0) {
+                return;
+            }
             
             try {
                 const text = editor.getText();
