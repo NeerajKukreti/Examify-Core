@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -35,7 +35,10 @@ namespace Examify.Helpers
             if (file == null || file.Length == 0)
                 return null;
 
-            string fname = string.Empty;
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".pdf" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(fileExtension))
+                throw new InvalidOperationException("Invalid file format.");
 
             var uploadPath = Path.Combine(_env.WebRootPath, _settings.UploadPath);
 
@@ -43,8 +46,8 @@ namespace Examify.Helpers
             if (!Directory.Exists(uploadPath))
                 Directory.CreateDirectory(uploadPath);
 
-            // Full file path
-            var newName = Guid.NewGuid() + Path.GetFileName(file.FileName);
+            // Full file path with sanitized extension
+            var newName = Guid.NewGuid() + fileExtension;
             var filePath = Path.Combine(uploadPath, newName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))

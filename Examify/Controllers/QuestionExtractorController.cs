@@ -49,6 +49,14 @@ namespace Examify.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded");
 
+            if (file.Length > 10 * 1024 * 1024)
+                return BadRequest("File size exceeds 10MB limit.");
+
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            if (!allowedExtensions.Contains(ext))
+                return BadRequest("Invalid image format. Only JPG, PNG, and WebP are allowed.");
+
             using var ms = new MemoryStream();
             await file.CopyToAsync(ms);
             var imageBytes = ms.ToArray();
@@ -289,6 +297,13 @@ namespace Examify.Controllers
         {
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded");
+
+            if (file.Length > 20 * 1024 * 1024)
+                return BadRequest("File size exceeds 20MB limit.");
+
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (ext != ".pdf")
+                return BadRequest("Invalid file type. Only PDF documents are allowed.");
 
             using var stream = file.OpenReadStream();
             var images = _pdfToImage.ConvertPdfToImages(stream);

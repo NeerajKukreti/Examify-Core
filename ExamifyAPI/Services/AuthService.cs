@@ -143,12 +143,11 @@ namespace ExamAPI.Services
         public int GetCurrentUserID()
         {
             var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
             {
-                // fallback for Swagger/Postman testing without login
-                return 1;
+                throw new UnauthorizedAccessException("User is not authenticated.");
             }
-            return int.Parse(userIdClaim.Value);
+            return userId;
         }
 
         public int GetCurrentInstituteId()

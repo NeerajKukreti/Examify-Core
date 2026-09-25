@@ -1,6 +1,8 @@
 using ExamifyAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class UserController : ControllerBase
@@ -18,6 +20,7 @@ public class UserController : ControllerBase
     /// <param name="userName">Username to check</param>
     /// <param name="userId">Optional: UserId to exclude from check (for edit scenarios)</param>
     /// <returns>Returns whether the username exists</returns>
+    [AllowAnonymous]
     [HttpGet("check-username")]
     public async Task<IActionResult> CheckUserNameExists([FromQuery] string userName, [FromQuery] int? userId = null)
     {
@@ -55,6 +58,7 @@ public class UserController : ControllerBase
     /// </summary>
     /// <param name="request">Username validation request</param>
     /// <returns>Returns validation result</returns>
+    [AllowAnonymous]
     [HttpPost("validate-username")]
     public async Task<IActionResult> ValidateUserName([FromBody] ValidateUserNameRequest request)
     {
@@ -166,6 +170,7 @@ public class UserController : ControllerBase
     /// </summary>
     /// <param name="request">User creation request</param>
     /// <returns>Created user ID</returns>
+    [Authorize(Roles = "SuperAdmin,Admin")]
     [HttpPost]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
     {
@@ -179,6 +184,14 @@ public class UserController : ControllerBase
                     Success = false, 
                     Message = "Username, password, and role are required" 
                 });
+            }
+
+            // Only SuperAdmin can create Admin or SuperAdmin accounts
+            if ((request.Role.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase) || 
+                 request.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase)) && 
+                !User.IsInRole("SuperAdmin"))
+            {
+                return Forbid();
             }
 
             // Check if username already exists

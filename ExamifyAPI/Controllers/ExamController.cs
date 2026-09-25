@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using ExamifyAPI.Services;
 using DataModel;
 using DataModel.Exam;
@@ -7,6 +8,7 @@ using ExamAPI.Services;
 
 namespace ExamifyAPI.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class ExamController : ControllerBase
@@ -221,11 +223,16 @@ namespace ExamifyAPI.Controllers
         }
 
         [HttpGet("{examId}/sessionquestions")]
-        public IActionResult GetExamSessionQuestions(int userId, int examId)
+        public IActionResult GetExamSessionQuestions(int examId, [FromQuery] int? userId = null)
         {
             try
             {
-                var examQuestions = _examService.GetExamSessionQuestions(userId, examId);
+                var currentUserId = _authService.GetCurrentUserID();
+                var targetUserId = (User.IsInRole("Admin") || User.IsInRole("SuperAdmin")) && userId.HasValue
+                    ? userId.Value
+                    : currentUserId;
+
+                var examQuestions = _examService.GetExamSessionQuestions(targetUserId, examId);
                 if (examQuestions == null)
                     return NotFound();
                     
@@ -242,14 +249,30 @@ namespace ExamifyAPI.Controllers
         {
             try
             {
+                if (submission == null || !long.TryParse(submission.SessionId, out var parsedSessionId) || parsedSessionId <= 0)
+                    return BadRequest(new { Success = false, Message = "Invalid submission payload." });
+
+                var currentUserId = _authService.GetCurrentUserID();
+                var session = _examService.GetUserExamSession(parsedSessionId);
+                if (session == null)
+                    return NotFound(new { Success = false, Message = "Exam session not found." });
+
+                // Verify session ownership
+                if (session.UserId != currentUserId && !User.IsInRole("Admin") && !User.IsInRole("SuperAdmin"))
+                    return Forbid();
+
+                // Prevent multiple submissions
+                if (session.Status == "Submit")
+                    return BadRequest(new { Success = false, Message = "This exam has already been submitted." });
+
                 submission.ExamId = examId;
+                submission.SubmittedAt = DateTime.UtcNow; // Enforce server-side timestamp
+
                 // Map ordering and pairing items for each response
                 foreach (var response in submission.Responses)
                 {
-                    // If ordering, ensure OrderedItems is not null
                     if (response.OrderedItems == null)
                         response.OrderedItems = new List<ExamResponseOrderModel>();
-                    // If pairing, ensure PairedItems is not null
                     if (response.PairedItems == null)
                         response.PairedItems = new List<ExamResponsePairModel>();
                 }
@@ -275,6 +298,15 @@ namespace ExamifyAPI.Controllers
         {
             try
             {
+                var currentUserId = _authService.GetCurrentUserID();
+                var session = _examService.GetUserExamSession(sessionId);
+                if (session == null)
+                    return NotFound("Exam result not found");
+
+                // Restrict students to viewing only their own result
+                if (session.UserId != currentUserId && !User.IsInRole("Admin") && !User.IsInRole("SuperAdmin"))
+                    return Forbid();
+
                 var result = _examService.GetExamResult(sessionId);
                 if (result == null)
                     return NotFound("Exam result not found");

@@ -14,6 +14,7 @@ namespace DAL.Repository
         List<ExamModel> GetActiveExams(int instituteId);
         ExamModel GetExamById(int examId, int instituteId);
         ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId);
+        UserExamSessionModel? GetUserExamSession(long sessionId);
         int SubmitExamResponses(ExamSubmissionModel submission);
         ExamResultModel GetExamResult(int sessionId);
         Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null,
@@ -227,7 +228,7 @@ namespace DAL.Repository
                                         ChoiceId = row.ChoiceId ?? 0,
                                         ChoiceTextEnglish = row.ChoiceTextEnglish,
                                         ChoiceTextHindi = row.ChoiceTextHindi,
-                                        IsCorrect = row.IsCorrect
+                                        IsCorrect = false // Do not leak correct answers to the client during active exam
                                     });
                                 }
                             }
@@ -290,6 +291,14 @@ namespace DAL.Repository
             }
         }
 
+        public UserExamSessionModel? GetUserExamSession(long sessionId)
+        {
+            using var connection = CreateConnection();
+            return connection.QueryFirstOrDefault<UserExamSessionModel>(
+                "SELECT UserExamSessionId, ExamId, UserId, StartTime, SubmitTime, Status, TotalScore, CreatedDate FROM dbo.UserExamSession WHERE UserExamSessionId = @SessionId",
+                new { SessionId = sessionId });
+        }
+
         public int SubmitExamResponses(ExamSubmissionModel submission)
         {
             using var connection = CreateConnection();
@@ -346,7 +355,7 @@ namespace DAL.Repository
                         new
                         {
                             UserExamSessionId = submission.SessionId,
-                            SubmitTime = submission.SubmittedAt
+                            SubmitTime = DateTime.UtcNow // Enforce server UTC time
                         },
                         transaction,
                         commandType: CommandType.StoredProcedure

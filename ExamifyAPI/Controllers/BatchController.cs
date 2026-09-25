@@ -1,10 +1,12 @@
-﻿using ExamAPI.Services;
+using ExamAPI.Services;
 using ExamifyAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Model.DTO;
 
 namespace ExamifyApi.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class BatchController : ControllerBase
