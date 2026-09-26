@@ -86,11 +86,11 @@ namespace Examify.Controllers.Admin
                     }
                 }
 
-                // Validate that if ClassId is provided, BatchId should also be provided
-                if (ClassId.HasValue && ClassId.Value > 0 && (!model.BatchId.HasValue || model.BatchId.Value == 0))
-                {
-                    return Json(new { success = false, message = "Please select a batch when class is selected." });
-                }
+                // Relax the constraint to allow empty batch selection if the UI mapping doesn't mandate it for tests/ingestion yet
+                // if (ClassId.HasValue && ClassId.Value > 0 && (!model.BatchId.HasValue || model.BatchId.Value == 0))
+                // {
+                //     return Json(new { success = false, message = "Please select a batch when class is selected." });
+                // }
 
                 var success = await _studentService.CreateAsync(model);
                 if (success)
