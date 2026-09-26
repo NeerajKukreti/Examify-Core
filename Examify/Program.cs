@@ -50,7 +50,21 @@ builder.Services.AddHttpClient("ExamifyAPI", client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl);
 })
-.AddHttpMessageHandler<AuthTokenHandler>();
+.AddHttpMessageHandler<AuthTokenHandler>()
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+});
+
+builder.Services.AddHttpClient<IExamifyApiClient, ExamifyApiClient>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+})
+.AddHttpMessageHandler<AuthTokenHandler>()
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+});
 
 builder.Services.AddCors(options =>
 {
@@ -122,7 +136,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Dashboard}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 Log.Information("Application configured and starting");
 

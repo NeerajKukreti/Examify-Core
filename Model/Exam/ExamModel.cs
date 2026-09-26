@@ -20,6 +20,8 @@ namespace DataModel
         public string? Instructions { get; set; }
         public string? ExamType { get; set; }
         public decimal? CutOffPercentage { get; set; }
+        public bool IsPublic { get; set; } = false;
+        public int InstituteId { get; set; }
 
         // New: list of class ids associated with this exam (populated by repository)
         public List<int> ClassIds { get; set; } = new List<int>();

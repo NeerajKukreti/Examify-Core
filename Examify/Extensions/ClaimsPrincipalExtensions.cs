@@ -34,5 +34,11 @@ namespace Examify.Extensions
         {
             return principal.FindFirst("FullName")?.Value ?? principal.GetUserName();
         }
+
+        public static int GetTenantType(this ClaimsPrincipal principal)
+        {
+            var claim = principal.FindFirst("TenantType")?.Value;
+            return int.TryParse(claim, out var type) ? type : 2; // Default to Institute (2)
+        }
     }
 }

@@ -35,7 +35,8 @@ namespace Model.DTO
         [Range(0, 100, ErrorMessage = "Cut Off Percentage must be between 0 and 100")]
         public decimal? CutOffPercentage { get; set; }
 
-        [Required(ErrorMessage = "Exam must be tagged with one Class")]
+        public bool IsPublic { get; set; } = false;
+
         public List<int>? ClassIds { get; set; }
     } 
 }

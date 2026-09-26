@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using DAL.Repository;
 using DataModel;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace ExamifyAPI.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class QuestionController : ControllerBase

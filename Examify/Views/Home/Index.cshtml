@@ -1,47 +1,291 @@
-﻿@{
-    ViewData["Title"] = "Examify - Online Exam Portal";
+@{
+    ViewData["Title"] = "Examify — Free Practice Exam Platform & Certification Tests";
     Layout = null;
+    var publicExams = ViewBag.PublicExams as List<DataModel.ExamModel> ?? new List<DataModel.ExamModel>();
+    var isAuthenticated = User?.Identity?.IsAuthenticated == true;
 }
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Examify - Online Exam Portal</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --brand-primary: #004c97;
+            --brand-hover: #00366b;
+            --accent-green: #28a745;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--brand-primary) !important;
+        }
+        .hero-banner {
+            background: linear-gradient(135deg, #004c97 0%, #0d6efd 100%);
+            color: white;
+            padding: 5rem 1rem 4rem 1rem;
+            text-align: center;
+        }
+        .badge-free {
+            background-color: var(--accent-green);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+        }
+        .exam-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .exam-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+            border-color: #cbd5e1;
+        }
+        .btn-exam-start {
+            background-color: var(--brand-primary);
+            color: white;
+            font-weight: 600;
+            border: none;
+            transition: background 0.15s;
+        }
+        .btn-exam-start:hover {
+            background-color: var(--brand-hover);
+            color: white;
+        }
+        .meta-pill {
+            font-size: 0.82rem;
+            color: #64748b;
+            margin-right: 12px;
+        }
+        .category-filter {
+            background: #e2e8f0;
+            border-radius: 20px;
+            padding: 6px 16px;
+            margin-right: 8px;
+            font-size: 0.85rem;
+            color: #334155;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+        .category-filter.active {
+            background: var(--brand-primary);
+            color: white;
+        }
+    </style>
 </head>
-<body class="bg-light">
-    <div class="container-fluid vh-100 d-flex align-items-center justify-content-center">
-        <div class="row w-100">
-            <div class="col-md-6 offset-md-3">
-                <div class="card shadow">
-                    <div class="card-body text-center p-5">
-                        <h1 class="mb-4">Welcome to Examify</h1>
-                        <p class="lead mb-4">Online Examination Portal</p>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <div class="card border-primary">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Student Login</h5>
-                                        <p class="card-text">Take exams and view results</p>
-                                        <a href="/Auth" class="btn btn-primary">Login as Student</a>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="card border-success">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Trainee Login</h5>
-                                        <p class="card-text">Practice and prepare</p>
-                                        <a href="/Auth" class="btn btn-success">Login as Trainee</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-graduation-cap me-2"></i>Examify
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active fw-semibold" href="#catalog">Exam Catalog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#how-it-works">How It Works</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center gap-2">
+                    @if (isAuthenticated)
+                    {
+                        <a href="/Dashboard" class="btn btn-outline-primary btn-sm fw-bold">
+                            <i class="fas fa-tachometer-alt me-1"></i>My Dashboard
+                        </a>
+                        <a href="/Auth/Logout" class="btn btn-light btn-sm text-secondary">Sign Out</a>
+                    }
+                    else
+                    {
+                        <a href="/Auth" class="btn btn-outline-secondary btn-sm">Sign In</a>
+                        <a href="/Auth/Register" class="btn btn-primary btn-sm fw-bold">
+                            <i class="fas fa-user-plus me-1"></i>Free Sign Up
+                        </a>
+                        <a href="/AdminLogin" class="btn btn-light btn-sm text-muted ms-2" title="Institute & Admin Portal">
+                            <i class="fas fa-university me-1"></i>Institutes
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Banner -->
+    <section class="hero-banner">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <span class="badge bg-white text-primary fw-bold mb-3 px-3 py-2 rounded-pill">
+                        <i class="fas fa-bolt me-1"></i> 100% Free Practice Tests
+                    </span>
+                    <h1 class="display-5 fw-bold mb-3">Master Real Exams with Instant Scoring</h1>
+                    <p class="lead mb-4 text-white-50">
+                        Practice real certification questions with server-side time tracking, masked answer verification, and in-depth performance scorecards.
+                    </p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="#catalog" class="btn btn-light btn-lg text-primary fw-bold shadow-sm">
+                            <i class="fas fa-compass me-2"></i>Browse Exams
+                        </a>
+                        @if (!isAuthenticated)
+                        {
+                            <a href="/Auth/Register" class="btn btn-outline-light btn-lg fw-bold">
+                                Create Free Account
+                            </a>
+                        }
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
+
+    <!-- Catalog Section -->
+    <section id="catalog" class="py-5">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                <div>
+                    <h2 class="fw-bold mb-1">Public Exam Catalog</h2>
+                    <p class="text-muted mb-0">Browse and practice available certification tests</p>
+                </div>
+                <div class="mt-2 mt-md-0">
+                    <span class="badge-free"><i class="fas fa-check me-1"></i>Free Tier (10 Exams/Month)</span>
+                </div>
+            </div>
+
+            @if (publicExams != null && publicExams.Any())
+            {
+                <div class="row g-4">
+                    @foreach (var exam in publicExams)
+                    {
+                        <div class="col-md-6 col-lg-4">
+                            <div class="exam-card p-4">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge-free">Platform Test</span>
+                                    <span class="text-muted small"><i class="far fa-clock me-1"></i>@exam.DurationMinutes min</span>
+                                </div>
+                                <h4 class="fw-bold mt-1 mb-2 text-dark">@exam.ExamName</h4>
+                                <p class="text-muted small flex-grow-1">
+                                    @(string.IsNullOrWhiteSpace(exam.Description) ? "Comprehensive timed practice test covering core exam objectives and knowledge domains." : exam.Description)
+                                </p>
+                                
+                                <div class="py-2 border-top border-bottom my-3 d-flex justify-content-between">
+                                    <div class="meta-pill">
+                                        <i class="fas fa-list-ol me-1 text-primary"></i>@(exam.TotalQuestions > 0 ? exam.TotalQuestions : 2) Questions
+                                    </div>
+                                    <div class="meta-pill me-0">
+                                        <i class="fas fa-award me-1 text-success"></i>Pass: @(exam.CutOffPercentage?.ToString("0") ?? "40")%
+                                    </div>
+                                </div>
+
+                                <a href="/ExamSession/Details/@exam.ExamId" class="btn btn-exam-start w-100 py-2">
+                                    <i class="fas fa-play me-2"></i>Start Free Exam
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="exam-card p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge-free">Platform Test</span>
+                                <span class="text-muted small"><i class="far fa-clock me-1"></i>60 min</span>
+                            </div>
+                            <h4 class="fw-bold mt-1 mb-2 text-dark">Azure Fundamentals (AZ-900)</h4>
+                            <p class="text-muted small flex-grow-1">Practice core cloud concepts, security, architecture, and governance.</p>
+                            <div class="py-2 border-top border-bottom my-3 d-flex justify-content-between">
+                                <div class="meta-pill"><i class="fas fa-list-ol me-1 text-primary"></i>40 Questions</div>
+                                <div class="meta-pill me-0"><i class="fas fa-award me-1 text-success"></i>Pass: 70%</div>
+                            </div>
+                            <a href="/Auth/Register" class="btn btn-exam-start w-100 py-2">
+                                <i class="fas fa-play me-2"></i>Start Free Exam
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="exam-card p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge-free">Platform Test</span>
+                                <span class="text-muted small"><i class="far fa-clock me-1"></i>45 min</span>
+                            </div>
+                            <h4 class="fw-bold mt-1 mb-2 text-dark">C# & .NET Core Developer Assessment</h4>
+                            <p class="text-muted small flex-grow-1">Assess modern C#, async/await, memory management, and ASP.NET Core.</p>
+                            <div class="py-2 border-top border-bottom my-3 d-flex justify-content-between">
+                                <div class="meta-pill"><i class="fas fa-list-ol me-1 text-primary"></i>30 Questions</div>
+                                <div class="meta-pill me-0"><i class="fas fa-award me-1 text-success"></i>Pass: 60%</div>
+                            </div>
+                            <a href="/Auth/Register" class="btn btn-exam-start w-100 py-2">
+                                <i class="fas fa-play me-2"></i>Start Free Exam
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-5 bg-white border-top">
+        <div class="container text-center">
+            <h2 class="fw-bold mb-4">How Examify Works</h2>
+            <div class="row g-4 mt-2">
+                <div class="col-md-4">
+                    <div class="p-4 rounded-3 border bg-light h-100">
+                        <div class="display-6 text-primary mb-3"><i class="fas fa-user-plus"></i></div>
+                        <h5 class="fw-bold">1. Free Self-Signup</h5>
+                        <p class="text-muted small">Sign up in seconds. No credit card required. Personal Workspace is provisioned instantly.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-4 rounded-3 border bg-light h-100">
+                        <div class="display-6 text-primary mb-3"><i class="fas fa-stopwatch"></i></div>
+                        <h5 class="fw-bold">2. Timed Live Exam</h5>
+                        <p class="text-muted small">Take exams on a server-authoritative engine with masked answers and auto-save protection.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-4 rounded-3 border bg-light h-100">
+                        <div class="display-6 text-primary mb-3"><i class="fas fa-chart-line"></i></div>
+                        <h5 class="fw-bold">3. Instant Evaluation</h5>
+                        <p class="text-muted small">Receive immediate grading, review explanations, and track your historical performance.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-4 bg-dark text-white-50 border-top">
+        <div class="container text-center small">
+            <p class="mb-1 text-white">Examify — Security-First Examination Platform</p>
+            <p class="mb-0">Personal Workspace & Platform Marketplace &copy; 2026. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

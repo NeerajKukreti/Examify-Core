@@ -18,8 +18,8 @@ namespace DAL.Repository
         Task<List<QuestionModel>> GetAllQuestionsAsync(int instituteId);
         Task<QuestionModel?> GetQuestionAsync(int id, int instituteId);
         Task<int> CreateQuestionAsync(QuestionModel model, int instituteId);
-        Task<int> UpdateQuestionAsync(QuestionModel model);
-        Task<int> DeleteQuestionAsync(int id);
+        Task<int> UpdateQuestionAsync(QuestionModel model, int instituteId);
+        Task<int> DeleteQuestionAsync(int id, int instituteId);
         Task<List<QuestionTypeModel>> GetQuestionTypesAsync();
     }
 
@@ -209,7 +209,7 @@ namespace DAL.Repository
             }
         }
 
-        public async Task<int> UpdateQuestionAsync(QuestionModel model)
+        public async Task<int> UpdateQuestionAsync(QuestionModel model, int instituteId)
         {
             using var connection = CreateConnection();
             return await connection.ExecuteScalarAsync<int>("_sp_UpdateQuestion", new
@@ -218,15 +218,15 @@ namespace DAL.Repository
                 model.QuestionEnglish,
                 model.QuestionHindi,
                 model.TopicId,
-                //model.TopicName,
-                model.IsMultiSelect
+                model.IsMultiSelect,
+                InstituteId = instituteId
             }, commandType: CommandType.StoredProcedure);
         }
 
-        public async Task<int> DeleteQuestionAsync(int id)
+        public async Task<int> DeleteQuestionAsync(int id, int instituteId)
         {
             using var connection = CreateConnection();
-            return await connection.ExecuteScalarAsync<int>("_sp_DeleteQuestion", new { QuestionId = id }, commandType: CommandType.StoredProcedure);
+            return await connection.ExecuteScalarAsync<int>("_sp_DeleteQuestion", new { QuestionId = id, InstituteId = instituteId }, commandType: CommandType.StoredProcedure);
         }
 
         public async Task<List<QuestionTypeModel>> GetQuestionTypesAsync()

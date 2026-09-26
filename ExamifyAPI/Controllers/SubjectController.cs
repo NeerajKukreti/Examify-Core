@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace ExamifyAPI.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class SubjectController : ControllerBase
@@ -40,6 +41,12 @@ namespace ExamifyAPI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(new { Success = false, Errors = ModelState });
 
+            var currentInstituteId = _authService.GetCurrentInstituteId();
+            if (currentInstituteId > 0)
+            {
+                dto.InstituteId = currentInstituteId;
+            }
+
             var userId = _authService.GetCurrentUserID();
             var newId = await _subjectService.InsertOrUpdateSubjectAsync(dto, null, userId);
 
@@ -52,6 +59,12 @@ namespace ExamifyAPI.Controllers
         public async Task<IActionResult> UpdateSubject(int id, [FromBody] SubjectDTO dto)
         {
             if (!ModelState.IsValid) return BadRequest(new { Success = false, Errors = ModelState });
+
+            var currentInstituteId = _authService.GetCurrentInstituteId();
+            if (currentInstituteId > 0)
+            {
+                dto.InstituteId = currentInstituteId;
+            }
 
             var userId = _authService.GetCurrentUserID();
             var updatedId = await _subjectService.InsertOrUpdateSubjectAsync(dto, id, userId);

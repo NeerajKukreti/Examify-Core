@@ -1,8 +1,10 @@
-﻿using ExamAPI.Services;
+using ExamAPI.Services;
 using ExamifyAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Model.DTO;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class StudentController : ControllerBase
@@ -38,6 +40,12 @@ public class StudentController : ControllerBase
 
         if (!ModelState.IsValid) return BadRequest(new { Success = false, Errors = ModelState });
 
+        var currentInstituteId = _authService.GetCurrentInstituteId();
+        if (currentInstituteId > 0)
+        {
+            dto.InstituteId = currentInstituteId;
+        }
+
         var createdBy = _authService.GetCurrentUserID(); // logged-in user ID
         var newId = await _studentService.InsertOrUpdateStudentAsync(dto, null, createdBy, null);
 
@@ -50,6 +58,12 @@ public class StudentController : ControllerBase
     public async Task<IActionResult> UpdateStudent(int id, [FromBody] StudentDTO dto)
     {
         if (!ModelState.IsValid) return BadRequest(new { Success = false, Errors = ModelState });
+
+        var currentInstituteId = _authService.GetCurrentInstituteId();
+        if (currentInstituteId > 0)
+        {
+            dto.InstituteId = currentInstituteId;
+        }
 
         var existingStudent = await _studentService.GetAllStudentsAsync(dto.InstituteId, id);
         var student = existingStudent?.FirstOrDefault();

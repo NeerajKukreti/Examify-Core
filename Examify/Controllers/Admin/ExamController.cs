@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using DataModel;
 using Examify.Services;
@@ -82,7 +82,8 @@ namespace Examify.Controllers.Admin
                 Instructions = exam.Instructions,
                 ExamType = exam.ExamType,
                 CutOffPercentage = exam.CutOffPercentage,
-                ClassIds = exam.ClassIds
+                ClassIds = exam.ClassIds,
+                IsPublic = exam.IsPublic
             };
 
             return PartialView("_Create", model);

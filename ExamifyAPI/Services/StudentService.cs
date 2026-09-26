@@ -1,4 +1,4 @@
-﻿using DAL.Repository;
+using DAL.Repository;
 using DataModel;
 using ExamAPI.Services;
 using ExamifyAPI.Services;
@@ -104,9 +104,9 @@ namespace ExamifyAPI.Services
         {
             var allExams = await _examService.GetAllExamsAsync();
             var studentClasses = await _classService.GetStudentClassesAsync(_authService.GetCurrentUserID());
-            var studentClassIds = studentClasses.Select(sc => sc.ClassId).ToHashSet();
+            var studentClassIds = studentClasses?.Select(sc => sc.ClassId).ToHashSet() ?? new HashSet<int>();
             
-            return allExams.Where(exam => exam.ClassIds.Any(classId => studentClassIds.Contains(classId)))
+            return allExams.Where(exam => exam.IsPublic || exam.ClassIds.Any(classId => studentClassIds.Contains(classId)))
                 .Where(x => x.IsPublished && (x.IsActive ?? false) && x.TotalQuestions > 0);
         } 
     }

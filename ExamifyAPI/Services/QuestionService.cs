@@ -40,8 +40,16 @@ namespace ExamifyAPI.Services
             var instituteId = _authService.GetCurrentInstituteId();
             return await _repo.CreateQuestionAsync(model, instituteId);
         }
-        public async Task<int> UpdateQuestionAsync(QuestionModel model) => await _repo.UpdateQuestionAsync(model);
-        public async Task<int> DeleteQuestionAsync(int id) => await _repo.DeleteQuestionAsync(id);
+        public async Task<int> UpdateQuestionAsync(QuestionModel model)
+        {
+            var instituteId = _authService.GetCurrentInstituteId();
+            return await _repo.UpdateQuestionAsync(model, instituteId);
+        }
+        public async Task<int> DeleteQuestionAsync(int id)
+        {
+            var instituteId = _authService.GetCurrentInstituteId();
+            return await _repo.DeleteQuestionAsync(id, instituteId);
+        }
         public async Task<List<QuestionTypeModel>> GetQuestionTypesAsync() => await _repo.GetQuestionTypesAsync();
     }
 }

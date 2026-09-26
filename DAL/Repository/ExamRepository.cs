@@ -14,6 +14,7 @@ namespace DAL.Repository
         List<ExamModel> GetActiveExams(int instituteId);
         ExamModel GetExamById(int examId, int instituteId);
         ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId);
+        UserExamSessionModel? GetUserExamSession(long sessionId);
         int SubmitExamResponses(ExamSubmissionModel submission);
         ExamResultModel GetExamResult(int sessionId);
         Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null,
@@ -28,6 +29,8 @@ namespace DAL.Repository
         Task<StatsDTO> GetStatsAsync(int instituteId);
         Task<IEnumerable<ExamInstructionModel>> GetInstructionsAsync(int instituteId);
         Task<int> UpsertInstructionAsync(ExamInstructionModel model);
+        List<ExamModel> GetPublicCatalogExams();
+        Task<int> GetMonthlyExamCountAsync(int userId);
     }
 
     public class ExamRepository : IExamRepository
@@ -66,6 +69,41 @@ namespace DAL.Repository
             return exams;
         }
 
+        public List<ExamModel> GetPublicCatalogExams()
+        {
+            using var connection = CreateConnection();
+            using var multi = connection.QueryMultiple(
+                "_sp_GetPublicExams",
+                commandType: CommandType.StoredProcedure);
+
+            var exams = multi.Read<ExamModel>().ToList();
+            var classMappings = multi.Read<dynamic>().ToList();
+
+            var map = classMappings
+                .Where(x => x.ExamId != null)
+                .GroupBy(x => (int)x.ExamId)
+                .ToDictionary(g => g.Key, g => g.Select(r => (int)r.ClassId).ToList());
+
+            foreach (var exam in exams)
+            {
+                if (map.TryGetValue(exam.ExamId, out var classIds))
+                {
+                    exam.ClassIds = classIds;
+                }
+            }
+
+            return exams;
+        }
+
+        public async Task<int> GetMonthlyExamCountAsync(int userId)
+        {
+            using var connection = CreateConnection();
+            return await connection.ExecuteScalarAsync<int>(
+                "_sp_GetUserMonthlyExamCount",
+                new { UserId = userId },
+                commandType: CommandType.StoredProcedure);
+        }
+
         public async Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null,
             int? userloggedIn = null, int instituteId = 0)
         {
@@ -82,6 +120,7 @@ namespace DAL.Repository
             parameters.Add("@CutOffPercentage", dto.CutOffPercentage);
             parameters.Add("@UserId", userloggedIn);
             parameters.Add("@InstituteId", instituteId);
+            parameters.Add("@IsPublic", dto.IsPublic);
 
             // Prepare TVP for ClassIds (SP parameter name: @classIds) using IntList TVP
             var classIdsTable = new DataTable();
@@ -227,7 +266,7 @@ namespace DAL.Repository
                                         ChoiceId = row.ChoiceId ?? 0,
                                         ChoiceTextEnglish = row.ChoiceTextEnglish,
                                         ChoiceTextHindi = row.ChoiceTextHindi,
-                                        IsCorrect = row.IsCorrect
+                                        IsCorrect = false // Do not leak correct answers to the client during active exam
                                     });
                                 }
                             }
@@ -290,6 +329,14 @@ namespace DAL.Repository
             }
         }
 
+        public UserExamSessionModel? GetUserExamSession(long sessionId)
+        {
+            using var connection = CreateConnection();
+            return connection.QueryFirstOrDefault<UserExamSessionModel>(
+                "SELECT UserExamSessionId, ExamId, UserId, StartTime, SubmitTime, Status, TotalScore, CreatedDate FROM dbo.UserExamSession WHERE UserExamSessionId = @SessionId",
+                new { SessionId = sessionId });
+        }
+
         public int SubmitExamResponses(ExamSubmissionModel submission)
         {
             using var connection = CreateConnection();
@@ -346,7 +393,7 @@ namespace DAL.Repository
                         new
                         {
                             UserExamSessionId = submission.SessionId,
-                            SubmitTime = submission.SubmittedAt
+                            SubmitTime = DateTime.UtcNow // Enforce server UTC time
                         },
                         transaction,
                         commandType: CommandType.StoredProcedure

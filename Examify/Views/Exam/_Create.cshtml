@@ -125,7 +125,7 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         <div class="d-flex align-items-center justify-content-between">
-                            <label class="mb-0">Assign to Classes <span class="required">*</span></label>
+                            <label class="mb-0">Assign to Classes <span class="required" id="classRequiredAsterisk">*</span> <span class="badge bg-info text-white ms-1" id="classPublicBadge" style="display:none; font-size:10px;">Optional (Public)</span></label>
                             <div class="form-check mb-0">
                                 <input class="form-check-input" type="checkbox" id="selectAllClasses" />
                                 <label class="form-check-label" for="selectAllClasses">Select All</label>
@@ -155,6 +155,19 @@
                         <label asp-for="CutOffPercentage">Cut Off Percentage</label>
                         <input asp-for="CutOffPercentage" type="number" step="0.01" class="form-control" placeholder="Enter cut off %" />
                         <span asp-validation-for="CutOffPercentage" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <div class="form-check form-switch p-3 bg-light rounded border">
+                        <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="IsPublic" id="chkIsPublic" style="transform: scale(1.3); cursor: pointer;" />
+                        <label class="form-check-label fw-bold" for="chkIsPublic" style="cursor: pointer;">
+                            <i class="fas fa-globe text-primary me-1"></i> Make Public (Platform Marketplace Catalog)
+                        </label>
+                        <div class="text-muted small mt-1 ps-4">
+                            When enabled, this exam is publicly available in the platform catalog for any self-registered candidate to practice and take. Class assignment is optional.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -306,8 +319,26 @@
             }
 
             $.validator.addMethod('multiRequired', function(value, element) {
-            return $(element).val() && $(element).val().length > 0;
-    });
+                if ($('#chkIsPublic').is(':checked')) {
+                    return true;
+                }
+                return $(element).val() && $(element).val().length > 0;
+            });
+
+            function updatePublicExamUI() {
+                var isPub = $('#chkIsPublic').is(':checked');
+                if (isPub) {
+                    $('#classRequiredAsterisk').hide();
+                    $('#classPublicBadge').show();
+                    $('#ClassIds-error').text('').hide();
+                } else {
+                    $('#classRequiredAsterisk').show();
+                    $('#classPublicBadge').hide();
+                }
+            }
+
+            $('#chkIsPublic').on('change', updatePublicExamUI);
+            updatePublicExamUI();
             $('#examForm').validate({
                 // include hidden fields (Select2 hides original select); custom rule checks underlying value
                 ignore: [],

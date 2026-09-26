@@ -19,9 +19,11 @@ namespace Examify.Controllers
             var role = User.GetRole();
             var userId = User.GetUserId();
             var instituteId = User.GetInstituteId();
+            var tenantType = User.GetTenantType();
             
             ViewBag.UserId = userId;
             ViewBag.InstituteId = instituteId;
+            ViewBag.TenantType = tenantType;
             ViewBag.ApiBaseUrl = _configuration["ExamifyAPI:BaseUrl"] ?? "https://localhost:7271/api/";
 
             return role?.ToLower() switch

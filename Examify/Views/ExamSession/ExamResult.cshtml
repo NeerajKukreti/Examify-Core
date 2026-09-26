@@ -1,11 +1,38 @@
+@inject IConfiguration Configuration
 @{
     Layout = null;
+    var accessTokenValue = Context.Request.Cookies["JWToken"];
+    var refreshTokenValue = Context.Request.Cookies["RefreshToken"];
+    var apiBase = Configuration["ExamifyAPI:BaseUrl"] ?? "https://localhost:7271/api/";
 }
-@inject IConfiguration Configuration
 <script>
     window.API_ENDPOINTS = {
-        baseUrl: '@(Configuration["ExamifyAPI:BaseUrl"] ?? "https://localhost:7271/api/")'
+        baseUrl: '@apiBase'
     };
+    window.accessToken = '@accessTokenValue';
+    window.refreshToken = '@refreshTokenValue';
+
+    // Intercept fetch API to automatically inject Bearer token for API calls
+    (function() {
+        var originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            options = options || {};
+            var urlStr = (typeof url === 'string') ? url : (url && url.url ? url.url : '');
+            var isApiCall = urlStr.includes('/api/') || urlStr.includes('7271') || (window.API_ENDPOINTS && urlStr.includes(window.API_ENDPOINTS.baseUrl));
+            
+            if (window.accessToken && isApiCall) {
+                options.headers = options.headers || {};
+                if (options.headers instanceof Headers) {
+                    if (!options.headers.has('Authorization')) {
+                        options.headers.set('Authorization', 'Bearer ' + window.accessToken);
+                    }
+                } else if (!options.headers['Authorization']) {
+                    options.headers['Authorization'] = 'Bearer ' + window.accessToken;
+                }
+            }
+            return originalFetch(url, options);
+        };
+    })();
 </script>
 <!DOCTYPE html>
 <html lang="en">
@@ -499,7 +526,7 @@
                     <h4 class="mb-0 opacity-90" id="examName">Loading exam details...</h4>
                 </div>
                 <div class="col-md-4 text-end">
-                    <button class="exit-btn" onclick="window.close()">
+                    <button class="exit-btn" onclick="exitExamResult()">
                         <i class="fas fa-times me-2"></i> Exit
                     </button>
                 </div>
@@ -619,6 +646,14 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
         window.sessionId = @ViewBag.SessionId;
+        function exitExamResult() {
+            if (window.opener && !window.opener.closed) {
+                window.close();
+            }
+            setTimeout(function() {
+                window.location.href = '/Dashboard';
+            }, 100);
+        }
     </script>
     <script src="~/Scripts/Custom/ExamSession/ExamResult.js"></script>
 </body>

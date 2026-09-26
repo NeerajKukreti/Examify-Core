@@ -4,6 +4,7 @@ using Examify.Common;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Model.DTO;
 
 public class AuthController : Controller
 {
@@ -15,16 +16,21 @@ public class AuthController : Controller
     }
 
     [HttpGet]
-    public IActionResult Index() => View();
+    public IActionResult Index(string? returnUrl = null)
+    {
+        ViewBag.ReturnUrl = returnUrl;
+        return View();
+    }
 
     [HttpPost]
-    public async Task<IActionResult> Login(UserDTO dto)
+    public async Task<IActionResult> Login(UserDTO dto, string? returnUrl = null)
     {
         var result = await _authService.LoginAsync(dto);
         
         if (!result.Success)
         {
             ModelState.AddModelError("", result.ErrorMessage ?? "Login failed");
+            ViewBag.ReturnUrl = returnUrl;
             return View("Index", dto);
         }
 
@@ -33,6 +39,46 @@ public class AuthController : Controller
         var tokenData = JwtHelper.ParseToken(result.Token!);
         await SetUserClaims(tokenData, result.InstituteId, result.FullName);
         
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+
+        return RedirectToAction("Index", "Dashboard");
+    }
+
+    [HttpGet]
+    public IActionResult Register(string? returnUrl = null)
+    {
+        ViewBag.ReturnUrl = returnUrl;
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Register(PersonalRegisterDTO dto, string? returnUrl = null)
+    {
+        ViewBag.ReturnUrl = returnUrl;
+        if (!ModelState.IsValid)
+        {
+            return View(dto);
+        }
+
+        var result = await _authService.RegisterPersonalAsync(dto);
+        if (!result.Success)
+        {
+            ModelState.AddModelError("", result.ErrorMessage ?? "Registration failed");
+            return View(dto);
+        }
+
+        _authService.SaveTokensInSession(result.Token!, result.RefreshToken!);
+        var tokenData = JwtHelper.ParseToken(result.Token!);
+        await SetUserClaims(tokenData, result.InstituteId, result.FullName);
+
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+
         return RedirectToAction("Index", "Dashboard");
     }
 
@@ -67,6 +113,7 @@ public class AuthController : Controller
             new Claim(ClaimTypes.Email, tokenData.Email ?? ""),
             new Claim(ClaimTypes.Role, tokenData.Role ?? ""),
             new Claim("InstituteId", instituteId?.ToString() ?? "0"),
+            new Claim("TenantType", tokenData.TenantType.ToString()),
             // Store tokens in claims as backup
             new Claim("JWToken", tokenData.Token ?? ""),
             new Claim("RefreshToken", HttpContext.Request.Cookies["RefreshToken"] ?? "")
