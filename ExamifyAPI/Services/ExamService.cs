@@ -8,8 +8,9 @@ namespace ExamifyAPI.Services
     public interface IExamService
     {
         Task<IEnumerable<ExamModel>> GetAllExamsAsync();
+        IEnumerable<ExamModel> GetPublicCatalogExams();
         Task<ExamModel> GetExamByIdAsync(int examId);
-        Task<ExamModel> GetSessionExamByIdAsync(int examId);
+        Task<ExamModel?> GetSessionExamByIdAsync(int examId);
         Task<int> InsertOrUpdateExamAsync(ExamDTO dto, int? examId = null, int? userloggedIn = null);
         Task<bool> ChangeStatusAsync(int examId);
         Task<bool> PublishExamAsync(int examId);
@@ -46,17 +47,24 @@ namespace ExamifyAPI.Services
             return await Task.FromResult(_examRepository.GetActiveExams(instituteId));
         }
 
+        public IEnumerable<ExamModel> GetPublicCatalogExams()
+        {
+            return _examRepository.GetPublicCatalogExams();
+        }
+
         public async Task<ExamModel> GetExamByIdAsync(int examId)
         {
             var instituteId = _authService.GetCurrentInstituteId();
-            var exam = _examRepository.GetExamById(examId, instituteId);
+            var exam = _examRepository.GetExamById(examId, instituteId)
+                       ?? _examRepository.GetExamById(examId, 0);
             return exam;
         }
 
-        public async Task<ExamModel> GetSessionExamByIdAsync(int examId)
+        public async Task<ExamModel?> GetSessionExamByIdAsync(int examId)
         {
             var instituteId = _authService.GetCurrentInstituteId();
             var userId = _authService.GetCurrentUserID();
+            var tenantType = _authService.GetCurrentTenantType();
             
             // Check if user has already taken this exam
             var userExams = await _examRepository.GetUserExamsAsync(new List<long> { userId });
@@ -65,13 +73,36 @@ namespace ExamifyAPI.Services
                 return null; // User has already taken the exam
             }
             
-            var exam = _examRepository.GetExamById(examId, instituteId);
+            var exam = _examRepository.GetExamById(examId, instituteId)
+                       ?? _examRepository.GetExamById(examId, 0);
+
+            if (exam == null || exam.IsActive != true || !exam.IsPublished)
+            {
+                return null;
+            }
+
+            // 1. If it's a Public Platform exam:
+            if (exam.IsPublic)
+            {
+                // Enforce monthly quota for Personal tenant users (max 10 free exams / month)
+                if (tenantType == 1) // Personal
+                {
+                    var monthlyAttempts = await _examRepository.GetMonthlyExamCountAsync(userId);
+                    if (monthlyAttempts >= 10)
+                    {
+                        throw new InvalidOperationException("Monthly free exam limit reached (10/10). Upgrade to Pro for unlimited exams.");
+                    }
+                }
+                return exam;
+            }
+            
+            // 2. Otherwise, enforce Institute Class/Batch gating
             var studentClasses = await _classService.GetStudentClassesAsync(userId);
             var studentClassIds = studentClasses.Select(sc => sc.ClassId).ToHashSet();
             
-            if (exam != null && exam.ClassIds.Any(classId => studentClassIds.Contains(classId)))
+            if (exam.ClassIds.Any(classId => studentClassIds.Contains(classId)))
             {
-                return await Task.FromResult(exam);
+                return exam;
             }
             
             return null;

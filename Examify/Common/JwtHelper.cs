@@ -21,6 +21,7 @@ namespace Examify.Common
                     Username = jsonToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value,
                     Email = jsonToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value,
                     Role = jsonToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value,
+                    TenantType = int.TryParse(jsonToken.Claims.FirstOrDefault(x => x.Type == "TenantType")?.Value, out var tt) ? tt : 2,
                     ExpiryDate = jsonToken.ValidTo,
                     IsValid = jsonToken.ValidTo > DateTime.UtcNow,
                     IsExpired = jsonToken.ValidTo <= DateTime.UtcNow,
@@ -40,6 +41,7 @@ namespace Examify.Common
         public string? Username { get; set; }
         public string? Email { get; set; }
         public string? Role { get; set; }
+        public int TenantType { get; set; } = 2;
         public DateTime? ExpiryDate { get; set; }
         public bool IsValid { get; set; }
         public bool IsExpired { get; set; }

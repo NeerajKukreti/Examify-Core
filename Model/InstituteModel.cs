@@ -1,4 +1,4 @@
-﻿namespace DataModel
+namespace DataModel
 {
     public class InstituteModel
     {
@@ -22,5 +22,8 @@
         public int? ModifiedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
         public int UserId { get; set; }
+        public int TenantType { get; set; } = 2; // 1 = Personal, 2 = Institute
+        public int? OwnerUserId { get; set; }
+        public string PlanType { get; set; } = "Free";
     }
 }

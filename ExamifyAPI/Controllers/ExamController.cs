@@ -36,6 +36,22 @@ namespace ExamifyAPI.Controllers
             }
         }
 
+        [AllowAnonymous]
+        [HttpGet("catalog")]
+        public IActionResult GetPublicCatalog()
+        {
+            try
+            {
+                var exams = _examService.GetPublicCatalogExams();
+                return Ok(new { Success = true, Count = exams?.Count() ?? 0, Data = exams });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Success = false, Message = $"Error: {ex.Message}" });
+            }
+        }
+
+        [AllowAnonymous]
         [HttpGet("{examId:int}")]
         public async Task<IActionResult> GetExamById(int examId)
         {
@@ -43,7 +59,10 @@ namespace ExamifyAPI.Controllers
             {
                 var exam = await _examService.GetExamByIdAsync(examId);
                 if (exam == null)
-                    return BadRequest(new { Success = false, Message = "User has already taken the exam" });
+                    return NotFound(new { Success = false, Message = "Exam not found" });
+
+                if (!exam.IsPublic && !(User?.Identity?.IsAuthenticated == true))
+                    return Unauthorized(new { Success = false, Message = "Authentication required for private institute exams" });
                     
                 return Ok(new { Success = true, Data = exam });
             }
@@ -212,9 +231,13 @@ namespace ExamifyAPI.Controllers
             {
                 var exam = await _examService.GetSessionExamByIdAsync(examId);
                 if (exam == null)
-                    return BadRequest(new { Success = false, Message = "User has already taken the exam" });
+                    return BadRequest(new { Success = false, Message = "Exam not available or already taken" });
 
                 return Ok(new { Success = true, Data = exam });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(429, new { Success = false, Message = ex.Message });
             }
             catch (Exception ex)
             {

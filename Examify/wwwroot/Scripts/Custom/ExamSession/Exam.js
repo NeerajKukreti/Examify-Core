@@ -1,8 +1,17 @@
 // Exam Interface Functionality
 console.log('Exam.js file loaded successfully');
 
-// API Configuration - will be set from window.examUrls
-var API_BASE_URL = window.API_ENDPOINTS.baseUrl+'Exam';
+function getApiBaseUrl() {
+    if (window.examUrls && window.examUrls.apiBaseUrl) {
+        return window.examUrls.apiBaseUrl;
+    }
+    if (window.API_ENDPOINTS && window.API_ENDPOINTS.baseUrl) {
+        var b = window.API_ENDPOINTS.baseUrl;
+        return b.endsWith('/') ? b + 'Exam' : b + '/Exam';
+    }
+    return 'https://localhost:7271/api/Exam';
+}
+var API_BASE_URL = getApiBaseUrl();
 
 var examData = examData || null;
 var allQuestions = allQuestions || [];
@@ -27,6 +36,7 @@ var S = { UNVISITED: 'unvisited', NOT_ANSWERED: 'not-answered', ANSWERED: 'answe
 async function loadExamData() {
 
     try {
+        API_BASE_URL = getApiBaseUrl();
         console.log('Loading exam data for examId:', examId);
         const apiUrl = `${API_BASE_URL}/${examId}/sessionquestions?userId=${window.currentUserId || 1}`;
         console.log('API URL:', apiUrl);
@@ -642,6 +652,7 @@ async function finalSubmit() {
     };
 
     try {
+        API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/${examId}/submit`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -712,6 +723,7 @@ async function retrySubmission() {
     $('button:contains("Submit")').prop('disabled', true).html('<span class="spinner"></span>Retrying...');
 
     try {
+        API_BASE_URL = getApiBaseUrl();
         const response = await fetch(`${API_BASE_URL}/${examId}/submit`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -776,6 +788,7 @@ async function forceSubmitExam() {
     };
 
     try {
+        API_BASE_URL = getApiBaseUrl();
         await fetch(`${API_BASE_URL}/${examId}/submit`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

@@ -40,6 +40,12 @@ var ExamTable = function () {
                     }
                 },
                 {
+                    "title": "Catalog", "data": "isPublic",
+                    "render": function (data, type, row) {
+                        return data ? '<span class="badge bg-success"><i class="fas fa-globe"></i> Public</span>' : '<span class="badge bg-secondary"><i class="fas fa-lock"></i> Institute</span>';
+                    }
+                },
+                {
                     "title": "Status", "data": "isActive",
                     fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                         var active = '<i class="fas fa-check-circle text-success"></i>';

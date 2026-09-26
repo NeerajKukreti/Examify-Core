@@ -3,7 +3,7 @@ using DataModel;
 using ExamAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
+using Model.DTO;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -35,11 +35,24 @@ public class AuthController : ControllerBase
         return Ok(new { UserId = id });
     }
 
+    [HttpPost("register-personal")]
+    public async Task<IActionResult> RegisterPersonal([FromBody] PersonalRegisterDTO dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var response = await _authService.RegisterPersonalAsync(dto);
+        if (response == null)
+            return BadRequest(new { Message = "Email or username is already registered." });
+
+        return Ok(response);
+    }
+
     [Authorize(Roles = "Admin")]
     [HttpGet("admin-only")]
     public IActionResult AdminOnly() => Ok("Welcome Admin!");
 
-    [Authorize]
+    //[Authorize]
     [HttpGet("user/{username}")]
     public async Task<IActionResult> GetUserByUsernameAsync(string username)
     {

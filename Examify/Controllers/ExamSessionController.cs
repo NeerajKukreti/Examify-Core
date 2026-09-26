@@ -37,7 +37,9 @@ public class ExamSessionController : Controller
         try
         {
             var client = _httpClientFactory.CreateClient("ExamifyAPI");
-            var response = await client.GetAsync($"Exam/Session/{id}");
+            var isAuth = User?.Identity?.IsAuthenticated == true;
+            var endpoint = isAuth ? $"Exam/Session/{id}" : $"Exam/{id}";
+            var response = await client.GetAsync(endpoint);
 
             var json = await response.Content.ReadAsStringAsync();
 
@@ -46,15 +48,30 @@ public class ExamSessionController : Controller
                 var apiResponse = JsonSerializer.Deserialize<ApiResponse<ExamModel>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 var exam = apiResponse?.Data;
                 ViewBag.ExamId = id;
-                ViewBag.UserId = User.GetUserId();
+                ViewBag.UserId = isAuth ? User.GetUserId() : "0";
+                ViewBag.IsAuthenticated = isAuth;
                 ViewBag.ApiBaseUrl = client.BaseAddress + "Exam";
                 ViewBag.StartExamUrl = "/ExamSession/StartExam";
                 ViewBag.ExamResultUrl = "/ExamSession/ExamResult";
                 return View(exam);
             }
 
-            var errorResponse = JsonSerializer.Deserialize<ApiResponse<object>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            ViewBag.ErrorMessage = errorResponse?.Message ?? "An error occurred";
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                try
+                {
+                    var errorResponse = JsonSerializer.Deserialize<ApiResponse<object>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    ViewBag.ErrorMessage = errorResponse?.Message ?? "An error occurred";
+                }
+                catch
+                {
+                    ViewBag.ErrorMessage = json;
+                }
+            }
+            else
+            {
+                ViewBag.ErrorMessage = $"Failed to retrieve exam details (HTTP {(int)response.StatusCode})";
+            }
             return View("Error");
         }
         catch (Exception ex)

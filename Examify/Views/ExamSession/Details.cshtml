@@ -217,9 +217,21 @@
             </div> *@
 
             <div class="footer-buttons">
-                <button data-examid="@Model.ExamId" type="button" class="btn btn-start startExam">
-                    <i class="fas fa-play me-2"></i>Start Test
-                </button>
+                @if (ViewBag.IsAuthenticated == true)
+                {
+                    <button data-examid="@Model.ExamId" type="button" class="btn btn-start startExam">
+                        <i class="fas fa-play me-2"></i>Start Test
+                    </button>
+                }
+                else
+                {
+                    <a href="/Auth/Register?returnUrl=/ExamSession/StartExam?examId=@Model.ExamId" class="btn btn-start">
+                        <i class="fas fa-user-plus me-2"></i>Free Sign Up to Start Test
+                    </a>
+                    <div class="mt-2 small text-muted">
+                        Already have an account? <a href="/Auth?returnUrl=/ExamSession/StartExam?examId=@Model.ExamId">Sign In</a>
+                    </div>
+                }
                 <div class="footer-note">
                     Please note: All questions may not appear in your default language.
                 </div>

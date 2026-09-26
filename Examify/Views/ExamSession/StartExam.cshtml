@@ -1,10 +1,45 @@
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment HostEnv
-<body data-environment="@HostEnv.EnvironmentName">
-    <!-- Your content -->
-</body>
+@inject IConfiguration Configuration
 @{
     Layout = null;
+    var accessTokenValue = Context.Request.Cookies["JWToken"];
+    var refreshTokenValue = Context.Request.Cookies["RefreshToken"];
+    var apiBase = Configuration["ExamifyAPI:BaseUrl"] ?? "https://localhost:7271/api/";
 }
+<script>
+    window.API_ENDPOINTS = {
+        baseUrl: '@apiBase'
+    };
+    window.examUrls = {
+        apiBaseUrl: '@Html.Raw(ViewBag.ApiBaseUrl ?? (apiBase + "Exam"))',
+        startExamUrl: '@Html.Raw(ViewBag.StartExamUrl ?? "/ExamSession/StartExam")',
+        examResultUrl: '@Html.Raw(ViewBag.ExamResultUrl ?? "/ExamSession/ExamResult")'
+    };
+    window.accessToken = '@accessTokenValue';
+    window.refreshToken = '@refreshTokenValue';
+
+    // Intercept fetch API to automatically inject Bearer token for API calls
+    (function() {
+        var originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            options = options || {};
+            var urlStr = (typeof url === 'string') ? url : (url && url.url ? url.url : '');
+            var isApiCall = urlStr.includes('/api/') || urlStr.includes('7271') || (window.API_ENDPOINTS && urlStr.includes(window.API_ENDPOINTS.baseUrl));
+            
+            if (window.accessToken && isApiCall) {
+                options.headers = options.headers || {};
+                if (options.headers instanceof Headers) {
+                    if (!options.headers.has('Authorization')) {
+                        options.headers.set('Authorization', 'Bearer ' + window.accessToken);
+                    }
+                } else if (!options.headers['Authorization']) {
+                    options.headers['Authorization'] = 'Bearer ' + window.accessToken;
+                }
+            }
+            return originalFetch(url, options);
+        };
+    })();
+</script>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -456,9 +491,9 @@
         // Set global variables
         window.currentUserId = @(ViewBag.UserId ?? 1);
         window.examUrls = {
-             
-            startExamUrl: '@Html.Raw(ViewBag.StartExamUrl ?? "/Exam/StartExam")',
-            examResultUrl: '@Html.Raw(ViewBag.ExamResultUrl ?? "/Exam/ExamResult")'
+            apiBaseUrl: '@Html.Raw(ViewBag.ApiBaseUrl ?? (apiBase + "Exam"))',
+            startExamUrl: '@Html.Raw(ViewBag.StartExamUrl ?? "/ExamSession/StartExam")',
+            examResultUrl: '@Html.Raw(ViewBag.ExamResultUrl ?? "/ExamSession/ExamResult")'
         };
 
         // Initialize exam when page loads

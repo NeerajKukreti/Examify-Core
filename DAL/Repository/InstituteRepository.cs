@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
@@ -12,6 +12,7 @@ namespace DAL.Repository
         Task<IEnumerable<InstituteModel>> GetAllInstitutesAsync();
         Task<InstituteModel?> GetInstituteByIdAsync(int instituteId);
         Task<int> InsertOrUpdateInstituteAsync(InstituteDTO dto, int? instituteId = null, int? createdBy = null, int? modifiedBy = null);
+        Task<int> CreatePersonalWorkspaceAsync(int userId, string fullName, string email);
     }
 
     public class InstituteRepository : IInstituteRepository
@@ -73,5 +74,27 @@ namespace DAL.Repository
             return newInstituteId;
         }
 
+        public async Task<int> CreatePersonalWorkspaceAsync(int userId, string fullName, string email)
+        {
+            using var connection = CreateConnection();
+            var sql = @"
+                INSERT INTO dbo.Institute (
+                    InstituteName, ShortName, Email, Validity, IsActive, CreatedBy, CreatedDate, UserId, TenantType, OwnerUserId, PlanType
+                )
+                VALUES (
+                    @InstituteName, @ShortName, @Email, DATEADD(year, 10, GETDATE()), 1, @UserId, GETDATE(), @UserId, 1, @UserId, 'Free'
+                );
+                SELECT CAST(SCOPE_IDENTITY() AS INT);";
+
+            var instituteName = $"{fullName}'s Workspace";
+            var shortName = fullName.Length > 10 ? fullName.Substring(0, 10) : fullName;
+
+            return await connection.ExecuteScalarAsync<int>(sql, new {
+                InstituteName = instituteName,
+                ShortName = shortName,
+                Email = email,
+                UserId = userId
+            });
+        }
     }
 }

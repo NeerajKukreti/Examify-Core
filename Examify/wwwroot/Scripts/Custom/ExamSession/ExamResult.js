@@ -2,7 +2,14 @@
 console.log('ExamResult.js loaded successfully');
 
 // API Configuration
-let RESULT_API_BASE = window.API_ENDPOINTS.baseUrl+'Exam';
+function getResultApiBaseUrl() {
+    if (window.API_ENDPOINTS && window.API_ENDPOINTS.baseUrl) {
+        var b = window.API_ENDPOINTS.baseUrl;
+        return b.endsWith('/') ? b + 'Exam' : b + '/Exam';
+    }
+    return 'https://localhost:7271/api/Exam';
+}
+let RESULT_API_BASE = getResultApiBaseUrl();
 
 // Load and display exam result
 async function displayExamResult(sessionId) {
@@ -25,6 +32,7 @@ async function displayExamResult(sessionId) {
 // Load result data from API
 async function loadResultData(sessionId) {
     try {
+        RESULT_API_BASE = getResultApiBaseUrl();
         const response = await fetch(`${RESULT_API_BASE}/result/${sessionId}`);
         
         if (!response.ok) {
@@ -283,29 +291,19 @@ function filterQuestions(filter) {
     }
 }
 
-// Initialize on page load
-$(document).ready(function() {
-    if (window.sessionId) {
-        displayExamResult(window.sessionId);
-    } else {
-        showErrorMessage('Session ID not found');
-    }
-});
-
 // Share result
 function shareResult() {
-    alert('Share feature will be implemented');
-
-    if (sessionId) {
-    navigator.share({
+    const sId = window.sessionId || new URLSearchParams(window.location.search).get('sessionId');
+    if (navigator.share && sId) {
+        navigator.share({
             title: 'Exam Result',
-            text: `I scored ${$('#totalScore').text()} out of ${$('#maxScore').text()} in the exam!`,
+            text: `I scored ${$('#marksText').text()} in the exam!`,
             url: window.location.href
-        });
+        }).catch(function() {});
     } else {
         // Fallback - copy to clipboard
-        const resultText = `Exam Result: ${$('#totalScore').text()}/${$('#maxScore').text()} (${$('#percentage').text()})`;
-        navigator.clipboard.writeText(resultText).then(() => {
+        const resultText = `Exam Result: ${$('#marksText').text()} (${$('#percentageText').text()})`;
+        navigator.clipboard.writeText(resultText).then(function() {
             alert('Result copied to clipboard!');
         });
     }
@@ -313,9 +311,9 @@ function shareResult() {
 
 // Initialize result page
 $(document).ready(function() {
-    // Get session ID from URL
+    // Get session ID from window or URL
     const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get('sessionId');
+    const sessionId = window.sessionId || urlParams.get('sessionId');
     
     if (sessionId) {
         displayExamResult(sessionId);
@@ -330,7 +328,7 @@ $(document).ready(function() {
     
     // Back to exams button
     $('#backToExamsBtn').on('click', function() {
-        window.location.href = '/ExamSession/Selection';
+        window.location.href = '/ExamSession';
     });
     
     // Toggle explanation

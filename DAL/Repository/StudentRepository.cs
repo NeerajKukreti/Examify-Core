@@ -14,6 +14,7 @@ namespace DAL.Repository
         Task<int> InsertStudentBatchAsync(int studentId, int batchId, int createdBy, DateTime? enrollmentDate = null);
         Task<IEnumerable<StudentModel>> GetAllStudentsAsync(int instituteId, int? studentId);
         Task<bool> ChangeStatus(int studentId);
+        Task<int> CreatePersonalStudentProfileAsync(int userId, int instituteId, string fullName, string email);
     }
 
     public class StudentRepository : IStudentRepository
@@ -129,6 +130,24 @@ namespace DAL.Repository
             return rowsAffected > 0;
         } 
 
+        public async Task<int> CreatePersonalStudentProfileAsync(int userId, int instituteId, string fullName, string email)
+        {
+            using var connection = CreateConnection();
+            var sql = @"
+                INSERT INTO dbo.Student (
+                    StudentName, Email, Validity, IsActive, CreatedBy, CreatedDate, UserId, InstituteId
+                )
+                VALUES (
+                    @StudentName, @Email, DATEADD(year, 10, GETDATE()), 1, @UserId, GETDATE(), @UserId, @InstituteId
+                );
+                SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
+            return await connection.ExecuteScalarAsync<int>(sql, new {
+                StudentName = fullName,
+                Email = email,
+                UserId = userId,
+                InstituteId = instituteId
+            });
+        }
     }
 }

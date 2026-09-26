@@ -1,6 +1,7 @@
 using DataModel;
 using Microsoft.Extensions.Options;
 using Examify.Common;
+using Model.DTO;
 using System.Text;
 using System.Text.Json;
 
@@ -56,6 +57,38 @@ namespace Examify.Services
             catch (Exception ex)
             {
                 return (false, null, null, null, null, ex.Message);
+            }
+        }
+
+        public async Task<(bool Success, string? Token, string? RefreshToken, int? InstituteId, string? FullName, int? TenantType, string? ErrorMessage)> 
+            RegisterPersonalAsync(PersonalRegisterDTO dto)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("ExamifyAPI");
+
+                var json = JsonSerializer.Serialize(dto);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync("auth/register-personal", content);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return (false, null, null, null, null, null, "Registration failed. Email or username might already exist.");
+                }
+
+                var result = await response.Content.ReadAsStringAsync();
+                var authResult = JsonSerializer.Deserialize<JsonElement>(result);
+                var token = authResult.GetProperty("AccessToken").GetString();
+                var refreshToken = authResult.GetProperty("RefreshToken").GetString();
+                var instituteId = authResult.TryGetProperty("InstituteId", out var instId) ? instId.GetInt32() : (int?)null;
+                var fullName = authResult.TryGetProperty("FullName", out var name) ? name.GetString() : null;
+                var tenantType = authResult.TryGetProperty("TenantType", out var tt) ? tt.GetInt32() : (int?)null;
+
+                return (true, token, refreshToken, instituteId, fullName, tenantType, null);
+            }
+            catch (Exception ex)
+            {
+                return (false, null, null, null, null, null, ex.Message);
             }
         }
 

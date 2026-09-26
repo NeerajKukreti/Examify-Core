@@ -1,8 +1,8 @@
-﻿<aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+<aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
     <!--begin::Sidebar Brand-->
     <div class="sidebar-brand">
         <!--begin::Brand Link-->
-        <a href="Dashboard" class="brand-link">
+        <a href="/" class="brand-link">
             <!--begin::Brand Image-->
             <img src="@Url.Content("~/theme/assets/img/AdminLTELogo.png")"
                  alt="AdminLTE Logo"
@@ -78,6 +78,12 @@
                 @if (userRole == "Student")
                 {
                     <li class="nav-item">
+                        <a href="/" class="nav-link">
+                            <i class="nav-icon bi bi-grid-3x3-gap"></i>
+                            <p>Browse Catalog</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="@Url.Action("Index", "ExamSession")" class="nav-link">
                             <i class="nav-icon bi bi-pencil-square"></i>
                             <p>Exam Session</p>
@@ -85,8 +91,8 @@
                     </li>
                     <li class="nav-item">
                         <a href="@Url.Action("UserExam", "ExamSession")" class="nav-link">
-                            <i class="nav-icon bi bi-pencil-square"></i>
-                            <p>User Taken</p>
+                            <i class="nav-icon bi bi-clipboard-check"></i>
+                            <p>My Taken Exams</p>
                         </a>
                     </li>
                 }

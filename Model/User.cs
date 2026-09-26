@@ -1,4 +1,4 @@
-﻿
+
 using System.ComponentModel.DataAnnotations;
 
 namespace DataModel
@@ -15,6 +15,8 @@ namespace DataModel
         public string PasswordHash { get; set; } = "";
         public string Role { get; set; } = ""; //Admin, Institute, Student
         public bool IsActive { get; set; } = true;
+        public int TenantType { get; set; } = 2; // 1 = Personal, 2 = Institute
+        public string PlanType { get; set; } = "Free";
         public DateTime CreatedDate { get; set; } = DateTime.Now;
     }
 
