@@ -217,6 +217,17 @@ namespace ExamAPI.Services
 
         public int GetCurrentTenantType()
         {
+            var userId = GetCurrentUserID();
+            if (userId > 0)
+            {
+                var userTask = _userService.GetUserByUsernameAsync(_httpContextAccessor.HttpContext?.User.Identity?.Name ?? "");
+                var user = userTask.GetAwaiter().GetResult();
+                if (user != null)
+                {
+                    return user.TenantType;
+                }
+            }
+
             var tenantClaim = _httpContextAccessor.HttpContext?.User.FindFirst("TenantType");
             return tenantClaim != null && int.TryParse(tenantClaim.Value, out var tenantType) ? tenantType : 2;
         }

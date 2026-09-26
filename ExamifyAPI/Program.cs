@@ -8,6 +8,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Text;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +35,17 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            if (context.Request.Cookies.ContainsKey("JWToken"))
+            {
+                context.Token = context.Request.Cookies["JWToken"];
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -65,6 +78,18 @@ builder.Services.AddSwaggerGen(c =>
             },
             new string[] {}
         }
+    });
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = 429;
+    options.AddFixedWindowLimiter("ExamSubmissionPolicy", policy =>
+    {
+        policy.PermitLimit = 1;
+        policy.Window = TimeSpan.FromSeconds(10);
+        policy.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        policy.QueueLimit = 0;
     });
 });
 
@@ -121,6 +146,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors("AllowExamify");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

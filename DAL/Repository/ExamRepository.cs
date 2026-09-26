@@ -13,7 +13,7 @@ namespace DAL.Repository
     {
         List<ExamModel> GetActiveExams(int instituteId);
         ExamModel GetExamById(int examId, int instituteId);
-        ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId);
+        ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId, int instituteId);
         UserExamSessionModel? GetUserExamSession(long sessionId);
         int SubmitExamResponses(ExamSubmissionModel submission);
         ExamResultModel GetExamResult(int sessionId);
@@ -193,14 +193,14 @@ namespace DAL.Repository
             return exam;
         }
 
-        public ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId)
+        public ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId, int instituteId)
         {
             using var connection = CreateConnection();
             {
                 //Begin exam session first
                 var sessionId = connection.QuerySingle<long>(
                     "_sp_BeginExam",
-                    new { ExamId = examId, UserId = userId },
+                    new { ExamId = examId, UserId = userId, InstituteId = instituteId },
                     commandType: CommandType.StoredProcedure
                 );
 
@@ -208,7 +208,7 @@ namespace DAL.Repository
                 // Get exam details
                 using var examMulti = connection.QueryMultiple(
                     "_sp_GetAllExams",
-                    new { ExamId = examId, InstituteId = 0 },
+                    new { ExamId = examId, InstituteId = instituteId },
                     commandType: CommandType.StoredProcedure
                 );
 
@@ -345,6 +345,18 @@ namespace DAL.Repository
             {
                 try
                 {
+                    // Pessimistic locking to prevent double submission
+                    var existingStatus = connection.QueryFirstOrDefault<string>(
+                        "SELECT Status FROM dbo.UserExamSession WITH (UPDLOCK) WHERE UserExamSessionId = @SessionId",
+                        new { SessionId = submission.SessionId },
+                        transaction
+                    );
+
+                    if (existingStatus == "Submit")
+                    {
+                        throw new InvalidOperationException("This exam has already been submitted.");
+                    }
+
                     // Build DataTable for TVP
                     var responseTable = new DataTable();
                     responseTable.Columns.Add("SessionQuestionId", typeof(long));

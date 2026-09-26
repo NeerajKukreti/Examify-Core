@@ -45,13 +45,13 @@ namespace ExamiFy.Tests
                 }
             };
 
-            mockExamRepo.Setup(r => r.GetExamSessionQuestions(10, 1))
+            mockExamRepo.Setup(r => r.GetExamSessionQuestions(10, 1, It.IsAny<int>()))
                 .Returns(serverQuestions);
 
             var examService = new ExamService(mockExamRepo.Object, mockAuthService.Object, mockClassService.Object);
 
             // Act: Fetch session questions for user 10
-            var result = examService.GetExamSessionQuestions(10, 1);
+            var result = examService.GetExamSessionQuestions(10, 1, 1);
 
             // Assert: Anti-cheating guardrail - no choices disclose correct answers
             Assert.NotNull(result);

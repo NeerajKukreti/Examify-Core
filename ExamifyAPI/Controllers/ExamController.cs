@@ -251,11 +251,12 @@ namespace ExamifyAPI.Controllers
             try
             {
                 var currentUserId = _authService.GetCurrentUserID();
+                var currentInstituteId = _authService.GetCurrentInstituteId();
                 var targetUserId = (User.IsInRole("Admin") || User.IsInRole("SuperAdmin")) && userId.HasValue
                     ? userId.Value
                     : currentUserId;
 
-                var examQuestions = _examService.GetExamSessionQuestions(targetUserId, examId);
+                var examQuestions = _examService.GetExamSessionQuestions(targetUserId, examId, currentInstituteId);
                 if (examQuestions == null)
                     return NotFound();
                     
@@ -268,6 +269,7 @@ namespace ExamifyAPI.Controllers
         }
 
         [HttpPost("{examId}/submit")]
+        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("ExamSubmissionPolicy")]
         public IActionResult SubmitExam(int examId, [FromBody] ExamSubmissionModel submission)
         {
             try
