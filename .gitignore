@@ -55,3 +55,4 @@ TestResult.xml
 nunit-*.xml
 *.md
 /Examify/appsettings.json
+node_modules/
