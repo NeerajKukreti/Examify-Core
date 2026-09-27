@@ -24,7 +24,17 @@ namespace ExamifyAPI.Controllers
         public async Task<IActionResult> SaveQuestion([FromBody] QuestionModel model, [FromQuery] int? instituteId = null)
         {
             var currentInstituteId = _authService.GetCurrentInstituteId();
-            var targetInstituteId = currentInstituteId > 0 ? currentInstituteId : (instituteId ?? 0);
+            var targetInstituteId = currentInstituteId;
+            
+            if (currentInstituteId == 0 && (User.IsInRole("Admin") || User.IsInRole("SuperAdmin")))
+            {
+                targetInstituteId = instituteId ?? 0;
+            }
+            else if (currentInstituteId == 0)
+            {
+                return Forbid();
+            }
+
             var questionId = await _service.SaveExtractedQuestionAsync(model, targetInstituteId);
             return Ok(new { QuestionId = questionId });
         }
@@ -33,7 +43,17 @@ namespace ExamifyAPI.Controllers
         public async Task<IActionResult> SaveQuestions([FromBody] List<QuestionModel> questions, [FromQuery] int? instituteId = null)
         {
             var currentInstituteId = _authService.GetCurrentInstituteId();
-            var targetInstituteId = currentInstituteId > 0 ? currentInstituteId : (instituteId ?? 0);
+            var targetInstituteId = currentInstituteId;
+            
+            if (currentInstituteId == 0 && (User.IsInRole("Admin") || User.IsInRole("SuperAdmin")))
+            {
+                targetInstituteId = instituteId ?? 0;
+            }
+            else if (currentInstituteId == 0)
+            {
+                return Forbid();
+            }
+
             var questionIds = await _service.SaveExtractedQuestionsAsync(questions, targetInstituteId);
             return Ok(new { QuestionIds = questionIds, Count = questionIds.Count });
         }

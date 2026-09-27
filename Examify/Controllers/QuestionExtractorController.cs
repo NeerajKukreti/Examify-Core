@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
+using System.Security.Claims;
 
 namespace Examify.Controllers
 {
@@ -285,7 +286,10 @@ namespace Examify.Controllers
                 _logger.LogInformation($"Q{q.QuestionNumber}: {q.QuestionText.Length} chars, img tags: {imgCount}");
             }
 
-            var savedIds = await _apiService.SaveQuestionsAsync(questionModels, 2);
+            var instituteIdClaim = User.FindFirst("InstituteId");
+            var instituteId = instituteIdClaim != null && int.TryParse(instituteIdClaim.Value, out var id) ? id : 0;
+            
+            var savedIds = await _apiService.SaveQuestionsAsync(questionModels, instituteId);
             _logger.LogInformation($"Saved {savedIds.Count} questions to DB");
 
             return Ok(new { Questions = questions, DiagramCount = detectedDiagrams.Count, SavedQuestionIds = savedIds });

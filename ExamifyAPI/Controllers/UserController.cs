@@ -131,6 +131,13 @@ public class UserController : ControllerBase
     {
         try
         {
+            var currentUserIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            var currentUserId = currentUserIdClaim != null ? int.Parse(currentUserIdClaim.Value) : 0;
+            if (id != currentUserId && !User.IsInRole("Admin") && !User.IsInRole("SuperAdmin"))
+            {
+                return Forbid();
+            }
+
             var user = await _userService.GetUserByIdAsync(id);
             if (user == null)
             {

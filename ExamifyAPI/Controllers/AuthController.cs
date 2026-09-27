@@ -52,15 +52,22 @@ public class AuthController : ControllerBase
     [HttpGet("admin-only")]
     public IActionResult AdminOnly() => Ok("Welcome Admin!");
 
-    //[Authorize]
+    [Authorize]
     [HttpGet("user/{username}")]
     public async Task<IActionResult> GetUserByUsernameAsync(string username)
     {
+        var currentUsernameClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Name);
+        if (currentUsernameClaim?.Value != username && !User.IsInRole("Admin") && !User.IsInRole("SuperAdmin"))
+        {
+            return Forbid();
+        }
+
         var user = await _authService.GetUserByUsernameAsync(username);
         if (user == null) return NotFound();
         return Ok(new { user.InstituteId, user.FullName });
     }
 
+    [Authorize(Roles = "SuperAdmin")]
     [HttpPost("getHash")]
     public IActionResult HashPassword([FromBody] string password)
     {
