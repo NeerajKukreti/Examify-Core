@@ -280,3 +280,4 @@ BEGIN
     ORDER BY SortOrder, SessionQuestionId, QuestionTypeOrder;
 END
 GO
+CREATE OR ALTER PROCEDURE [dbo].[_sp_SubmitExamSession] \n @UserExamSessionId BIGINT,\n @SubmitTime DATETIME\nAS\nBEGIN\n    SET NOCOUNT ON;\n    UPDATE dbo.UserExamSession WITH (UPDLOCK)\n    SET Status = 'Submit', SubmitTime = @SubmitTime\n    WHERE UserExamSessionId = @UserExamSessionId AND Status != 'Submit';\n    SELECT @@ROWCOUNT;\nEND\nGO

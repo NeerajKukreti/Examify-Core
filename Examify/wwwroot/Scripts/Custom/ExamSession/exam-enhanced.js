@@ -91,10 +91,10 @@
     // 6. SMART NAVIGATION HINTS
     function showNavigationHints() {
         // Show hints for first-time users
-        if (!localStorage.getItem('examHintsShown')) {
+        if (!document.cookie.includes('examHintsShown=true')) {
             setTimeout(() => {
                 showToast('💡 Tip: Use keyboard shortcuts (N=Next, P=Previous, M=Mark)', 'info', 5000);
-                localStorage.setItem('examHintsShown', 'true');
+                document.cookie = "examHintsShown=true; path=/; max-age=31536000; samesite=strict";
             }, 3000);
         }
     }
