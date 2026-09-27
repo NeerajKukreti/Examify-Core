@@ -152,19 +152,14 @@
                 var isApiCall = (typeof url === 'string' && (url.includes('/api/') || url.includes(window.API_ENDPOINTS.baseUrl) || url.startsWith('api/'))) ||
                                (url instanceof Request && (url.url.includes('/api/') || url.url.includes(window.API_ENDPOINTS.baseUrl) || url.url.startsWith('api/')));
                 
-                if (accessToken && isApiCall) {
-                    options.headers = options.headers || {};
-                    if (!options.headers['Authorization']) {
-                        options.headers['Authorization'] = 'Bearer ' + accessToken;
-                    }
-                }
+                // Fetch intercepts now rely solely on HttpOnly cookies via backend parsing.
+                options.credentials = 'include';
                 
                 return originalFetch(url, options).then(function(response) {
                     if (response.status === 401 && refreshToken && !isRefreshing) {
                         isRefreshing = true;
                         return refreshAccessToken()
                             .then(function() {
-                                options.headers['Authorization'] = 'Bearer ' + accessToken;
                                 return originalFetch(url, options);
                             })
                             .catch(function() {
@@ -180,20 +175,14 @@
             };
 
             $.ajax = function(settings) {
-                // Add Authorization header to all API calls
-                if (accessToken && settings.url) {
+                if (settings.url) {
                     var isApiCall = settings.url.includes('/api/') || 
                                    settings.url.includes(window.API_BASE_URL) ||
                                    settings.url.startsWith('api/');
                     
                     if (isApiCall) {
-                        var originalBeforeSend = settings.beforeSend;
-                        settings.beforeSend = function(xhr) {
-                            xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-                            if (originalBeforeSend) {
-                                originalBeforeSend.call(this, xhr);
-                            }
-                        };
+                        settings.xhrFields = settings.xhrFields || {};
+                        settings.xhrFields.withCredentials = true;
                     }
                 }
 
@@ -207,9 +196,6 @@
                             isRefreshing = true;
                             refreshAccessToken()
                                 .done(function() {
-                                    settings.beforeSend = function(xhr) {
-                                        xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-                                    };
                                     originalAjax(settings)
                                         .done(function(data, textStatus, jqXHR) {
                                             dfd.resolve(data, textStatus, jqXHR);

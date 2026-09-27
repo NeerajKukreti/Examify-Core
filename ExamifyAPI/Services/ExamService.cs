@@ -16,7 +16,7 @@ namespace ExamifyAPI.Services
         Task<bool> PublishExamAsync(int examId);
         int SubmitExamResponses(ExamSubmissionModel submission);
         UserExamSessionModel? GetUserExamSession(long sessionId);
-        ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId);
+        ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId, int instituteId);
         ExamResultModel GetExamResult(int sessionId);
         Task<IEnumerable<AvailableQuestionDTO>> GetAvailableQuestionsAsync(int examId, int instituteId);
         Task<IEnumerable<ExamQuestionDTO>> GetExamQuestionsAsync(int examId);
@@ -131,9 +131,9 @@ namespace ExamifyAPI.Services
         {
             return _examRepository.GetUserExamSession(sessionId);
         }
-        public ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId)
+        public ExamQuestionsResponse GetExamSessionQuestions(int userId, int examId, int instituteId)
         {
-            return _examRepository.GetExamSessionQuestions(userId, examId);
+            return _examRepository.GetExamSessionQuestions(userId, examId, instituteId);
         }
 
         public ExamResultModel GetExamResult(int sessionId)

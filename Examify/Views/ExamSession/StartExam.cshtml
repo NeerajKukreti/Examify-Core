@@ -18,7 +18,7 @@
     window.accessToken = '@accessTokenValue';
     window.refreshToken = '@refreshTokenValue';
 
-    // Intercept fetch API to automatically inject Bearer token for API calls
+    // Intercept fetch API to automatically pass credentials
     (function() {
         var originalFetch = window.fetch;
         window.fetch = function(url, options) {
@@ -26,15 +26,8 @@
             var urlStr = (typeof url === 'string') ? url : (url && url.url ? url.url : '');
             var isApiCall = urlStr.includes('/api/') || urlStr.includes('7271') || (window.API_ENDPOINTS && urlStr.includes(window.API_ENDPOINTS.baseUrl));
             
-            if (window.accessToken && isApiCall) {
-                options.headers = options.headers || {};
-                if (options.headers instanceof Headers) {
-                    if (!options.headers.has('Authorization')) {
-                        options.headers.set('Authorization', 'Bearer ' + window.accessToken);
-                    }
-                } else if (!options.headers['Authorization']) {
-                    options.headers['Authorization'] = 'Bearer ' + window.accessToken;
-                }
+            if (isApiCall) {
+                options.credentials = 'include';
             }
             return originalFetch(url, options);
         };

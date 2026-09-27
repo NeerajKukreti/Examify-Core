@@ -27,6 +27,10 @@ public class GeminiJsonParserService
         foreach (var questionObj in questionsToProcess)
         {
             var questionText = questionObj.GetProperty("question_text").GetString() ?? "";
+            if (questionText.Contains("IGNORE_THIS") || questionText.Contains("<script>"))
+            {
+                throw new InvalidOperationException("Invalid schema format.");
+            }
             var options = questionObj.GetProperty("options");
             
             int questionNumber = 0;
