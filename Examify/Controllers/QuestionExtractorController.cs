@@ -45,6 +45,7 @@ namespace Examify.Controllers
         }
 
         [HttpPost]
+        [HttpPost]
         public async Task<IActionResult> UploadImage(IFormFile file, [FromForm] int topicId, [FromForm] List<int> classIds)
         {
             if (file == null || file.Length == 0)
@@ -62,50 +63,242 @@ namespace Examify.Controllers
             await file.CopyToAsync(ms);
             var imageBytes = ms.ToArray();
 
-            var connectionString = HttpContext.RequestServices.GetRequiredService<IConfiguration>().GetConnectionString("AzureBlobStorage") ?? "UseDevelopmentStorage=true";
-            var queueConnectionString = HttpContext.RequestServices.GetRequiredService<IConfiguration>().GetConnectionString("AzureServiceBus") ?? "Endpoint=sb://examify.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=123";
-            var instituteId = HttpContext.User.FindFirst("InstituteId")?.Value ?? "0";
+            var result = await _geminiOcr.ExtractFromImageAsync(imageBytes, file.ContentType);
 
-            // Push to Azure Service Bus for decoupled processing
-            try
+            var jsonParser = HttpContext.RequestServices.GetRequiredService<GeminiJsonParserService>();
+            var (questions, _) = jsonParser.ParseJsonResponse(result);
+
+            _logger.LogInformation($"Parsed {questions.Count} questions");
+
+            // Try OpenCV detection
+            var detectedDiagrams = _diagramDetection.DetectDiagrams(imageBytes);
+
+            using var originalImage = Image.Load(imageBytes);
+
+            _logger.LogInformation($"OpenCV detected {detectedDiagrams.Count} diagrams");
+
+            if (detectedDiagrams.Count > 0)
             {
-                var serviceBusClient = new Azure.Messaging.ServiceBus.ServiceBusClient(queueConnectionString);
-                var sender = serviceBusClient.CreateSender("ocr-queue");
+                var diagramFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "QuesionUploads");
+                Directory.CreateDirectory(diagramFolder);
 
-                // Store image in Azure Blob Storage
-                var blobServiceClient = new Azure.Storage.Blobs.BlobServiceClient(connectionString);
-                var containerClient = blobServiceClient.GetBlobContainerClient("ocr-images");
-                await containerClient.CreateIfNotExistsAsync();
-
-                var blobName = $"{Guid.NewGuid()}{ext}";
-                var blobClient = containerClient.GetBlobClient(blobName);
-
-                using var uploadStream = new MemoryStream(imageBytes);
-                await blobClient.UploadAsync(uploadStream, overwrite: true);
-
-                var payload = new
+                var questionsWithDiagrams = questions.Where(q => q.Diagrams != null && q.Diagrams.Count > 0).ToList();
+                _logger.LogInformation($"Gemini says {questionsWithDiagrams.Count} questions have diagrams:");
+                foreach (var q in questionsWithDiagrams)
                 {
-                    FileName = file.FileName,
-                    BlobName = blobName,
-                    TopicId = topicId,
-                    ClassIds = classIds,
-                    InstituteId = instituteId
-                };
+                    _logger.LogInformation($"  Q{q.QuestionNumber} has {q.Diagrams.Count} diagram(s)");
+                }
 
-                var msg = new Azure.Messaging.ServiceBus.ServiceBusMessage(System.Text.Json.JsonSerializer.Serialize(payload));
-                await sender.SendMessageAsync(msg);
+                var timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
 
-                return Ok(new { Message = "Image upload queued successfully for background OCR processing." });
+                if (questionsWithDiagrams.Count > 0)
+                {
+                    _logger.LogInformation($"OpenCV detected: {detectedDiagrams.Count}, Questions with diagrams: {questionsWithDiagrams.Count}");
+                    _logger.LogInformation($"OpenCV Y-positions: {string.Join(", ", detectedDiagrams.Select(d => $"{d.YPercent:F1}%"))}");
+
+                    var usedDiagrams = new HashSet<int>();
+
+                    foreach (var question in questionsWithDiagrams)
+                    {
+                        // Separate question diagrams from option diagrams
+                        var questionDiagrams = question.Diagrams
+                            .Where(d => !d.Description.Contains("Option", StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+
+                        if (questionDiagrams.Count == 0)
+                        {
+                            _logger.LogInformation($"Q{question.QuestionNumber}: Only has option diagrams, skipping question-level processing");
+                            continue;
+                        }
+
+                        _logger.LogInformation($"Processing Q{question.QuestionNumber}: {questionDiagrams.Count} question diagram(s)");
+
+                        var geminiYPositions = questionDiagrams.Select(d => d.YPercent).OrderBy(y => y).ToList();
+                        _logger.LogInformation($"  Gemini Y-positions: {string.Join(", ", geminiYPositions.Select(y => $"{y:F1}%"))}");
+
+                        bool geminiCoordsValid = geminiYPositions.All(y => y >= 0 && y <= 100);
+
+                        int diagramsForThisQuestion = 0;
+
+                        if (geminiCoordsValid && questionsWithDiagrams.Count > 1)
+                        {
+                            // Multiple questions: use spatial matching
+                            foreach (var geminiY in geminiYPositions)
+                            {
+                                var closestDiagram = detectedDiagrams
+                                    .Select((d, idx) => new { Diagram = d, Index = idx, Distance = Math.Abs(d.YPercent - geminiY) })
+                                    .Where(x => !usedDiagrams.Contains(x.Index) && x.Distance < 20)
+                                    .OrderBy(x => x.Distance)
+                                    .FirstOrDefault();
+
+                                if (closestDiagram != null)
+                                {
+                                    var diagram = closestDiagram.Diagram;
+                                    _logger.LogInformation($"  Diagram {diagramsForThisQuestion}: Using OpenCV[{closestDiagram.Index}] at Y={diagram.YPercent:F1}% (Gemini Y={geminiY:F1}%, distance={closestDiagram.Distance:F1}%)");
+                                    using var cropped = originalImage.Clone(ctx => ctx.Crop(new Rectangle(diagram.X, diagram.Y, diagram.Width, diagram.Height)));
+                                    var fileName = $"q{question.QuestionNumber}_d{diagramsForThisQuestion}_{timestamp}.png";
+                                    await cropped.SaveAsPngAsync(Path.Combine(diagramFolder, fileName));
+
+                                    question.QuestionText += $" <img src='/QuesionUploads/{fileName}' alt='Diagram {diagramsForThisQuestion + 1}' style='max-width:400px;display:block;margin:10px 0;'/>";
+                                    _logger.LogInformation($"  Saved as {fileName}");
+                                    usedDiagrams.Add(closestDiagram.Index);
+                                    diagramsForThisQuestion++;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Gemini coords invalid OR single question: use sequential assignment
+                            _logger.LogWarning($"  Gemini coordinates invalid, using sequential assignment");
+
+                            int diagramsToAssign = questionsWithDiagrams.Count == 1 ? detectedDiagrams.Count : questionDiagrams.Count;
+
+                            for (int i = 0; i < diagramsToAssign && usedDiagrams.Count < detectedDiagrams.Count; i++)
+                            {
+                                var nextIndex = Enumerable.Range(0, detectedDiagrams.Count).First(idx => !usedDiagrams.Contains(idx));
+                                var diagram = detectedDiagrams[nextIndex];
+                                _logger.LogInformation($"  Diagram {diagramsForThisQuestion}: Using OpenCV[{nextIndex}] at Y={diagram.YPercent:F1}%");
+                                using var cropped = originalImage.Clone(ctx => ctx.Crop(new Rectangle(diagram.X, diagram.Y, diagram.Width, diagram.Height)));
+                                var fileName = $"q{question.QuestionNumber}_d{diagramsForThisQuestion}_{timestamp}.png";
+                                await cropped.SaveAsPngAsync(Path.Combine(diagramFolder, fileName));
+
+                                question.QuestionText += $" <img src='/QuesionUploads/{fileName}' alt='Diagram {diagramsForThisQuestion + 1}' style='max-width:400px;display:block;margin:10px 0;'/>";
+                                _logger.LogInformation($"  Saved as {fileName}");
+                                usedDiagrams.Add(nextIndex);
+                                diagramsForThisQuestion++;
+                            }
+                        }
+
+                        _logger.LogInformation($"  Q{question.QuestionNumber} got {diagramsForThisQuestion} diagram(s)");
+                    }
+                    _logger.LogInformation($"Diagram mapping complete: used {usedDiagrams.Count} of {detectedDiagrams.Count} OpenCV diagrams");
+
+                    // Process option diagrams for ALL questions
+                    _logger.LogInformation("=== Processing Option Diagrams ===");
+                    foreach (var question in questions)
+                    {
+                        if (question.Diagrams == null || question.Diagrams.Count == 0) continue;
+
+                        var optionDiagrams = question.Diagrams
+                            .Where(d => d.Description.Contains("Option", StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+
+                        if (optionDiagrams.Count > 0)
+                        {
+                            _logger.LogInformation($"Q{question.QuestionNumber} has {optionDiagrams.Count} option diagram(s)");
+
+                            var maxOptNum = optionDiagrams
+                                .Select(d => System.Text.RegularExpressions.Regex.Match(d.Description, @"option\s+([0-9]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                                .Where(m => m.Success)
+                                .Select(m => int.Parse(m.Groups[1].Value))
+                                .DefaultIfEmpty(0)
+                                .Max();
+
+                            while (question.Options.Count < maxOptNum)
+                            {
+                                question.Options.Add(new OcrOption { OptionNumber = question.Options.Count + 1, OptionText = "" });
+                            }
+
+                            bool optionCoordsValid = optionDiagrams.All(d => d.YPercent >= 0 && d.YPercent <= 100);
+
+                            if (!optionCoordsValid)
+                            {
+                                _logger.LogWarning($"  Option diagram coordinates invalid, using sequential assignment");
+                                var sortedOptions = optionDiagrams
+                                    .Select(d => new { Diag = d, Match = System.Text.RegularExpressions.Regex.Match(d.Description, @"option\s+([0-9]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase) })
+                                    .Where(x => x.Match.Success)
+                                    .OrderBy(x => int.Parse(x.Match.Groups[1].Value))
+                                    .ToList();
+
+                                for (int i = 0; i < sortedOptions.Count && usedDiagrams.Count < detectedDiagrams.Count; i++)
+                                {
+                                    var nextIndex = Enumerable.Range(0, detectedDiagrams.Count).First(idx => !usedDiagrams.Contains(idx));
+                                    var diagram = detectedDiagrams[nextIndex];
+                                    var optNum = int.Parse(sortedOptions[i].Match.Groups[1].Value);
+
+                                    using var cropped = originalImage.Clone(ctx => ctx.Crop(new Rectangle(diagram.X, diagram.Y, diagram.Width, diagram.Height)));
+                                    var fileName = $"q{question.QuestionNumber}_opt{optNum}_{timestamp}.png";
+                                    await cropped.SaveAsPngAsync(Path.Combine(diagramFolder, fileName));
+
+                                    question.Options[optNum - 1].OptionImageUrl = $"/QuesionUploads/{fileName}";
+                                    _logger.LogInformation($"  Option {optNum}: {fileName} (OpenCV[{nextIndex}])");
+                                    usedDiagrams.Add(nextIndex);
+                                }
+                            }
+                            else
+                            {
+                                foreach (var optDiag in optionDiagrams)
+                                {
+                                    _logger.LogInformation($"  Processing: {optDiag.Description}");
+                                    var match = System.Text.RegularExpressions.Regex.Match(optDiag.Description, @"option\s+([0-9]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                                    if (match.Success && int.TryParse(match.Groups[1].Value, out int optNum))
+                                    {
+                                        var closestDiagram = detectedDiagrams
+                                            .Select((d, idx) => new { Diagram = d, Index = idx, Distance = Math.Abs(d.YPercent - optDiag.YPercent) })
+                                            .Where(x => !usedDiagrams.Contains(x.Index) && x.Distance < 20)
+                                            .OrderBy(x => x.Distance)
+                                            .FirstOrDefault();
+
+                                        if (closestDiagram != null)
+                                        {
+                                            var diagram = closestDiagram.Diagram;
+                                            using var cropped = originalImage.Clone(ctx => ctx.Crop(new Rectangle(diagram.X, diagram.Y, diagram.Width, diagram.Height)));
+                                            var fileName = $"q{question.QuestionNumber}_opt{optNum}_{timestamp}.png";
+                                            await cropped.SaveAsPngAsync(Path.Combine(diagramFolder, fileName));
+
+                                            question.Options[optNum - 1].OptionImageUrl = $"/QuesionUploads/{fileName}";
+                                            _logger.LogInformation($"  Option {optNum}: {fileName}");
+                                            usedDiagrams.Add(closestDiagram.Index);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            catch (Exception ex)
+            else
             {
-                _logger.LogError(ex, "Failed to enqueue image for OCR processing.");
-                return StatusCode(500, "Failed to enqueue processing task.");
+                _logger.LogWarning($"OpenCV detection unreliable ({detectedDiagrams.Count} diagrams), skipping diagram extraction");
             }
+
+            // Convert to QuestionModel and save to DB
+            var questionModels = questions.Select(q => new DataModel.QuestionModel
+            {
+                QuestionEnglish = q.QuestionText,
+                TopicId = topicId,
+                ClassIds = classIds,
+                QuestionTypeId = 1,
+                DifficultyLevel = "Medium",
+                Options = q.Options.Select(opt => new DataModel.OptionModel
+                {
+                    Text = string.IsNullOrEmpty(opt.OptionImageUrl)
+                        ? opt.OptionText
+                        : $"{opt.OptionText}<img src='{opt.OptionImageUrl}' style='max-width:200px;display:block;margin:5px 0;'/>",
+                    IsCorrect = false
+                }).ToList()
+            }).ToList();
+
+            _logger.LogInformation("=== Final Question Summary ===");
+            _logger.LogInformation("Saving to database:");
+            foreach (var q in questions)
+            {
+                var imgCount = q.QuestionText.Split("<img").Length - 1;
+                _logger.LogInformation($"Q{q.QuestionNumber}: {q.QuestionText.Length} chars, img tags: {imgCount}");
+            }
+
+            var instituteIdClaim = User.FindFirst("InstituteId");
+            var instituteId = instituteIdClaim != null && int.TryParse(instituteIdClaim.Value, out var id) ? id : 0;
+
+            var savedIds = await _apiService.SaveQuestionsAsync(questionModels, instituteId);
+            _logger.LogInformation($"Saved {savedIds.Count} questions to DB");
+
+            return Ok(new { Questions = questions, DiagramCount = detectedDiagrams.Count, SavedQuestionIds = savedIds });
         }
 
         [HttpPost]
-        public async Task<IActionResult> UploadPdf(IFormFile file, [FromForm] int topicId, [FromForm] List<int> classIds)
+        [HttpPost]
+        public IActionResult UploadPdf(IFormFile file)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded");
@@ -117,45 +310,17 @@ namespace Examify.Controllers
             if (ext != ".pdf")
                 return BadRequest("Invalid file type. Only PDF documents are allowed.");
 
-            var connectionString = HttpContext.RequestServices.GetRequiredService<IConfiguration>().GetConnectionString("AzureBlobStorage") ?? "UseDevelopmentStorage=true";
-            var queueConnectionString = HttpContext.RequestServices.GetRequiredService<IConfiguration>().GetConnectionString("AzureServiceBus") ?? "Endpoint=sb://examify.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=123";
-            var instituteId = HttpContext.User.FindFirst("InstituteId")?.Value ?? "0";
+            using var stream = file.OpenReadStream();
+            var images = _pdfToImage.ConvertPdfToImages(stream);
 
-            try
+            var imageData = new List<object>();
+            for (int i = 0; i < images.Count; i++)
             {
-                var serviceBusClient = new Azure.Messaging.ServiceBus.ServiceBusClient(queueConnectionString);
-                var sender = serviceBusClient.CreateSender("ocr-queue-pdf");
-
-                // Store PDF in Azure Blob Storage
-                var blobServiceClient = new Azure.Storage.Blobs.BlobServiceClient(connectionString);
-                var containerClient = blobServiceClient.GetBlobContainerClient("ocr-pdfs");
-                await containerClient.CreateIfNotExistsAsync();
-
-                var blobName = $"{Guid.NewGuid()}{ext}";
-                var blobClient = containerClient.GetBlobClient(blobName);
-
-                using var uploadStream = file.OpenReadStream();
-                await blobClient.UploadAsync(uploadStream, overwrite: true);
-
-                var payload = new
-                {
-                    FileName = file.FileName,
-                    BlobName = blobName,
-                    TopicId = topicId,
-                    ClassIds = classIds,
-                    InstituteId = instituteId
-                };
-
-                var msg = new Azure.Messaging.ServiceBus.ServiceBusMessage(System.Text.Json.JsonSerializer.Serialize(payload));
-                await sender.SendMessageAsync(msg);
-
-                return Ok(new { Message = "PDF upload queued successfully for background OCR processing." });
+                var fileName = $"page_{i + 1}_{DateTime.Now:yyyyMMddHHmmss}.png";
+                imageData.Add(new { FileName = fileName, Data = Convert.ToBase64String(images[i]) });
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to enqueue PDF for OCR processing.");
-                return StatusCode(500, "Failed to enqueue processing task.");
-            }
+
+            return Ok(new { Message = $"Converted {images.Count} images", Images = imageData });
         }
     }
 }

@@ -143,6 +143,8 @@ $(document).ready(function() {
         },
         error: function(xhr, status, error) {
             console.error('Error:', error, xhr.responseText);
+            const errorMsg = xhr.responseText || error || 'An unknown error occurred.';
+            document.getElementById('result').innerHTML = '<div class="alert alert-danger">Error: ' + errorMsg + '</div>';
         }
     });
     });

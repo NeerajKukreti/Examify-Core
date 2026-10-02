@@ -4,6 +4,7 @@ using Examify.Helpers;
 using Examify.Handlers;
 using Examify.Middleware;
 using Serilog;
+using Polly;
  
 
 var builder = WebApplication.CreateBuilder(args); 
@@ -70,7 +71,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        policy.SetIsOriginAllowed(origin => true).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
     });
 });
 
@@ -80,7 +81,11 @@ builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 builder.Services.AddHttpClient<Examify.Services.OCR.GeminiOcrService>().ConfigureHttpClient(client =>
 {
     client.Timeout = TimeSpan.FromMinutes(5);
-});
+})
+.AddPolicyHandler(Polly.Extensions.Http.HttpPolicyExtensions
+    .HandleTransientHttpError()
+    .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+    .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));
 builder.Services.AddHttpClient<Examify.Services.OCR.GeminiModelService>().ConfigureHttpClient(client =>
 {
     client.Timeout = TimeSpan.FromMinutes(5);

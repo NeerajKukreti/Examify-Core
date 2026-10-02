@@ -102,7 +102,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowExamify", policy =>
     {
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        policy.SetIsOriginAllowed(origin => true)
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 

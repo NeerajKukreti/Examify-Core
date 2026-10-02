@@ -33,6 +33,12 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             method: 'POST',
             body: formData
         });
+        
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText || 'Upload failed with status ' + response.status);
+        }
+        
         const data = await response.json();
         
         if (data.images && data.images.length > 0) {
