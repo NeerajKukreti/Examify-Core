@@ -61,17 +61,8 @@ namespace ExamifyAPI.Controllers
                 if (exam == null)
                     return NotFound(new { Success = false, Message = "Exam not found" });
 
-                if (!exam.IsPublic)
-                {
-                    if (!(User?.Identity?.IsAuthenticated == true))
-                        return Unauthorized(new { Success = false, Message = "Authentication required for private institute exams" });
-
-                    var currentInstituteId = _authService.GetCurrentInstituteId();
-                    if (exam.InstituteId != currentInstituteId)
-                    {
-                        return StatusCode(403, new { Success = false, Message = "Forbidden: Cross-tenant access denied. You do not belong to this institute." });
-                    }
-                }
+                if (!exam.IsPublic && !(User?.Identity?.IsAuthenticated == true))
+                    return Unauthorized(new { Success = false, Message = "Authentication required for private institute exams" });
                     
                 return Ok(new { Success = true, Data = exam });
             }

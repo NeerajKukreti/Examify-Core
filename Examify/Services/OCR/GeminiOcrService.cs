@@ -82,8 +82,8 @@ Extract ONLY real MCQ questions and diagrams.
 STEP 1 — OCR (EXACT TRANSCRIPTION)
 ----------------------------------------
 Transcribe text EXACTLY as printed:
-- ALL inline math and chemical formulas MUST be enclosed in `$` (e.g., $x^2$, $H_2O$, $Fe^{3+}$).
-- ALL block/display math MUST be enclosed in `$$`.
+- Math equations in LaTeX: $x^2$, $H_2O$, $Fe^{3+}$
+- Chemical formulas with subscripts/superscripts
 - Arrows: →, ⇌, ↦
 - NO simplification, NO interpretation
 
@@ -186,8 +186,7 @@ RULES:
                 generationConfig = new
                 {
                     temperature = 0.0,
-                    maxOutputTokens = 16384,
-                    responseMimeType = "application/json"
+                    maxOutputTokens = 16384
                 }
             };
 

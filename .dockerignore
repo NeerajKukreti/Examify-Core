@@ -1,9 +1,0 @@
-**/.git
-**/.vs
-**/bin
-**/obj
-**/.agents
-**/debate_engine
-**/*.log
-**/.release
-**/test_publish_*
