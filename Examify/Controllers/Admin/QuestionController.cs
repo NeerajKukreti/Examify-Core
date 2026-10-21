@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Examify.Controllers.Admin
 {
-    [Authorize(Roles = "Institute")]
+    [Authorize(Roles = "Institute,SuperAdmin")]
     public class QuestionController : Controller
     {
         private readonly IQuestionService _QuestionService;

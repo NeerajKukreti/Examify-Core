@@ -1,0 +1,66 @@
+{
+  "version": "1.0.0",
+  "project": "ExamiFy-Core",
+  "target_framework": ".NET 8.0",
+  "cost_governance": {
+    "policy": "STRICT_ZERO_COST",
+    "description": "Zero financial expenditure invariant. No cloud or API charges are permitted to incur anywhere for anything.",
+    "monthly_budget_ceiling_usd": 0.00,
+    "accumulated_spend_usd": 0.00,
+    "hard_paid_block": true
+  },
+  "infrastructure_constraints": {
+    "reserve_headroom_invariant_percent": 50.0,
+    "description": "Host CPU, RAM, and Database Connection Pool must maintain at least 50% capacity buffer under peak load to prevent degradation.",
+    "cpu": {
+      "max_allowable_utilization_percent": 50.0,
+      "alert_threshold_percent": 45.0
+    },
+    "memory_mb": {
+      "max_process_working_set_mb": 1024,
+      "target_idle_working_set_mb": 512,
+      "enforce_50_percent_buffer": true
+    },
+    "database_connection_pool": {
+      "server": "101.53.148.84,8649",
+      "database": "db_exam",
+      "max_pool_size": 100,
+      "max_active_connections_allowed": 50,
+      "connection_timeout_seconds": 15,
+      "require_immediate_dispose": true
+    }
+  },
+  "cloud_budget_manifest": {
+    "currency": "USD",
+    "monthly_budget_cap": 0.00,
+    "current_month_accumulated_spend": 0.00,
+    "hard_spend_ceiling": 0.00,
+    "allow_paid_calls": false,
+    "services": {
+      "gemini_vision_api": {
+        "tier": "100% Free Tier (Google AI Studio Free Quota)",
+        "cost_per_request_usd": 0.00,
+        "monthly_quota_cost_usd": 0.00,
+        "rate_limit_rpm": 15,
+        "daily_request_limit": 1500,
+        "alert_on_duplicate_ocr_hashes": true,
+        "block_paid_billing_accounts": true
+      },
+      "image_storage": {
+        "local_storage_path": "Examify/Resources/UploadedImgs/",
+        "cloud_cost_usd": 0.00,
+        "max_disk_usage_gb": 10.0,
+        "require_compression_before_store": true,
+        "compression_format": "webp_or_jpeg_quality_80"
+      }
+    }
+  },
+  "telemetry_probe_hooks": {
+    "live_system_probe": true,
+    "log_sources": [
+      "Examify/wwwroot/gemini-responses/",
+      "Examify.Logs/",
+      "ExamifyAPI/Logs/"
+    ]
+  }
+}

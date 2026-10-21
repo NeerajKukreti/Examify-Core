@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: examify-core
+    runtime: docker
+    plan: free
+    region: singapore
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production

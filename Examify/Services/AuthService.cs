@@ -47,10 +47,31 @@ namespace Examify.Services
 
                 var result = await response.Content.ReadAsStringAsync();
                 var authResult = JsonSerializer.Deserialize<JsonElement>(result);
-                var token = authResult.GetProperty("AccessToken").GetString();
-                var refreshToken = authResult.GetProperty("RefreshToken").GetString();
-                var instituteId = authResult.TryGetProperty("InstituteId", out var instId) ? instId.GetInt32() : (int?)null;
-                var fullName = authResult.TryGetProperty("FullName", out var name) ? name.GetString() : null;
+                
+                string? token = null;
+                if (authResult.TryGetProperty("token", out var tok) || authResult.TryGetProperty("Token", out tok) ||
+                    authResult.TryGetProperty("accessToken", out tok) || authResult.TryGetProperty("AccessToken", out tok))
+                {
+                    token = tok.GetString();
+                }
+
+                string? refreshToken = null;
+                if (authResult.TryGetProperty("refreshToken", out var rfTok) || authResult.TryGetProperty("RefreshToken", out rfTok))
+                {
+                    refreshToken = rfTok.GetString();
+                }
+
+                int? instituteId = null;
+                if (authResult.TryGetProperty("instituteId", out var instId) || authResult.TryGetProperty("InstituteId", out instId))
+                {
+                    instituteId = instId.GetInt32();
+                }
+
+                string? fullName = null;
+                if (authResult.TryGetProperty("fullName", out var name) || authResult.TryGetProperty("FullName", out name))
+                {
+                    fullName = name.GetString();
+                }
 
                 return (true, token, refreshToken, instituteId, fullName, null);
             }
@@ -114,8 +135,14 @@ namespace Examify.Services
                     Expires = DateTimeOffset.UtcNow.AddDays(7)
                 };
 
-                _httpContextAccessor.HttpContext!.Response.Cookies.Append("JWToken", token, cookieOptions);
-                _httpContextAccessor.HttpContext!.Response.Cookies.Append("RefreshToken", refreshToken, refreshCookieOptions);
+                if (!string.IsNullOrEmpty(token))
+                {
+                    _httpContextAccessor.HttpContext!.Response.Cookies.Append("JWToken", token, cookieOptions);
+                }
+                if (!string.IsNullOrEmpty(refreshToken))
+                {
+                    _httpContextAccessor.HttpContext!.Response.Cookies.Append("RefreshToken", refreshToken, refreshCookieOptions);
+                }
                 
                 _logger.LogInformation("Tokens saved to cookies successfully");
             }

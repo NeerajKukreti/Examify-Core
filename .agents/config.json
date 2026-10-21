@@ -1,0 +1,138 @@
+{
+  "project_name": "ExamiFy-Core",
+  "version": "1.1.0",
+  "dag_execution": {
+    "fan_out_concurrency": 10,
+    "parallel_debates": [
+      {
+        "round_id": "round_1_speed_vs_conversion",
+        "name": "Round 1: Speed vs. Conversion Debate",
+        "chambers": ["Chamber 1: Commercial & Growth", "Chamber 2: Technical & Defense"],
+        "primary_actors": ["the_seo_auditor", "the_wordsmith", "the_monetizer", "the_latency_hunter", "the_ergonomist"],
+        "trade_off_formula": "conversion_lift_pct / (latency_penalty_ms / 15.0)",
+        "min_acceptable_tradeoff_ratio": 1.0
+      },
+      {
+        "round_id": "round_2_security_vs_zero_cost",
+        "name": "Round 2: Security vs. Zero-Cost Debate",
+        "chambers": ["Chamber 2: Technical & Defense", "Chamber 3: Risk, Legal & Armor"],
+        "primary_actors": ["the_pen_tester", "the_systems_architect", "the_auditor", "the_chief_risk_officer"],
+        "hard_veto_actors": ["the_pen_tester"],
+        "grounding_manifest": ".agents/telemetry_manifest.json"
+      },
+      {
+        "round_id": "round_3_liability_vs_aggressive_copy",
+        "name": "Round 3: Liability vs. Aggressive Copy",
+        "chambers": ["Chamber 1: Commercial & Growth", "Chamber 3: Risk, Legal & Armor"],
+        "primary_actors": ["the_wordsmith", "the_monetizer", "the_legal_counsel"],
+        "hard_veto_actors": ["the_legal_counsel"]
+      }
+    ],
+    "fan_in_synthesizer": "evolution_synthesizer",
+    "anti_obsolescence_gate": {
+      "target_framework": "net8.0",
+      "csharp_version": 12,
+      "disallowed_patterns": [
+        ".Result",
+        ".Wait()",
+        "Thread.Sleep",
+        "md5",
+        "sha1",
+        "SELECT *",
+        "eval("
+      ]
+    }
+  },
+  "chambers": {
+    "chamber_1": {
+      "name": "Chamber 1: Commercial & Growth",
+      "lenses": [
+        {
+          "id": "the_monetizer",
+          "name": "The Monetizer",
+          "specialty": "Pricing, Subscription Tiers, Monetization Guardrails",
+          "prompt_path": ".agents/lenses/chamber1_monetizer.md",
+          "model": "gemini-3.8-flash"
+        },
+        {
+          "id": "the_seo_auditor",
+          "name": "The SEO Auditor",
+          "specialty": "Public Exam Discovery, SSR Crawling, Structured Data, Schema Markup",
+          "prompt_path": ".agents/lenses/chamber1_seo_auditor.md",
+          "model": "gemini-3.8-flash"
+        },
+        {
+          "id": "the_wordsmith",
+          "name": "The Wordsmith",
+          "specialty": "UX Copywriting, Student Assessment Instructions, Brand Tone",
+          "prompt_path": ".agents/lenses/chamber1_wordsmith.md",
+          "model": "gemini-3.8-flash"
+        }
+      ]
+    },
+    "chamber_2": {
+      "name": "Chamber 2: Technical & Defense",
+      "lenses": [
+        {
+          "id": "the_pen_tester",
+          "name": "The Pen Tester",
+          "specialty": "Security Invariants, JWT Auth, Multi-Tenant Segregation, SQLi Prevention",
+          "prompt_path": ".agents/lenses/chamber2_pen_tester.md",
+          "model": "gemini-3.1-pro",
+          "hard_veto_authority": true,
+          "veto_triggers": ["P0_VULNERABILITY", "AUTH_BYPASS", "TENANT_LEAKAGE", "SQL_INJECTION"]
+        },
+        {
+          "id": "the_ergonomist",
+          "name": "The Ergonomist",
+          "specialty": "Distraction-Free Exam Engine UI, Accessibility (WCAG AA), Interaction Flow",
+          "prompt_path": ".agents/lenses/chamber2_ergonomist.md",
+          "model": "gemini-3.8-flash"
+        },
+        {
+          "id": "the_latency_hunter",
+          "name": "The Latency Hunter",
+          "specialty": "Sub-15ms Latency, Query Optimization, Async Execution, Minimal Payloads",
+          "prompt_path": ".agents/lenses/chamber2_latency_hunter.md",
+          "model": "gemini-3.8-flash"
+        },
+        {
+          "id": "the_systems_architect",
+          "name": "The Systems Architect",
+          "specialty": "Modular Monolith Integrity, .NET 8 Architectural Boundaries, Clean Code",
+          "prompt_path": ".agents/lenses/chamber2_systems_architect.md",
+          "model": "gemini-3.1-pro"
+        }
+      ]
+    },
+    "chamber_3": {
+      "name": "Chamber 3: Risk, Legal & Armor",
+      "lenses": [
+        {
+          "id": "the_auditor",
+          "name": "The Auditor",
+          "specialty": "50% Reserve Invariant, CPU/RAM Headroom, DB Connection Pool Saturation",
+          "prompt_path": ".agents/lenses/chamber3_auditor.md",
+          "model": "gemini-3.8-flash",
+          "invariant_threshold": 50.0
+        },
+        {
+          "id": "the_chief_risk_officer",
+          "name": "The Chief Risk Officer",
+          "specialty": "Zero-Cost Scaling Invariant, Gemini Vision Token Spend, Storage Quotas",
+          "prompt_path": ".agents/lenses/chamber3_chief_risk_officer.md",
+          "model": "gemini-3.1-pro"
+        },
+        {
+          "id": "the_legal_counsel",
+          "name": "The Legal Counsel",
+          "specialty": "Student Data Privacy (FERPA), Disclaimers, Exam Integrity, Legal Armor",
+          "prompt_path": ".agents/lenses/chamber3_legal_counsel.md",
+          "model": "gemini-3.1-pro",
+          "hard_veto_authority": true,
+          "veto_triggers": ["P0_COMPLIANCE", "UNAUTHORIZED_DATA_COLLECTION", "MISSING_MANDATORY_DISCLAIMER"]
+        }
+      ]
+    }
+  }
+}

@@ -5,47 +5,89 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
+.drop-zone {
+    border: 2px dashed #0d6efd;
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.drop-zone:hover, .drop-zone.dragover {
+    background: #e9ecef;
+    border-color: #0a58ca;
+}
+.image-preview {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    display: none;
+    margin-top: 15px;
+}
 .math-content {
-    font-size: 16px;
-    line-height: 2;
     white-space: pre-wrap;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    max-height: 600px;
-    overflow-y: auto;
 }
 .math-content .katex { font-size: 1.1em; }
+.question-card {
+    border: none;
+    border-left: 4px solid #0d6efd;
+    background: #fff;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
 </style>
 
-<div class="text-center">
-    <h1 class="display-4">Upload questions</h1>
-    <p>Upload an image with math/science content</p>
-</div>
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold">Image to QnA</h1>
+        <p class="lead text-muted">Upload an image containing math or science questions to extract them magically.</p>
+    </div>
 
-<div class="row justify-content-center mt-4">
-    <div class="col-md-8">
-        <form id="uploadForm" enctype="multipart/form-data">
-            <div class="mb-3">
-                <label>Subject</label>
-                <select id="subjectId" class="form-control" required></select>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Subject</label>
+                                <select id="subjectId" class="form-control" required></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Topic</label>
+                                <select id="topicId" class="form-control" required></select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Classes</label>
+                                <select id="classIds" class="form-control" multiple required></select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Question Image</label>
+                            <div class="drop-zone" id="dropZone">
+                                <div>
+                                    <h5 class="mb-1">Drag & Drop image here</h5>
+                                    <p class="text-muted mb-0">or click to browse. You can also paste (Ctrl+V)</p>
+                                </div>
+                                <input type="file" id="imageFile" accept="image/*" class="d-none" required>
+                                <img id="imagePreview" class="image-preview mx-auto shadow-sm" />
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                <span class="spinner-border spinner-border-sm d-none" id="submitSpinner" role="status" aria-hidden="true"></span>
+                                Extract Questions
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="mb-3">
-                <label>Topic</label>
-                <select id="topicId" class="form-control" required></select>
-            </div>
-            <div class="mb-3">
-                <label>Classes</label>
-                <select id="classIds" class="form-control" multiple required></select>
-            </div>
-            <div class="mb-3">
-                <input type="file" class="form-control" id="imageFile" accept="image/*" required />
-                <small class="text-muted">Or paste an image (Ctrl+V)</small>
-            </div>
-            <button type="submit" class="btn btn-primary">Extract Text</button>
-        </form>
-        <div id="result" class="mt-4"></div>
+            
+            <div id="result"></div>
+        </div>
     </div>
 </div>
 
@@ -55,9 +97,27 @@
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <script>
 $(document).ready(function() {
-    $('#subjectId, #topicId').select2({ placeholder: 'Select...', allowClear: true });
-    $('#classIds').select2({ placeholder: 'Select classes...', allowClear: true });
+    $('#subjectId, #topicId').select2({ placeholder: 'Select...', allowClear: true, width: '100%' });
+    $('#classIds').select2({ placeholder: 'Select classes...', allowClear: true, width: '100%' });
     
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('imageFile');
+    const preview = document.getElementById('imagePreview');
+    
+    // Drag and Drop Handlers
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            showPreview(fileInput.files[0]);
+        }
+    });
+    
+    // Paste Handler
     document.addEventListener('paste', function(e) {
         const items = e.clipboardData?.items;
         if (!items) return;
@@ -66,28 +126,39 @@ $(document).ready(function() {
                 const blob = items[i].getAsFile();
                 const dataTransfer = new DataTransfer();
                 dataTransfer.items.add(blob);
-                document.getElementById('imageFile').files = dataTransfer.files;
+                fileInput.files = dataTransfer.files;
+                showPreview(blob);
                 e.preventDefault();
                 break;
             }
         }
     });
+
+    fileInput.addEventListener('change', function() {
+        if (this.files.length) showPreview(this.files[0]);
+    });
+
+    function showPreview(file) {
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+    }
     
+    // Load dropdowns
     fetch(window.API_ENDPOINTS.baseUrl + 'Class/GetAll/2')
         .then(r => r.json())
-        .then(d => {
-            if (d.Success && d.Data) {
-                d.Data.forEach(c => $('#classIds').append(`<option value="${c.ClassId}">${c.ClassName}</option>`));
-            }
-        });
+        .then(d => { if (d.Success && d.Data) d.Data.forEach(c => $('#classIds').append(`<option value="${c.ClassId}">${c.ClassName}</option>`)); });
     
     fetch(window.API_ENDPOINTS.baseUrl + 'Subject/2/0')
         .then(r => r.json())
         .then(d => {
             $('#subjectId').append('<option></option>');
-            if (d.Success && d.Data) {
-                d.Data.forEach(s => $('#subjectId').append(`<option value="${s.SubjectId}">${s.SubjectName}</option>`));
-            }
+            if (d.Success && d.Data) d.Data.forEach(s => $('#subjectId').append(`<option value="${s.SubjectId}">${s.SubjectName}</option>`));
         });
     
     $('#subjectId').on('change', function() {
@@ -96,57 +167,89 @@ $(document).ready(function() {
         if (subjectId) {
             fetch(window.API_ENDPOINTS.baseUrl + `Subject/${subjectId}/topics`)
                 .then(r => r.json())
-                .then(d => {
-                    if (d.Success && d.Data) {
-                        d.Data.forEach(t => $('#topicId').append(`<option value="${t.TopicId}">${t.TopicName}</option>`));
-                    }
-                });
+                .then(d => { if (d.Success && d.Data) d.Data.forEach(t => $('#topicId').append(`<option value="${t.TopicId}">${t.TopicName}</option>`)); });
         }
     });
 
-    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const fileInput = document.getElementById('imageFile');
-    if (!fileInput.files[0]) {
-        alert('Please upload or paste an image');
-        return;
-    }
-    const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
-    formData.append('topicId', document.getElementById('topicId').value);
-    
-    const classIds = $('#classIds').val();
-    classIds.forEach(id => formData.append('classIds', id));
-    
-    document.getElementById('result').innerHTML = '<div class="spinner-border"></div> Processing...';
-    
-    $.ajax({
-        url: '/QuestionExtractor/UploadImage',
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function(data) {
-            document.getElementById('result').innerHTML = 
-                '<div class="alert alert-success"><h5>Extracted Questions:</h5><div class="math-content">' + 
-                JSON.stringify(data.questions, null, 2) + '</div></div>';
-            
-            if (window.renderMathInElement) {
-                renderMathInElement(document.querySelector('.math-content'), {
-                    delimiters: [
-                        {left: '$$', right: '$$', display: true},
-                        {left: '$', right: '$', display: false}
-                    ],
-                    throwOnError: false
+    function renderQuestions(questions) {
+        if (!questions || questions.length === 0) return '<div class="alert alert-warning">No questions could be extracted.</div>';
+        let html = '<h3 class="mb-4">Extracted Questions (' + questions.length + ')</h3>';
+        questions.forEach(q => {
+            let optionsHtml = '';
+            if (q.options && q.options.length > 0) {
+                optionsHtml = '<div class="row g-2 mt-3">';
+                q.options.forEach((opt, idx) => {
+                    const label = String.fromCharCode(65 + idx);
+                    optionsHtml += `<div class="col-md-6"><div class="p-2 border rounded bg-light"><strong>${label})</strong> <span class="math-content">${opt}</span></div></div>`;
                 });
+                optionsHtml += '</div>';
             }
-        },
-        error: function(xhr, status, error) {
-            console.error('Error:', error, xhr.responseText);
-            const errorMsg = xhr.responseText || error || 'An unknown error occurred.';
-            document.getElementById('result').innerHTML = '<div class="alert alert-danger">Error: ' + errorMsg + '</div>';
-        }
-    });
+            let diagramsHtml = '';
+            if (q.diagrams && q.diagrams.length > 0) {
+                diagramsHtml = `<div class="mt-3 text-primary small"><i class="bi bi-bounding-box-circles"></i> ${q.diagrams.length} Diagram(s) detected</div>`;
+            }
+            html += `
+                <div class="card question-card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="badge bg-primary rounded-pill">Question ${q.question_number || '?'}</span>
+                        </div>
+                        <div class="math-content fs-5">${q.question_text || ''}</div>
+                        ${optionsHtml}
+                        ${diagramsHtml}
+                    </div>
+                </div>`;
+        });
+        return html;
+    }
+
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!fileInput.files[0]) { alert('Please upload or paste an image'); return; }
+        
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('topicId', document.getElementById('topicId').value);
+        $('#classIds').val().forEach(id => formData.append('classIds', id));
+        
+        $('#submitBtn').prop('disabled', true);
+        $('#submitSpinner').removeClass('d-none');
+        document.getElementById('result').innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h4 class="mt-3 text-muted">Analyzing Image with AI...</h4>
+                <p class="text-muted small">This usually takes 10-20 seconds depending on the complexity.</p>
+            </div>
+        `;
+        
+        $.ajax({
+            url: '/QuestionExtractor/UploadImage',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(data) {
+                $('#submitBtn').prop('disabled', false);
+                $('#submitSpinner').addClass('d-none');
+                
+                document.getElementById('result').innerHTML = renderQuestions(data.questions || data.Questions || data);
+                
+                if (window.renderMathInElement) {
+                    renderMathInElement(document.getElementById('result'), {
+                        delimiters: [ {left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false} ],
+                        throwOnError: false
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#submitBtn').prop('disabled', false);
+                $('#submitSpinner').addClass('d-none');
+                const errorMsg = xhr.responseText || error || 'An unknown error occurred.';
+                document.getElementById('result').innerHTML = '<div class="alert alert-danger shadow-sm"><strong>Error:</strong> ' + errorMsg + '</div>';
+            }
+        });
     });
 });
 </script>

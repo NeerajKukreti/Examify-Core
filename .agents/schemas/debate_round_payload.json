@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DebateRoundPayload",
+  "description": "Strict JSON schema for the isolated 1v1 debate rounds (Round 1: Speed vs Conversion, Round 2: Security vs Zero-Cost, Round 3: Liability vs Aggressive Copy).",
+  "type": "object",
+  "properties": {
+    "round_id": {
+      "type": "string",
+      "enum": [
+        "round_1_speed_vs_conversion",
+        "round_2_security_vs_zero_cost",
+        "round_3_liability_vs_aggressive_copy"
+      ]
+    },
+    "round_name": { "type": "string" },
+    "chamber_a": {
+      "type": "object",
+      "properties": {
+        "chamber_name": { "type": "string" },
+        "advocate_lens": { "type": "string" },
+        "position": { "type": "string" },
+        "metric_claim": { "type": "string" }
+      },
+      "required": ["chamber_name", "advocate_lens", "position"],
+      "additionalProperties": false
+    },
+    "chamber_b": {
+      "type": "object",
+      "properties": {
+        "chamber_name": { "type": "string" },
+        "advocate_lens": { "type": "string" },
+        "position": { "type": "string" },
+        "metric_claim": { "type": "string" }
+      },
+      "required": ["chamber_name", "advocate_lens", "position"],
+      "additionalProperties": false
+    },
+    "hard_veto_asserted": {
+      "type": "boolean",
+      "description": "True if Pen Tester or Legal Counsel asserted a hard veto in this debate."
+    },
+    "veto_details": {
+      "type": ["string", "null"]
+    },
+    "trade_off_resolution": {
+      "type": "object",
+      "properties": {
+        "issue_id": { "type": "string" },
+        "severity": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "weighted_priority_score": {
+          "type": "number",
+          "description": "Calculated score: e.g. conversion lift vs latency penalty ratio."
+        },
+        "concession_granted_by": { "type": "string" },
+        "concession_terms": { "type": "string" },
+        "approved_diff": {
+          "type": "string",
+          "description": "Compromise unified diff accepted by both chambers."
+        }
+      },
+      "required": ["issue_id", "severity", "concession_granted_by", "concession_terms", "approved_diff"],
+      "additionalProperties": false
+    },
+    "telemetry_grounding": {
+      "type": "object",
+      "properties": {
+        "reserve_headroom_observed_percent": { "type": "number" },
+        "estimated_monthly_spend_usd": { "type": "number" },
+        "gemini_token_budget_headroom_percent": { "type": "number" },
+        "is_within_budget_manifest": { "type": "boolean" },
+        "is_within_50_percent_reserve": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "string",
+      "enum": ["CONSENSUS_REACHED", "DEADLOCKED_VETO", "COMPROMISE_ACCEPTED"]
+    }
+  },
+  "required": [
+    "round_id",
+    "round_name",
+    "chamber_a",
+    "chamber_b",
+    "hard_veto_asserted",
+    "trade_off_resolution",
+    "status"
+  ],
+  "additionalProperties": false
+}

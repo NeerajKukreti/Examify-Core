@@ -7,7 +7,7 @@ using Model.DTO;
 
 namespace Examify.Controllers.Admin
 {
-    [Authorize(Roles = "Institute")]
+    [Authorize(Roles = "Institute,SuperAdmin")]
     public class ExamController : Controller
     {
         private readonly IExamService _examService;
